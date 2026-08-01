@@ -12,10 +12,12 @@ const navItems = [
 export function AppShell({
   title,
   subtitle,
+  actions,
   children,
 }: {
   title: string;
   subtitle: string;
+  actions?: ReactNode;
   children: ReactNode;
 }) {
   return (
@@ -59,6 +61,7 @@ export function AppShell({
             <p className="truncate text-xs text-muted-foreground">{subtitle}</p>
           </div>
           <div className="flex items-center gap-2">
+            {actions}
             <nav className="flex gap-1 lg:hidden">
               {navItems.map(({ to, label }) => (
                 <Link
