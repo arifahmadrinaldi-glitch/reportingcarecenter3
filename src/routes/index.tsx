@@ -36,7 +36,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { BULAN_OPTIONS, type TicketRow } from "@/lib/ticket-constants";
+import { BULAN_OPTIONS, OPEN_STATUSES, type TicketRow } from "@/lib/ticket-constants";
 
 export const Route = createFileRoute("/")({
   head: () => ({
