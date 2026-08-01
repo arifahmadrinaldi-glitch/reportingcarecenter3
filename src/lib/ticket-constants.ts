@@ -7,6 +7,8 @@ export const STATUS_OPTIONS = [
   "Pending Transport",
   "Pending Spare",
   "Pending Customer",
+  "Monev",
+  "Technical Close",
   "Close",
 ] as const;
 
@@ -15,6 +17,7 @@ export const OPEN_STATUSES = [
   "Engineer Assignment",
   "Engineer On The Way",
   "Engineer Troubleshoot",
+  "Monev",
 ] as const;
 
 export const OPEN_BY_OPTIONS = [
