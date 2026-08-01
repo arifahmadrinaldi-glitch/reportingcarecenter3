@@ -7,6 +7,8 @@ export const STATUS_OPTIONS = [
   "Pending Transport",
   "Pending Spare",
   "Pending Customer",
+  "Monev",
+  "Technical Close",
   "Close",
 ] as const;
 
@@ -15,6 +17,7 @@ export const OPEN_STATUSES = [
   "Engineer Assignment",
   "Engineer On The Way",
   "Engineer Troubleshoot",
+  "Monev",
 ] as const;
 
 export const OPEN_BY_OPTIONS = [
@@ -136,7 +139,7 @@ export const emptyTicket = (): TicketFormValues => ({
 });
 
 export const statusTone = (status: string): "success" | "warning" | "info" | "muted" => {
-  if (status === "Close") return "success";
+  if (status === "Close" || status === "Technical Close") return "success";
   if (status.startsWith("Pending")) return "warning";
   if ((OPEN_STATUSES as readonly string[]).includes(status)) return "info";
   return "muted";
