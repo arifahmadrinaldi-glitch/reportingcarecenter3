@@ -31,13 +31,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { supabase } from "@/integrations/supabase/client";
 import { notifyNewTicket } from "@/lib/telegram.functions";
 import {
@@ -73,8 +67,6 @@ export const Route = createFileRoute("/tickets")({
   component: TicketsPage,
 });
 
-const ALL = "__all__";
-
 type Align = "center" | "wrap";
 
 const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
@@ -109,13 +101,13 @@ const cellValue = (ticket: TicketRow, key: keyof TicketRow) => {
 function TicketsPage() {
   const queryClient = useQueryClient();
   const [search, setSearch] = useState("");
-  const [bulan, setBulan] = useState(ALL);
-  const [tahun, setTahun] = useState(ALL);
-  const [status, setStatus] = useState(ALL);
-  const [regional, setRegional] = useState(ALL);
-  const [customer, setCustomer] = useState(ALL);
-  const [jenis, setJenis] = useState(ALL);
-  const [layanan, setLayanan] = useState(ALL);
+  const [bulan, setBulan] = useState<string[]>([]);
+  const [tahun, setTahun] = useState<string[]>([]);
+  const [status, setStatus] = useState<string[]>([]);
+  const [regional, setRegional] = useState<string[]>([]);
+  const [customer, setCustomer] = useState<string[]>([]);
+  const [jenis, setJenis] = useState<string[]>([]);
+  const [layanan, setLayanan] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [selected, setSelected] = useState<string[]>([]);
@@ -188,16 +180,17 @@ function TicketsPage() {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return tickets.filter((t) => {
-      if (status !== ALL && t.status !== status) return false;
-      if (regional !== ALL && t.regional !== regional) return false;
-      if (customer !== ALL && t.customer !== customer) return false;
-      if (jenis !== ALL && t.jenis_ticket !== jenis) return false;
-      if (layanan !== ALL && t.layanan !== layanan) return false;
-      if (bulan !== ALL || tahun !== ALL) {
+      if (status.length && !status.includes(t.status)) return false;
+      if (regional.length && !regional.includes(t.regional ?? "")) return false;
+      if (customer.length && !customer.includes(t.customer ?? "")) return false;
+      if (jenis.length && !jenis.includes(t.jenis_ticket ?? "")) return false;
+      if (layanan.length && !layanan.includes(t.layanan ?? "")) return false;
+      if (bulan.length || tahun.length) {
         if (!t.tanggal_open) return false;
         const date = new Date(t.tanggal_open);
-        if (bulan !== ALL && BULAN_OPTIONS[date.getMonth()] !== bulan) return false;
-        if (tahun !== ALL && String(date.getFullYear()) !== tahun) return false;
+        if (bulan.length && !bulan.includes(BULAN_OPTIONS[date.getMonth()] as string))
+          return false;
+        if (tahun.length && !tahun.includes(String(date.getFullYear()))) return false;
       }
       if (!term) return true;
       return columns.some((col) =>
@@ -214,13 +207,13 @@ function TicketsPage() {
 
   const resetFilters = () => {
     setSearch("");
-    setBulan(ALL);
-    setTahun(ALL);
-    setStatus(ALL);
-    setRegional(ALL);
-    setCustomer(ALL);
-    setJenis(ALL);
-    setLayanan(ALL);
+    setBulan([]);
+    setTahun([]);
+    setStatus([]);
+    setRegional([]);
+    setCustomer([]);
+    setJenis([]);
+    setLayanan([]);
     setPage(1);
   };
 
@@ -319,32 +312,19 @@ function TicketsPage() {
 
   const filterSelect = (
     label: string,
-    value: string,
-    onChange: (v: string) => void,
+    values: string[],
+    onChange: (v: string[]) => void,
     options: readonly string[],
   ) => (
-    <Select
-      value={value}
-      onValueChange={(v) => {
-        onChange(v);
+    <MultiSelect
+      label={label}
+      values={values}
+      options={options}
+      onChange={(next) => {
+        onChange(next);
         setPage(1);
       }}
-    >
-      <SelectTrigger className="h-10 rounded-full bg-surface text-xs">
-        <SelectValue>
-          <span className="text-muted-foreground">{label}: </span>
-          <span className="font-medium">{value === ALL ? "Semua" : value}</span>
-        </SelectValue>
-      </SelectTrigger>
-      <SelectContent>
-        <SelectItem value={ALL}>Semua</SelectItem>
-        {options.map((option) => (
-          <SelectItem key={option} value={option}>
-            {option}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    />
   );
 
   return (
