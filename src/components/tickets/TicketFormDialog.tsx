@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { Save } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ import {
   ASAL_GANGGUAN_OPTIONS,
   JENIS_OPTIONS,
   LAYANAN_OPTIONS,
+  OPEN_BY_OPTIONS,
   REGIONAL_OPTIONS,
   STATUS_OPTIONS,
   TEAM_SEM_OPTIONS,
@@ -65,6 +67,11 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
   const set = <K extends keyof TicketFormValues>(key: K, value: TicketFormValues[K]) =>
     setValues((prev) => ({ ...prev, [key]: value }));
 
+  const durasiAuto = useMemo(
+    () => computeDurasi(toIso(openAt), toIso(closeAt)),
+    [openAt, closeAt],
+  );
+
   const submit = async () => {
     setSaving(true);
     try {
@@ -74,7 +81,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
         ...values,
         tanggal_open: tanggalOpen,
         tanggal_close: tanggalClose,
-        durasi: values.durasi || computeDurasi(tanggalOpen, tanggalClose),
+        durasi: computeDurasi(tanggalOpen, tanggalClose),
       });
       onOpenChange(false);
     } finally {
@@ -82,18 +89,25 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
     }
   };
 
+  const fieldLabel = (label: string, required = true) => (
+    <Label className="text-[11px] font-bold tracking-wide uppercase">
+      {label}
+      {required ? <span className="text-destructive">*</span> : null}
+    </Label>
+  );
+
   const selectField = (
     label: string,
     key: keyof TicketFormValues,
     options: readonly string[],
   ) => (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
+      {fieldLabel(label)}
       <Select
         value={(values[key] as string) || ""}
         onValueChange={(v) => set(key, v as never)}
       >
-        <SelectTrigger>
+        <SelectTrigger className="h-10 w-full bg-surface">
           <SelectValue placeholder={`Pilih ${label.toLowerCase()}`} />
         </SelectTrigger>
         <SelectContent>
@@ -107,85 +121,104 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
     </div>
   );
 
-  const textField = (label: string, key: keyof TicketFormValues) => (
+  const textField = (label: string, key: keyof TicketFormValues, required = true) => (
     <div className="space-y-1.5">
-      <Label>{label}</Label>
+      {fieldLabel(label, required)}
       <Input
         value={(values[key] as string) ?? ""}
         onChange={(e) => set(key, e.target.value as never)}
         placeholder={label}
+        className="h-10 bg-surface"
+      />
+    </div>
+  );
+
+  const textareaField = (label: string, key: keyof TicketFormValues, rows: number, required = true) => (
+    <div className="space-y-1.5 sm:col-span-2">
+      {fieldLabel(label, required)}
+      <Textarea
+        rows={rows}
+        value={(values[key] as string) ?? ""}
+        onChange={(e) => set(key, e.target.value as never)}
+        className="bg-surface"
       />
     </div>
   );
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
-        <DialogHeader>
-          <DialogTitle>{ticket ? "Edit Ticket" : "Tambah Ticket"}</DialogTitle>
-          <DialogDescription>
-            {ticket
-              ? "Perbarui data ticket gangguan."
-              : "Ticket baru akan muncul di posisi nomor 1 pada daftar."}
+      <DialogContent className="gap-0 overflow-hidden p-0 sm:max-w-3xl">
+        <DialogHeader className="space-y-1 bg-gradient-to-r from-primary to-info px-5 py-4 text-left">
+          <DialogTitle className="text-base font-bold text-primary-foreground">
+            {ticket ? "Edit Ticket" : "Tambah Ticket"}
+          </DialogTitle>
+          <DialogDescription className="text-xs text-primary-foreground/85">
+            Lengkapi data gangguan. Durasi dihitung otomatis dari Tanggal Open dan Tanggal
+            Close.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          {selectField("Status", "status", STATUS_OPTIONS)}
-          {textField("Customer", "customer")}
-          {textField("Nama Lokasi", "nama_lokasi")}
-          {textField("Tiket Mantools", "tiket_mantools")}
-          {textField("Tiket Noxis", "tiket_noxis")}
-          {selectField("Layanan", "layanan", LAYANAN_OPTIONS)}
-          {selectField("Jenis Ticket", "jenis_ticket", JENIS_OPTIONS)}
-          {selectField("Asal Gangguan", "asal_gangguan", ASAL_GANGGUAN_OPTIONS)}
-          {selectField("Regional", "regional", REGIONAL_OPTIONS)}
-          {selectField("Team SEM", "team_sem", TEAM_SEM_OPTIONS)}
-          {textField("Open By", "open_by")}
-          {textField("Teknisi", "teknisi")}
-          <div className="space-y-1.5">
-            <Label>Tanggal Open</Label>
-            <Input
-              type="datetime-local"
-              value={openAt}
-              onChange={(e) => setOpenAt(e.target.value)}
-            />
-          </div>
-          <div className="space-y-1.5">
-            <Label>Tanggal Close</Label>
-            <Input
-              type="datetime-local"
-              value={closeAt}
-              onChange={(e) => setCloseAt(e.target.value)}
-            />
-          </div>
-          {textField("Durasi", "durasi")}
-          {textField("Indikasi Gangguan", "indikasi_gangguan")}
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label>Keterangan</Label>
-            <Textarea
-              rows={2}
-              value={values.keterangan ?? ""}
-              onChange={(e) => set("keterangan", e.target.value)}
-              placeholder="Keterangan ticket"
-            />
-          </div>
-          <div className="space-y-1.5 sm:col-span-2">
-            <Label>Last Update</Label>
-            <Textarea
-              rows={3}
-              value={values.last_update ?? ""}
-              onChange={(e) => set("last_update", e.target.value)}
-              placeholder="Progres terakhir penanganan"
-            />
+        <div className="max-h-[75vh] overflow-y-auto px-5 py-4">
+          <div className="grid gap-4 sm:grid-cols-2">
+            {selectField("Status", "status", STATUS_OPTIONS)}
+            {selectField("Indikasi Asal Gangguan", "asal_gangguan", ASAL_GANGGUAN_OPTIONS)}
+            {textField("Customer", "customer")}
+            {textField("Nama Lokasi", "nama_lokasi")}
+            {textField("Tiket Mantools", "tiket_mantools")}
+            {textField("Tiket Noxis", "tiket_noxis")}
+            {selectField("Layanan", "layanan", LAYANAN_OPTIONS)}
+            {selectField("Jenis Ticket", "jenis_ticket", JENIS_OPTIONS)}
+            {selectField("Regional", "regional", REGIONAL_OPTIONS)}
+            {textField("Teknisi", "teknisi")}
+            {textareaField("Indikasi Gangguan", "indikasi_gangguan", 3)}
+            {textareaField("Last Update", "last_update", 3, false)}
+            <div className="space-y-1.5 sm:col-span-2">
+              {fieldLabel("Keterangan")}
+              <Input
+                value={values.keterangan ?? ""}
+                onChange={(e) => set("keterangan", e.target.value)}
+                className="h-10 bg-surface"
+              />
+            </div>
+            {selectField("Team SEM", "team_sem", TEAM_SEM_OPTIONS)}
+            {selectField("Open By", "open_by", OPEN_BY_OPTIONS)}
+            <div className="space-y-1.5">
+              {fieldLabel("Tanggal Open")}
+              <Input
+                type="datetime-local"
+                step={60}
+                value={openAt}
+                onChange={(e) => setOpenAt(e.target.value)}
+                className="h-10 bg-surface"
+              />
+            </div>
+            <div className="space-y-1.5">
+              {fieldLabel("Tanggal Close", false)}
+              <Input
+                type="datetime-local"
+                step={60}
+                value={closeAt}
+                onChange={(e) => setCloseAt(e.target.value)}
+                className="h-10 bg-surface"
+              />
+            </div>
+            <div className="space-y-1.5 sm:col-span-2">
+              {fieldLabel("Durasi (Otomatis)", false)}
+              <Input
+                readOnly
+                value={durasiAuto || "-"}
+                className="h-10 bg-muted/60 text-muted-foreground"
+              />
+            </div>
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="border-t border-border bg-muted/40 px-5 py-3">
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             Batal
           </Button>
           <Button onClick={submit} disabled={saving}>
+            <Save className="size-4" />
             {saving ? "Menyimpan…" : ticket ? "Simpan Perubahan" : "Simpan Ticket"}
           </Button>
         </DialogFooter>
