@@ -2,6 +2,7 @@ import { Save } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/components/tickets/DateTimePicker";
 import {
   Dialog,
   DialogContent,
@@ -184,23 +185,11 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
             {selectField("Open By", "open_by", OPEN_BY_OPTIONS)}
             <div className="space-y-1.5">
               {fieldLabel("Tanggal Open")}
-              <Input
-                type="datetime-local"
-                step={60}
-                value={openAt}
-                onChange={(e) => setOpenAt(e.target.value)}
-                className="h-10 bg-surface"
-              />
+              <DateTimePicker value={openAt} onChange={setOpenAt} />
             </div>
             <div className="space-y-1.5">
               {fieldLabel("Tanggal Close", false)}
-              <Input
-                type="datetime-local"
-                step={60}
-                value={closeAt}
-                onChange={(e) => setCloseAt(e.target.value)}
-                className="h-10 bg-surface"
-              />
+              <DateTimePicker value={closeAt} onChange={setCloseAt} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               {fieldLabel("Durasi (Otomatis)", false)}
