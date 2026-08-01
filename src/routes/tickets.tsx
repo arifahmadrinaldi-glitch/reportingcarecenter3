@@ -1,0 +1,630 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { createFileRoute } from "@tanstack/react-router";
+import {
+  Eye,
+  FileSpreadsheet,
+  History,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Search,
+  Trash2,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { toast } from "sonner";
+
+import { AppShell } from "@/components/AppShell";
+import { RollbackDialog } from "@/components/tickets/RollbackDialog";
+import { StatusBadge } from "@/components/tickets/StatusBadge";
+import { TicketDetailDialog } from "@/components/tickets/TicketDetailDialog";
+import { TicketFormDialog } from "@/components/tickets/TicketFormDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
+import { notifyNewTicket } from "@/lib/telegram.functions";
+import {
+  BULAN_OPTIONS,
+  JENIS_OPTIONS,
+  LAYANAN_OPTIONS,
+  REGIONAL_OPTIONS,
+  STATUS_OPTIONS,
+  formatDateTime,
+  type TicketFormValues,
+  type TicketRow,
+} from "@/lib/ticket-constants";
+
+export const Route = createFileRoute("/tickets")({
+  head: () => ({
+    meta: [
+      { title: "Daftar Ticket — Ticket Care Center 3" },
+      {
+        name: "description",
+        content:
+          "Kelola data ticket gangguan: tambah, edit, hapus dengan konfirmasi, rollback data terhapus, filter multi pilihan dan export Excel.",
+      },
+      { property: "og:title", content: "Daftar Ticket — Ticket Care Center 3" },
+      {
+        property: "og:description",
+        content:
+          "Tabel ticket lengkap dengan pencarian cepat, filter layanan, rollback data terhapus dan export Excel.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary_large_image" },
+    ],
+  }),
+  component: TicketsPage,
+});
+
+const ALL = "__all__";
+
+type Align = "center" | "wrap";
+
+const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
+  { key: "status", label: "Status", align: "center" },
+  { key: "keterangan", label: "Keterangan", align: "wrap" },
+  { key: "customer", label: "Customer", align: "wrap" },
+  { key: "nama_lokasi", label: "Nama Lokasi", align: "wrap" },
+  { key: "tiket_mantools", label: "Tiket Mantools", align: "center" },
+  { key: "tiket_noxis", label: "Tiket Noxis", align: "center" },
+  { key: "layanan", label: "Layanan", align: "center" },
+  { key: "jenis_ticket", label: "Jenis Ticket", align: "center" },
+  { key: "asal_gangguan", label: "Asal Gangguan", align: "center" },
+  { key: "regional", label: "Regional", align: "center" },
+  { key: "indikasi_gangguan", label: "Indikasi Gangguan", align: "wrap" },
+  { key: "last_update", label: "Last Update", align: "wrap" },
+  { key: "team_sem", label: "Team SEM", align: "center" },
+  { key: "open_by", label: "Open By", align: "center" },
+  { key: "tanggal_open", label: "Tanggal Open", align: "center" },
+  { key: "tanggal_close", label: "Tanggal Close", align: "center" },
+  { key: "durasi", label: "Durasi", align: "center" },
+  { key: "teknisi", label: "Teknisi", align: "center" },
+];
+
+const cellValue = (ticket: TicketRow, key: keyof TicketRow) => {
+  if (key === "tanggal_open" || key === "tanggal_close") {
+    return formatDateTime(ticket[key] as string | null);
+  }
+  const value = ticket[key];
+  return value ? String(value) : "-";
+};
+
+function TicketsPage() {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [bulan, setBulan] = useState(ALL);
+  const [tahun, setTahun] = useState(ALL);
+  const [status, setStatus] = useState(ALL);
+  const [regional, setRegional] = useState(ALL);
+  const [customer, setCustomer] = useState(ALL);
+  const [jenis, setJenis] = useState(ALL);
+  const [layanan, setLayanan] = useState(ALL);
+  const [page, setPage] = useState(1);
+  const [perPage, setPerPage] = useState(10);
+  const [selected, setSelected] = useState<string[]>([]);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<TicketRow | null>(null);
+  const [detail, setDetail] = useState<TicketRow | null>(null);
+  const [rollbackOpen, setRollbackOpen] = useState(false);
+
+  const activeQuery = useQuery({
+    queryKey: ["tickets", "active"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("*")
+        .is("deleted_at", null)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as TicketRow[];
+    },
+  });
+
+  const deletedQuery = useQuery({
+    queryKey: ["tickets", "deleted"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("tickets")
+        .select("*")
+        .not("deleted_at", "is", null)
+        .order("deleted_at", { ascending: false });
+      if (error) throw error;
+      return (data ?? []) as TicketRow[];
+    },
+  });
+
+  const tickets = activeQuery.data ?? [];
+  const deleted = deletedQuery.data ?? [];
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("tickets-changes")
+      .on("postgres_changes", { event: "*", schema: "public", table: "tickets" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["tickets"] });
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  const customerOptions = useMemo(
+    () =>
+      Array.from(new Set(tickets.map((t) => t.customer).filter(Boolean) as string[])).sort(),
+    [tickets],
+  );
+  const tahunOptions = useMemo(
+    () =>
+      Array.from(
+        new Set(
+          tickets
+            .map((t) => (t.tanggal_open ? new Date(t.tanggal_open).getFullYear() : null))
+            .filter(Boolean) as number[],
+        ),
+      )
+        .sort((a, b) => b - a)
+        .map(String),
+    [tickets],
+  );
+
+  const filtered = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    return tickets.filter((t) => {
+      if (status !== ALL && t.status !== status) return false;
+      if (regional !== ALL && t.regional !== regional) return false;
+      if (customer !== ALL && t.customer !== customer) return false;
+      if (jenis !== ALL && t.jenis_ticket !== jenis) return false;
+      if (layanan !== ALL && t.layanan !== layanan) return false;
+      if (bulan !== ALL || tahun !== ALL) {
+        if (!t.tanggal_open) return false;
+        const date = new Date(t.tanggal_open);
+        if (bulan !== ALL && BULAN_OPTIONS[date.getMonth()] !== bulan) return false;
+        if (tahun !== ALL && String(date.getFullYear()) !== tahun) return false;
+      }
+      if (!term) return true;
+      return columns.some((col) =>
+        String(t[col.key] ?? "")
+          .toLowerCase()
+          .includes(term),
+      );
+    });
+  }, [tickets, search, status, regional, customer, jenis, layanan, bulan, tahun]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const currentPage = Math.min(page, totalPages);
+  const pageRows = filtered.slice((currentPage - 1) * perPage, currentPage * perPage);
+
+  const resetFilters = () => {
+    setSearch("");
+    setBulan(ALL);
+    setTahun(ALL);
+    setStatus(ALL);
+    setRegional(ALL);
+    setCustomer(ALL);
+    setJenis(ALL);
+    setLayanan(ALL);
+    setPage(1);
+  };
+
+  const saveTicket = async (values: TicketFormValues) => {
+    if (editing) {
+      const { error } = await supabase.from("tickets").update(values).eq("id", editing.id);
+      if (error) {
+        toast.error("Gagal menyimpan ticket", { description: error.message });
+        return;
+      }
+      toast.success("Ticket diperbarui");
+    } else {
+      const { error } = await supabase.from("tickets").insert(values);
+      if (error) {
+        toast.error("Gagal menambah ticket", { description: error.message });
+        return;
+      }
+      toast.success("Ticket baru ditambahkan di posisi nomor 1");
+      setPage(1);
+      try {
+        const result = await notifyNewTicket({
+          data: {
+            status: values.status,
+            customer: values.customer ?? "",
+            nama_lokasi: values.nama_lokasi ?? "",
+            tiket_mantools: values.tiket_mantools ?? "",
+            tiket_noxis: values.tiket_noxis ?? "",
+            layanan: values.layanan ?? "",
+            jenis_ticket: values.jenis_ticket ?? "",
+            regional: values.regional ?? "",
+            indikasi_gangguan: values.indikasi_gangguan ?? "",
+            open_by: values.open_by ?? "",
+          },
+        });
+        if (result?.sent) toast.success("Notifikasi Telegram terkirim");
+        else if (result?.reason) toast.info(`Notifikasi Telegram: ${result.reason}`);
+      } catch {
+        toast.info("Notifikasi Telegram belum aktif");
+      }
+    }
+    queryClient.invalidateQueries({ queryKey: ["tickets"] });
+  };
+
+  const deleteSelected = async () => {
+    const { error } = await supabase
+      .from("tickets")
+      .update({ deleted_at: new Date().toISOString() })
+      .in("id", selected);
+    if (error) {
+      toast.error("Gagal menghapus ticket", { description: error.message });
+      return;
+    }
+    toast.success(`${selected.length} ticket dihapus`, {
+      description: "Bisa dikembalikan lewat menu Rollback.",
+    });
+    setSelected([]);
+    setConfirmDelete(false);
+    queryClient.invalidateQueries({ queryKey: ["tickets"] });
+  };
+
+  const restore = async (ids: string[]) => {
+    const { error } = await supabase.from("tickets").update({ deleted_at: null }).in("id", ids);
+    if (error) {
+      toast.error("Gagal mengembalikan ticket", { description: error.message });
+      return;
+    }
+    toast.success(`${ids.length} ticket dikembalikan`);
+    queryClient.invalidateQueries({ queryKey: ["tickets"] });
+  };
+
+  const exportExcel = () => {
+    const head = ["Nomor", ...columns.map((c) => c.label)];
+    const rows = filtered.map((t, index) => [
+      String(index + 1),
+      ...columns.map((c) => cellValue(t, c.key)),
+    ]);
+    const escape = (value: string) =>
+      value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = `<html><head><meta charset="utf-8" /></head><body><table border="1"><thead><tr>${head
+      .map((h) => `<th>${escape(h)}</th>`)
+      .join("")}</tr></thead><tbody>${rows
+      .map((row) => `<tr>${row.map((cell) => `<td>${escape(cell)}</td>`).join("")}</tr>`)
+      .join("")}</tbody></table></body></html>`;
+    const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `daftar-ticket-${new Date().toISOString().slice(0, 10)}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Export Excel dimulai");
+  };
+
+  const allPageSelected =
+    pageRows.length > 0 && pageRows.every((row) => selected.includes(row.id));
+
+  const filterSelect = (
+    label: string,
+    value: string,
+    onChange: (v: string) => void,
+    options: readonly string[],
+  ) => (
+    <Select
+      value={value}
+      onValueChange={(v) => {
+        onChange(v);
+        setPage(1);
+      }}
+    >
+      <SelectTrigger className="h-10 rounded-full bg-surface text-xs">
+        <SelectValue>
+          <span className="text-muted-foreground">{label}: </span>
+          <span className="font-medium">{value === ALL ? "Semua" : value}</span>
+        </SelectValue>
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value={ALL}>Semua</SelectItem>
+        {options.map((option) => (
+          <SelectItem key={option} value={option}>
+            {option}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
+
+  return (
+    <AppShell title="Daftar Ticket" subtitle="Data ticket gangguan tersinkron realtime">
+      <div className="panel p-4 md:p-5">
+        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative flex-1">
+            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={search}
+              onChange={(e) => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
+              placeholder="Pencarian cepat…"
+              className="h-10 rounded-full pl-9"
+            />
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <Button
+              onClick={() => {
+                setEditing(null);
+                setFormOpen(true);
+              }}
+            >
+              <Plus className="size-4" /> Tambah Ticket
+            </Button>
+            <Button variant="outline" onClick={exportExcel}>
+              <FileSpreadsheet className="size-4" /> Excel
+            </Button>
+            <Button variant="outline" onClick={() => setRollbackOpen(true)}>
+              <History className="size-4" /> Rollback
+              {deleted.length > 0 ? (
+                <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                  {deleted.length}
+                </span>
+              ) : null}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => {
+                queryClient.invalidateQueries({ queryKey: ["tickets"] });
+                toast.success("Data disegarkan");
+              }}
+            >
+              <RefreshCw className="size-4" /> Refresh
+            </Button>
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+          {filterSelect("Bulan", bulan, setBulan, BULAN_OPTIONS)}
+          {filterSelect("Tahun", tahun, setTahun, tahunOptions)}
+          {filterSelect("Status", status, setStatus, STATUS_OPTIONS)}
+          {filterSelect("Regional", regional, setRegional, REGIONAL_OPTIONS)}
+          {filterSelect("Customer", customer, setCustomer, customerOptions)}
+          {filterSelect("Jenis", jenis, setJenis, JENIS_OPTIONS)}
+          {filterSelect("Layanan", layanan, setLayanan, LAYANAN_OPTIONS)}
+        </div>
+
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          <span>
+            Menampilkan {filtered.length} dari {tickets.length} ticket
+          </span>
+          <button onClick={resetFilters} className="text-primary hover:underline">
+            Reset semua filter
+          </button>
+          {selected.length > 0 ? (
+            <>
+              <span className="font-medium text-foreground">{selected.length} dipilih</span>
+              <Button
+                variant="destructive"
+                size="sm"
+                onClick={() => setConfirmDelete(true)}
+                className="h-7"
+              >
+                <Trash2 className="size-3.5" /> Hapus terpilih
+              </Button>
+            </>
+          ) : null}
+        </div>
+
+        <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+          <table className="w-full min-w-[1900px] border-collapse text-xs">
+            <thead>
+              <tr className="border-b border-border bg-muted/60">
+                <th className="cell-center w-10 px-2 py-3">
+                  <Checkbox
+                    checked={allPageSelected}
+                    onCheckedChange={(checked) =>
+                      setSelected((prev) =>
+                        checked
+                          ? Array.from(new Set([...prev, ...pageRows.map((r) => r.id)]))
+                          : prev.filter((id) => !pageRows.some((r) => r.id === id)),
+                      )
+                    }
+                    aria-label="Pilih semua baris"
+                  />
+                </th>
+                <th className="cell-center w-14 px-2 py-3 text-[11px] font-bold tracking-wide uppercase">
+                  Nomor
+                </th>
+                <th className="cell-center w-20 px-2 py-3 text-[11px] font-bold tracking-wide uppercase">
+                  Aksi
+                </th>
+                {columns.map((col) => (
+                  <th
+                    key={col.key}
+                    className={`px-3 py-3 text-[11px] font-bold tracking-wide whitespace-nowrap uppercase ${
+                      col.align === "center" ? "cell-center" : "text-left"
+                    }`}
+                  >
+                    {col.label}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {activeQuery.isPending ? (
+                <tr>
+                  <td colSpan={columns.length + 3} className="cell-center px-3 py-10">
+                    Memuat data…
+                  </td>
+                </tr>
+              ) : pageRows.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={columns.length + 3}
+                    className="cell-center px-3 py-10 text-muted-foreground"
+                  >
+                    Tidak ada ticket yang cocok dengan filter.
+                  </td>
+                </tr>
+              ) : (
+                pageRows.map((ticket, index) => (
+                  <tr
+                    key={ticket.id}
+                    className="border-b border-border last:border-0 hover:bg-muted/40"
+                  >
+                    <td className="cell-center px-2 py-3">
+                      <Checkbox
+                        checked={selected.includes(ticket.id)}
+                        onCheckedChange={(checked) =>
+                          setSelected((prev) =>
+                            checked
+                              ? [...prev, ticket.id]
+                              : prev.filter((id) => id !== ticket.id),
+                          )
+                        }
+                        aria-label={`Pilih ticket ${ticket.customer ?? ""}`}
+                      />
+                    </td>
+                    <td className="cell-center px-2 py-3 font-semibold">
+                      {(currentPage - 1) * perPage + index + 1}
+                    </td>
+                    <td className="cell-center px-2 py-3">
+                      <div className="flex items-center justify-center gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 text-primary"
+                          onClick={() => setDetail(ticket)}
+                          aria-label="Lihat detail"
+                        >
+                          <Eye className="size-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="size-7 text-primary"
+                          onClick={() => {
+                            setEditing(ticket);
+                            setFormOpen(true);
+                          }}
+                          aria-label="Edit ticket"
+                        >
+                          <Pencil className="size-4" />
+                        </Button>
+                      </div>
+                    </td>
+                    {columns.map((col) => (
+                      <td
+                        key={col.key}
+                        className={`px-3 py-3 ${
+                          col.align === "center"
+                            ? "cell-center whitespace-nowrap"
+                            : "cell-wrap max-w-[260px] min-w-[180px]"
+                        }`}
+                      >
+                        {col.key === "status" ? (
+                          <StatusBadge status={ticket.status} />
+                        ) : (
+                          cellValue(ticket, col.key)
+                        )}
+                      </td>
+                    ))}
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>Baris per halaman</span>
+            <Select
+              value={String(perPage)}
+              onValueChange={(v) => {
+                setPerPage(Number(v));
+                setPage(1);
+              }}
+            >
+              <SelectTrigger className="h-8 w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 25, 50, 100].map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage <= 1}
+              onClick={() => setPage(currentPage - 1)}
+            >
+              Sebelumnya
+            </Button>
+            <span className="text-muted-foreground">
+              Halaman {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage >= totalPages}
+              onClick={() => setPage(currentPage + 1)}
+            >
+              Berikutnya
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      <TicketFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        ticket={editing}
+        onSubmit={saveTicket}
+      />
+      <TicketDetailDialog ticket={detail} onOpenChange={() => setDetail(null)} />
+      <RollbackDialog
+        open={rollbackOpen}
+        onOpenChange={setRollbackOpen}
+        tickets={deleted}
+        loading={deletedQuery.isPending}
+        onRestore={(id) => restore([id])}
+        onRestoreAll={() => restore(deleted.map((t) => t.id))}
+      />
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus {selected.length} ticket?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ticket yang dipilih akan dipindahkan ke daftar terhapus. Data masih bisa
+              dikembalikan melalui menu Rollback.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction onClick={deleteSelected}>Ya, hapus</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </AppShell>
+  );
+}
