@@ -58,9 +58,16 @@ export const REGIONAL_OPTIONS = [
   "Regional 5",
 ] as const;
 
-export const ASAL_GANGGUAN_OPTIONS = ["Telkomsat", "Customer", "NOC", "Monitoring"] as const;
+export const ASAL_GANGGUAN_OPTIONS = ["Telkomsat", "Non-Telkomsat"] as const;
 
-export const TEAM_SEM_OPTIONS = ["SEM 1", "SEM 2", "SEM 3", "SEM 4", "SEM 5"] as const;
+export const TEAM_SEM_OPTIONS = [
+  "Ridwan/Andi",
+  "Ridwan/Yogi",
+  "Ridwan/Gilang",
+  "Dony/Taqim",
+  "Rowland/Yoga",
+  "Deny/Ibnu",
+] as const;
 
 export const BULAN_OPTIONS = [
   "Januari",
