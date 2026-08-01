@@ -1,11 +1,30 @@
 export const STATUS_OPTIONS = [
-  "Open",
-  "Progress",
+  "Diagnose",
+  "Engineer Assignment",
+  "Engineer On The Way",
+  "Engineer Troubleshoot",
   "Pending",
   "Pending Transport",
   "Pending Spare",
   "Pending Customer",
   "Close",
+] as const;
+
+export const OPEN_STATUSES = [
+  "Diagnose",
+  "Engineer Assignment",
+  "Engineer On The Way",
+  "Engineer Troubleshoot",
+] as const;
+
+export const OPEN_BY_OPTIONS = [
+  "Arif",
+  "Ari",
+  "Dicky",
+  "Hari",
+  "Nawin",
+  "Rangga",
+  "Raihan",
 ] as const;
 
 export const LAYANAN_OPTIONS = [
@@ -16,6 +35,12 @@ export const LAYANAN_OPTIONS = [
   "Star Data",
   "Star Data Lite",
   "VSAT Star",
+  "Gateway",
+  "Datakom",
+  "SN",
+  "BGAN",
+  "FBB",
+  "MSP",
 ] as const;
 
 export const JENIS_OPTIONS = [
@@ -83,7 +108,7 @@ export type TicketFormValues = Omit<
 >;
 
 export const emptyTicket = (): TicketFormValues => ({
-  status: "Open",
+  status: "Diagnose",
   keterangan: "",
   customer: "",
   nama_lokasi: "",
@@ -106,7 +131,7 @@ export const emptyTicket = (): TicketFormValues => ({
 export const statusTone = (status: string): "success" | "warning" | "info" | "muted" => {
   if (status === "Close") return "success";
   if (status.startsWith("Pending")) return "warning";
-  if (status === "Progress" || status === "Open") return "info";
+  if ((OPEN_STATUSES as readonly string[]).includes(status)) return "info";
   return "muted";
 };
 
@@ -115,7 +140,7 @@ export const formatDateTime = (value: string | null) => {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return value;
   const pad = (n: number) => String(n).padStart(2, "0");
-  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  return `${pad(date.getDate())}/${pad(date.getMonth() + 1)}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
 export const toInputDateTime = (value: string | null) => {
@@ -134,5 +159,7 @@ export const computeDurasi = (open: string | null, close: string | null) => {
   const totalMinutes = Math.floor((end - start) / 60000);
   const days = Math.floor(totalMinutes / 1440);
   const hours = Math.floor((totalMinutes % 1440) / 60);
-  return days > 0 ? `${days}d ${hours}h` : `${hours}h`;
+  const minutes = totalMinutes % 60;
+  const base = `${days} Hari ${hours} Jam ${minutes} Menit`;
+  return close ? base : `${base} (berjalan)`;
 };

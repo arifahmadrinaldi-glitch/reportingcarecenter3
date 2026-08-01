@@ -223,7 +223,12 @@ function Index() {
 
   const stats = [
     { label: "Total Ticket", value: filtered.length, icon: TicketIcon, tone: "primary" },
-    { label: "Total Open", value: count((t) => t.status === "Open"), icon: Activity, tone: "primary" },
+    {
+      label: "Total Open",
+      value: count((t) => (OPEN_STATUSES as readonly string[]).includes(t.status)),
+      icon: Activity,
+      tone: "primary",
+    },
     {
       label: "Total Pending",
       value: count((t) => t.status.startsWith("Pending")),
