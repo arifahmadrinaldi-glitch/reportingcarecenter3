@@ -139,7 +139,7 @@ export const emptyTicket = (): TicketFormValues => ({
 });
 
 export const statusTone = (status: string): "success" | "warning" | "info" | "muted" => {
-  if (status === "Close") return "success";
+  if (status === "Close" || status === "Technical Close") return "success";
   if (status.startsWith("Pending")) return "warning";
   if ((OPEN_STATUSES as readonly string[]).includes(status)) return "info";
   return "muted";
