@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutGrid, PanelLeftClose, PanelLeftOpen, Radio, Ticket } from "lucide-react";
+import { LayoutGrid, Radio, Ticket } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -20,9 +20,8 @@ export function AppShell({
   actions?: ReactNode;
   children: ReactNode;
 }) {
-  const [pinned, setPinned] = useState(true);
   const [hovered, setHovered] = useState(false);
-  const expanded = pinned || hovered;
+  const expanded = hovered;
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -65,23 +64,8 @@ export function AppShell({
           ))}
         </nav>
         <div className={`mt-auto py-4 ${expanded ? "px-4" : "px-2"}`}>
-          <button
-            type="button"
-            onClick={() => setPinned((value) => !value)}
-            title={pinned ? "Auto hide sidebar" : "Sematkan sidebar"}
-            className={`flex w-full items-center gap-2 rounded-lg py-2 text-[11px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-              expanded ? "px-3" : "justify-center px-0"
-            }`}
-          >
-            {pinned ? (
-              <PanelLeftClose className="size-4 shrink-0" />
-            ) : (
-              <PanelLeftOpen className="size-4 shrink-0" />
-            )}
-            {expanded ? <span className="truncate">{pinned ? "Auto hide" : "Sematkan"}</span> : null}
-          </button>
           {expanded ? (
-            <p className="mt-2 px-3 text-[11px] leading-snug text-sidebar-foreground/50">
+            <p className="px-3 text-[11px] leading-snug text-sidebar-foreground/50">
               Realtime aktif · data tersinkron otomatis
             </p>
           ) : null}
