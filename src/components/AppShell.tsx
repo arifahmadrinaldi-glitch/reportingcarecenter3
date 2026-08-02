@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutGrid, Radio, Ticket } from "lucide-react";
-import type { ReactNode } from "react";
+import { LayoutGrid, PanelLeftClose, PanelLeftOpen, Radio, Ticket } from "lucide-react";
+import { useState, type ReactNode } from "react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
 
@@ -20,37 +20,71 @@ export function AppShell({
   actions?: ReactNode;
   children: ReactNode;
 }) {
+  const [pinned, setPinned] = useState(true);
+  const [hovered, setHovered] = useState(false);
+  const expanded = pinned || hovered;
+
   return (
     <div className="flex min-h-screen bg-background">
-      <aside className="hidden w-56 shrink-0 flex-col bg-sidebar text-sidebar-foreground lg:flex">
-        <div className="flex items-center gap-3 px-4 py-5">
-          <span className="flex size-9 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
+      <aside
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        className={`hidden shrink-0 flex-col bg-sidebar text-sidebar-foreground transition-[width] duration-300 ease-out lg:flex ${
+          expanded ? "w-56" : "w-16"
+        }`}
+      >
+        <div className={`flex items-center gap-3 py-5 ${expanded ? "px-4" : "justify-center px-2"}`}>
+          <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
             <Radio className="size-5" />
           </span>
-          <span className="leading-tight">
-            <span className="block text-sm font-bold text-sidebar-accent-foreground">
-              Ticket Care Center 3
+          {expanded ? (
+            <span className="min-w-0 leading-tight">
+              <span className="block truncate text-sm font-bold text-sidebar-accent-foreground">
+                Ticket Care Center 3
+              </span>
+              <span className="block truncate text-[11px] text-sidebar-foreground/70">
+                Operations Dashboard
+              </span>
             </span>
-            <span className="block text-[11px] text-sidebar-foreground/70">
-              Operations Dashboard
-            </span>
-          </span>
+          ) : null}
         </div>
-        <nav className="flex flex-col gap-1 px-3 py-2">
+        <nav className={`flex flex-col gap-1 py-2 ${expanded ? "px-3" : "px-2"}`}>
           {navItems.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
               activeOptions={{ exact: to === "/" }}
-              className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:bg-sidebar-primary data-[status=active]:text-sidebar-primary-foreground"
+              title={label}
+              className={`flex items-center gap-3 rounded-lg py-2.5 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground data-[status=active]:bg-sidebar-primary data-[status=active]:text-sidebar-primary-foreground ${
+                expanded ? "px-3" : "justify-center px-0"
+              }`}
             >
-              <Icon className="size-4" />
-              {label}
+              <Icon className="size-4 shrink-0" />
+              {expanded ? <span className="truncate">{label}</span> : null}
             </Link>
           ))}
         </nav>
-        <div className="mt-auto px-4 py-4 text-[11px] leading-snug text-sidebar-foreground/50">
-          Realtime aktif · data tersinkron otomatis
+        <div className={`mt-auto py-4 ${expanded ? "px-4" : "px-2"}`}>
+          <button
+            type="button"
+            onClick={() => setPinned((value) => !value)}
+            title={pinned ? "Auto hide sidebar" : "Sematkan sidebar"}
+            className={`flex w-full items-center gap-2 rounded-lg py-2 text-[11px] font-medium text-sidebar-foreground/70 transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+              expanded ? "px-3" : "justify-center px-0"
+            }`}
+          >
+            {pinned ? (
+              <PanelLeftClose className="size-4 shrink-0" />
+            ) : (
+              <PanelLeftOpen className="size-4 shrink-0" />
+            )}
+            {expanded ? <span className="truncate">{pinned ? "Auto hide" : "Sematkan"}</span> : null}
+          </button>
+          {expanded ? (
+            <p className="mt-2 px-3 text-[11px] leading-snug text-sidebar-foreground/50">
+              Realtime aktif · data tersinkron otomatis
+            </p>
+          ) : null}
         </div>
       </aside>
 
