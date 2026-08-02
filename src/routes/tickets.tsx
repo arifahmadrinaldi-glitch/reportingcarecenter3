@@ -123,6 +123,52 @@ function TicketsPage() {
   const [editing, setEditing] = useState<TicketRow | null>(null);
   const [detail, setDetail] = useState<TicketRow | null>(null);
   const [rollbackOpen, setRollbackOpen] = useState(false);
+  const [filtersReady, setFiltersReady] = useState(false);
+
+  // Restore filter state from localStorage on mount so selections survive
+  // refresh, delete, or rollback operations.
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("tickets-filters");
+      if (raw) {
+        const saved = JSON.parse(raw);
+        const valid = (arr: unknown, options: readonly string[]) =>
+          Array.isArray(arr) ? arr.filter((v) => options.includes(String(v))) : [];
+
+        setSearch(String(saved.search ?? ""));
+        setBulan(valid(saved.bulan, BULAN_OPTIONS));
+        setTahun(Array.isArray(saved.tahun) ? saved.tahun.map(String) : []);
+        setStatus(valid(saved.status, STATUS_OPTIONS));
+        setRegional(valid(saved.regional, REGIONAL_OPTIONS));
+        setCustomer(Array.isArray(saved.customer) ? saved.customer.map(String) : []);
+        setJenis(valid(saved.jenis, JENIS_OPTIONS));
+        setLayanan(valid(saved.layanan, LAYANAN_OPTIONS));
+        setPerPage(Number(saved.perPage) || 10);
+      }
+    } catch {
+      // ignore corrupted storage
+    }
+    setFiltersReady(true);
+  }, []);
+
+  // Persist filter state whenever it changes.
+  useEffect(() => {
+    if (!filtersReady) return;
+    localStorage.setItem(
+      "tickets-filters",
+      JSON.stringify({
+        search,
+        bulan,
+        tahun,
+        status,
+        regional,
+        customer,
+        jenis,
+        layanan,
+        perPage,
+      }),
+    );
+  }, [search, bulan, tahun, status, regional, customer, jenis, layanan, perPage, filtersReady]);
 
   const activeQuery = useQuery({
     queryKey: ["tickets", "active"],
