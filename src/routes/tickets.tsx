@@ -177,7 +177,7 @@ function TicketsPage() {
         .from("tickets")
         .select("*")
         .is("deleted_at", null)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as TicketRow[];
     },
@@ -284,8 +284,8 @@ function TicketsPage() {
         toast.error("Gagal menambah ticket", { description: error.message });
         return;
       }
-      toast.success("Ticket baru ditambahkan di posisi nomor 1");
-      setPage(1);
+      toast.success("Ticket baru ditambahkan di posisi paling bawah");
+      setPage(Math.max(1, Math.ceil((tickets.length + 1) / perPage)));
       try {
         const result = await notifyNewTicket({
           data: {
