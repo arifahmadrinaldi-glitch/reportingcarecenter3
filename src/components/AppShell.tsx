@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { LayoutGrid, Radio, Ticket } from "lucide-react";
+import { ClipboardList, LayoutGrid, Radio, Ticket } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { ThemeToggle } from "@/components/ThemeToggle";
@@ -7,6 +7,7 @@ import { ThemeToggle } from "@/components/ThemeToggle";
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutGrid },
   { to: "/tickets", label: "Daftar Ticket", icon: Ticket },
+  { to: "/daily-activity", label: "Daily Activity", icon: ClipboardList },
 ] as const;
 
 export function AppShell({
