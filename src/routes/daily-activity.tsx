@@ -128,9 +128,10 @@ function DailyActivityPage() {
   };
 
   const updateField = async (id: string, key: Field, value: string) => {
+    const patch = { [key]: value === "" ? null : value } as Partial<DailyActivityRow>;
     const { error } = await supabase
       .from("daily_activities")
-      .update({ [key]: value === "" ? null : value })
+      .update(patch)
       .eq("id", id);
     if (error) {
       toast.error("Gagal menyimpan perubahan", { description: error.message });
