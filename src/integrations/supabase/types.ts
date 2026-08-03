@@ -14,6 +14,69 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_activities: {
+        Row: {
+          action: string | null
+          category: string | null
+          created_at: string
+          customer: string | null
+          id: string
+          kontak_pic: string | null
+          nama_lokasi: string | null
+          on_duty: string | null
+          problem: string | null
+          product: string | null
+          rfo_general: string | null
+          shift: string | null
+          source_information: string | null
+          status: string
+          tanggal: string | null
+          to_do: string | null
+          type_modem_sn: string | null
+          updated_at: string
+        }
+        Insert: {
+          action?: string | null
+          category?: string | null
+          created_at?: string
+          customer?: string | null
+          id?: string
+          kontak_pic?: string | null
+          nama_lokasi?: string | null
+          on_duty?: string | null
+          problem?: string | null
+          product?: string | null
+          rfo_general?: string | null
+          shift?: string | null
+          source_information?: string | null
+          status?: string
+          tanggal?: string | null
+          to_do?: string | null
+          type_modem_sn?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action?: string | null
+          category?: string | null
+          created_at?: string
+          customer?: string | null
+          id?: string
+          kontak_pic?: string | null
+          nama_lokasi?: string | null
+          on_duty?: string | null
+          problem?: string | null
+          product?: string | null
+          rfo_general?: string | null
+          shift?: string | null
+          source_information?: string | null
+          status?: string
+          tanggal?: string | null
+          to_do?: string | null
+          type_modem_sn?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tickets: {
         Row: {
           asal_gangguan: string | null
