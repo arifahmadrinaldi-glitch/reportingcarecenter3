@@ -312,7 +312,7 @@ function DailyActivityPage() {
                     Memuat data…
                   </td>
                 </tr>
-              ) : rows.length === 0 ? (
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td
                     colSpan={headers.length + 2}
@@ -322,7 +322,7 @@ function DailyActivityPage() {
                   </td>
                 </tr>
               ) : (
-                rows.map((row, index) => (
+                filtered.map((row, index) => (
                   <tr key={row.id} className="border-b border-border last:border-0 align-top">
                     <td className="cell-center px-2 py-2">
                       <Checkbox
@@ -385,14 +385,13 @@ function DailyActivityPage() {
         </div>
       </div>
 
-      <DailyActivityCharts rows={charts} />
-
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus {selected.length} activity?</AlertDialogTitle>
             <AlertDialogDescription>
-              Data activity yang dipilih akan dihapus permanen dari daftar Daily Activity.
+              Data activity yang dipilih akan dipindahkan ke Rollback dan bisa dikembalikan
+              kapan saja.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -401,6 +400,56 @@ function DailyActivityPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={rollbackOpen} onOpenChange={setRollbackOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Rollback Daily Activity Terhapus</DialogTitle>
+            <DialogDescription>
+              Activity yang dihapus tersimpan di sini dan bisa dikembalikan kapan saja.
+            </DialogDescription>
+          </DialogHeader>
+          {deletedPending ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Memuat data…</p>
+          ) : deleted.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Belum ada activity yang dihapus.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => restore(deleted.map((row) => row.id))}
+                >
+                  <RotateCcw className="size-4" /> Kembalikan semua
+                </Button>
+              </div>
+              {deleted.map((row) => (
+                <div
+                  key={row.id}
+                  className="flex items-start justify-between gap-3 rounded-lg border border-border p-3"
+                >
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                      <span>{formatTanggal(row.tanggal) || "-"}</span>
+                      <span>{row.on_duty ?? "-"}</span>
+                      <span className="text-muted-foreground">{row.product ?? "-"}</span>
+                    </div>
+                    <p className="text-xs break-words text-muted-foreground">
+                      {row.customer ?? "-"} · {row.nama_lokasi ?? "-"}
+                    </p>
+                  </div>
+                  <Button size="sm" onClick={() => restore([row.id])}>
+                    <RotateCcw className="size-4" /> Kembalikan
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }
