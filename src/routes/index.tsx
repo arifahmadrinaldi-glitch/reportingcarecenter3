@@ -27,6 +27,7 @@ import {
 } from "recharts";
 
 import { AppShell } from "@/components/AppShell";
+import { DailyActivityDashboard } from "@/components/daily/DailyActivityDashboard";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -448,6 +449,8 @@ function Index() {
           </div>
         </Panel>
       </div>
+
+      <DailyActivityDashboard />
     </AppShell>
   );
 }

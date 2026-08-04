@@ -1,11 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, RefreshCw, Trash2 } from "lucide-react";
+import { FileSpreadsheet, History, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
-import { DailyActivityCharts } from "@/components/daily/DailyActivityCharts";
+import { DailyActivityFilters } from "@/components/daily/DailyActivityFilters";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +18,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -37,6 +44,10 @@ import {
   SHIFT_OPTIONS,
   SOURCE_OPTIONS,
   TO_DO_OPTIONS,
+  emptyDailyFilters,
+  filterDailyRows,
+  formatTanggal,
+  tahunOptionsFrom,
   type DailyActivityRow,
 } from "@/lib/daily-activity-constants";
 
@@ -97,14 +108,30 @@ function DailyActivityPage() {
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [rollbackOpen, setRollbackOpen] = useState(false);
+  const [filters, setFilters] = useState(emptyDailyFilters);
 
   const { data: rows = [], isPending } = useQuery({
-    queryKey: ["daily-activities"],
+    queryKey: ["daily-activities", "active"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("daily_activities")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as DailyActivityRow[];
+    },
+  });
+
+  const { data: deleted = [], isPending: deletedPending } = useQuery({
+    queryKey: ["daily-activities", "deleted"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_activities")
+        .select("*")
+        .not("deleted_at", "is", null)
+        .order("deleted_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as DailyActivityRow[];
     },
@@ -141,20 +168,66 @@ function DailyActivityPage() {
   };
 
   const deleteSelected = async () => {
-    const { error } = await supabase.from("daily_activities").delete().in("id", selected);
+    const { error } = await supabase
+      .from("daily_activities")
+      .update({ deleted_at: new Date().toISOString() })
+      .in("id", selected);
     if (error) {
       toast.error("Gagal menghapus activity", { description: error.message });
       return;
     }
-    toast.success(`${selected.length} activity dihapus`);
+    toast.success(`${selected.length} activity dihapus`, {
+      description: "Bisa dikembalikan lewat menu Rollback.",
+    });
     setSelected([]);
     setConfirmDelete(false);
     refresh();
   };
 
-  const allSelected = rows.length > 0 && rows.every((r) => selected.includes(r.id));
+  const restore = async (ids: string[]) => {
+    const { error } = await supabase
+      .from("daily_activities")
+      .update({ deleted_at: null })
+      .in("id", ids);
+    if (error) {
+      toast.error("Gagal mengembalikan activity", { description: error.message });
+      return;
+    }
+    toast.success(`${ids.length} activity dikembalikan`);
+    refresh();
+  };
 
-  const charts = useMemo(() => rows, [rows]);
+  const tahunOptions = useMemo(() => tahunOptionsFrom(rows), [rows]);
+  const filtered = useMemo(() => filterDailyRows(rows, filters), [rows, filters]);
+
+  const allSelected = filtered.length > 0 && filtered.every((r) => selected.includes(r.id));
+
+  const exportExcel = () => {
+    const head = ["No", ...headers.map((h) => h.label)];
+    const body = filtered.map((row, index) => [
+      String(index + 1),
+      ...headers.map((h) =>
+        h.key === "tanggal"
+          ? formatTanggal(row.tanggal)
+          : ((row[h.key] as string | null) ?? "-"),
+      ),
+    ]);
+    const escape = (value: string) =>
+      value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = `<html><head><meta charset="utf-8" /></head><body><table border="1"><thead><tr>${head
+      .map((h) => `<th>${escape(h)}</th>`)
+      .join("")}</tr></thead><tbody>${body
+      .map((row) => `<tr>${row.map((cell) => `<td>${escape(cell)}</td>`).join("")}</tr>`)
+      .join("")}</tbody></table></body></html>`;
+    const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `daily-activity-${new Date().toISOString().slice(0, 10)}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Export Excel dimulai");
+  };
 
   return (
     <AppShell
@@ -174,7 +247,20 @@ function DailyActivityPage() {
           <Button variant="outline" size="sm" onClick={refresh}>
             <RefreshCw className="size-4" /> Refresh
           </Button>
-          <span className="text-xs text-muted-foreground">{rows.length} activity tercatat</span>
+          <Button variant="outline" size="sm" onClick={exportExcel}>
+            <FileSpreadsheet className="size-4" /> Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setRollbackOpen(true)}>
+            <History className="size-4" /> Rollback
+            {deleted.length > 0 ? (
+              <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                {deleted.length}
+              </span>
+            ) : null}
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            Menampilkan {filtered.length} dari {rows.length} activity
+          </span>
           {selected.length > 0 ? (
             <Button
               variant="destructive"
@@ -187,6 +273,14 @@ function DailyActivityPage() {
           ) : null}
         </div>
 
+        <div className="mt-4">
+          <DailyActivityFilters
+            filters={filters}
+            onChange={setFilters}
+            tahunOptions={tahunOptions}
+          />
+        </div>
+
         <div className="mt-4 overflow-x-auto rounded-lg border border-border">
           <table className="w-full min-w-[2400px] border-collapse text-xs">
             <thead>
@@ -195,7 +289,7 @@ function DailyActivityPage() {
                   <Checkbox
                     checked={allSelected}
                     onCheckedChange={(checked) =>
-                      setSelected(checked ? rows.map((r) => r.id) : [])
+                      setSelected(checked ? filtered.map((r) => r.id) : [])
                     }
                     aria-label="Pilih semua activity"
                   />
@@ -218,7 +312,7 @@ function DailyActivityPage() {
                     Memuat data…
                   </td>
                 </tr>
-              ) : rows.length === 0 ? (
+              ) : filtered.length === 0 ? (
                 <tr>
                   <td
                     colSpan={headers.length + 2}
@@ -228,7 +322,7 @@ function DailyActivityPage() {
                   </td>
                 </tr>
               ) : (
-                rows.map((row, index) => (
+                filtered.map((row, index) => (
                   <tr key={row.id} className="border-b border-border last:border-0 align-top">
                     <td className="cell-center px-2 py-2">
                       <Checkbox
@@ -291,14 +385,13 @@ function DailyActivityPage() {
         </div>
       </div>
 
-      <DailyActivityCharts rows={charts} />
-
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus {selected.length} activity?</AlertDialogTitle>
             <AlertDialogDescription>
-              Data activity yang dipilih akan dihapus permanen dari daftar Daily Activity.
+              Data activity yang dipilih akan dipindahkan ke Rollback dan bisa dikembalikan
+              kapan saja.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -307,6 +400,56 @@ function DailyActivityPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <Dialog open={rollbackOpen} onOpenChange={setRollbackOpen}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Rollback Daily Activity Terhapus</DialogTitle>
+            <DialogDescription>
+              Activity yang dihapus tersimpan di sini dan bisa dikembalikan kapan saja.
+            </DialogDescription>
+          </DialogHeader>
+          {deletedPending ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">Memuat data…</p>
+          ) : deleted.length === 0 ? (
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              Belum ada activity yang dihapus.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              <div className="flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => restore(deleted.map((row) => row.id))}
+                >
+                  <RotateCcw className="size-4" /> Kembalikan semua
+                </Button>
+              </div>
+              {deleted.map((row) => (
+                <div
+                  key={row.id}
+                  className="flex items-start justify-between gap-3 rounded-lg border border-border p-3"
+                >
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
+                      <span>{formatTanggal(row.tanggal) || "-"}</span>
+                      <span>{row.on_duty ?? "-"}</span>
+                      <span className="text-muted-foreground">{row.product ?? "-"}</span>
+                    </div>
+                    <p className="text-xs break-words text-muted-foreground">
+                      {row.customer ?? "-"} · {row.nama_lokasi ?? "-"}
+                    </p>
+                  </div>
+                  <Button size="sm" onClick={() => restore([row.id])}>
+                    <RotateCcw className="size-4" /> Kembalikan
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </AppShell>
   );
 }

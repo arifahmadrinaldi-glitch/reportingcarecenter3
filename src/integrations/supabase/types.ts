@@ -20,6 +20,7 @@ export type Database = {
           category: string | null
           created_at: string
           customer: string | null
+          deleted_at: string | null
           id: string
           kontak_pic: string | null
           nama_lokasi: string | null
@@ -40,6 +41,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           customer?: string | null
+          deleted_at?: string | null
           id?: string
           kontak_pic?: string | null
           nama_lokasi?: string | null
@@ -60,6 +62,7 @@ export type Database = {
           category?: string | null
           created_at?: string
           customer?: string | null
+          deleted_at?: string | null
           id?: string
           kontak_pic?: string | null
           nama_lokasi?: string | null
