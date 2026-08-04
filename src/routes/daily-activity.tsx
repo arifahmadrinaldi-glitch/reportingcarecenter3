@@ -108,14 +108,30 @@ function DailyActivityPage() {
   const queryClient = useQueryClient();
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [rollbackOpen, setRollbackOpen] = useState(false);
+  const [filters, setFilters] = useState(emptyDailyFilters);
 
   const { data: rows = [], isPending } = useQuery({
-    queryKey: ["daily-activities"],
+    queryKey: ["daily-activities", "active"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("daily_activities")
         .select("*")
+        .is("deleted_at", null)
         .order("created_at", { ascending: true });
+      if (error) throw error;
+      return (data ?? []) as DailyActivityRow[];
+    },
+  });
+
+  const { data: deleted = [], isPending: deletedPending } = useQuery({
+    queryKey: ["daily-activities", "deleted"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("daily_activities")
+        .select("*")
+        .not("deleted_at", "is", null)
+        .order("deleted_at", { ascending: false });
       if (error) throw error;
       return (data ?? []) as DailyActivityRow[];
     },
@@ -152,20 +168,66 @@ function DailyActivityPage() {
   };
 
   const deleteSelected = async () => {
-    const { error } = await supabase.from("daily_activities").delete().in("id", selected);
+    const { error } = await supabase
+      .from("daily_activities")
+      .update({ deleted_at: new Date().toISOString() })
+      .in("id", selected);
     if (error) {
       toast.error("Gagal menghapus activity", { description: error.message });
       return;
     }
-    toast.success(`${selected.length} activity dihapus`);
+    toast.success(`${selected.length} activity dihapus`, {
+      description: "Bisa dikembalikan lewat menu Rollback.",
+    });
     setSelected([]);
     setConfirmDelete(false);
     refresh();
   };
 
-  const allSelected = rows.length > 0 && rows.every((r) => selected.includes(r.id));
+  const restore = async (ids: string[]) => {
+    const { error } = await supabase
+      .from("daily_activities")
+      .update({ deleted_at: null })
+      .in("id", ids);
+    if (error) {
+      toast.error("Gagal mengembalikan activity", { description: error.message });
+      return;
+    }
+    toast.success(`${ids.length} activity dikembalikan`);
+    refresh();
+  };
 
-  const charts = useMemo(() => rows, [rows]);
+  const tahunOptions = useMemo(() => tahunOptionsFrom(rows), [rows]);
+  const filtered = useMemo(() => filterDailyRows(rows, filters), [rows, filters]);
+
+  const allSelected = filtered.length > 0 && filtered.every((r) => selected.includes(r.id));
+
+  const exportExcel = () => {
+    const head = ["No", ...headers.map((h) => h.label)];
+    const body = filtered.map((row, index) => [
+      String(index + 1),
+      ...headers.map((h) =>
+        h.key === "tanggal"
+          ? formatTanggal(row.tanggal)
+          : ((row[h.key] as string | null) ?? "-"),
+      ),
+    ]);
+    const escape = (value: string) =>
+      value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const html = `<html><head><meta charset="utf-8" /></head><body><table border="1"><thead><tr>${head
+      .map((h) => `<th>${escape(h)}</th>`)
+      .join("")}</tr></thead><tbody>${body
+      .map((row) => `<tr>${row.map((cell) => `<td>${escape(cell)}</td>`).join("")}</tr>`)
+      .join("")}</tbody></table></body></html>`;
+    const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `daily-activity-${new Date().toISOString().slice(0, 10)}.xls`;
+    link.click();
+    URL.revokeObjectURL(url);
+    toast.success("Export Excel dimulai");
+  };
 
   return (
     <AppShell
