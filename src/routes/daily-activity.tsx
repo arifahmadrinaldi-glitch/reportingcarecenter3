@@ -247,7 +247,20 @@ function DailyActivityPage() {
           <Button variant="outline" size="sm" onClick={refresh}>
             <RefreshCw className="size-4" /> Refresh
           </Button>
-          <span className="text-xs text-muted-foreground">{rows.length} activity tercatat</span>
+          <Button variant="outline" size="sm" onClick={exportExcel}>
+            <FileSpreadsheet className="size-4" /> Excel
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => setRollbackOpen(true)}>
+            <History className="size-4" /> Rollback
+            {deleted.length > 0 ? (
+              <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                {deleted.length}
+              </span>
+            ) : null}
+          </Button>
+          <span className="text-xs text-muted-foreground">
+            Menampilkan {filtered.length} dari {rows.length} activity
+          </span>
           {selected.length > 0 ? (
             <Button
               variant="destructive"
@@ -260,6 +273,14 @@ function DailyActivityPage() {
           ) : null}
         </div>
 
+        <div className="mt-4">
+          <DailyActivityFilters
+            filters={filters}
+            onChange={setFilters}
+            tahunOptions={tahunOptions}
+          />
+        </div>
+
         <div className="mt-4 overflow-x-auto rounded-lg border border-border">
           <table className="w-full min-w-[2400px] border-collapse text-xs">
             <thead>
@@ -268,7 +289,7 @@ function DailyActivityPage() {
                   <Checkbox
                     checked={allSelected}
                     onCheckedChange={(checked) =>
-                      setSelected(checked ? rows.map((r) => r.id) : [])
+                      setSelected(checked ? filtered.map((r) => r.id) : [])
                     }
                     aria-label="Pilih semua activity"
                   />
