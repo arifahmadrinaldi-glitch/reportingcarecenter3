@@ -272,6 +272,7 @@ function Index() {
 
   const perCustomer = groupBy("customer");
   const perRegional = groupBy("regional").sort((a, b) => a.name.localeCompare(b.name));
+  const totalRegional = perRegional.reduce((sum, item) => sum + item.value, 0);
   const perOpenBy = groupBy("open_by").sort((a, b) => a.name.localeCompare(b.name));
   const jenisData = [
     {
@@ -442,10 +443,10 @@ function Index() {
           <div className="grid gap-4 md:grid-cols-2 md:items-center">
             <Donut
               data={perRegional}
-              centerValue={perRegional.length}
+              centerValue={totalRegional}
               centerLabel="Regional"
             />
-            <DonutLegend data={perRegional} total={filtered.length} />
+            <DonutLegend data={perRegional} total={totalRegional} />
           </div>
         </Panel>
       </div>
