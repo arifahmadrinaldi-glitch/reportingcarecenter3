@@ -1,11 +1,11 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, RefreshCw, Trash2 } from "lucide-react";
+import { FileSpreadsheet, History, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
-import { DailyActivityCharts } from "@/components/daily/DailyActivityCharts";
+import { DailyActivityFilters } from "@/components/daily/DailyActivityFilters";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -18,6 +18,13 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -37,6 +44,10 @@ import {
   SHIFT_OPTIONS,
   SOURCE_OPTIONS,
   TO_DO_OPTIONS,
+  emptyDailyFilters,
+  filterDailyRows,
+  formatTanggal,
+  tahunOptionsFrom,
   type DailyActivityRow,
 } from "@/lib/daily-activity-constants";
 
