@@ -78,13 +78,13 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Ticket Care Center 3" },
+      { title: "Reporting Care Center 3" },
       {
         name: "description",
         content: "Aplikasi manajemen ticket gangguan layanan satelit dan data.",
       },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Ticket Care Center 3" },
+      { property: "og:title", content: "Reporting Care Center 3" },
       {
         property: "og:description",
         content: "Aplikasi manajemen ticket gangguan layanan satelit dan data.",
