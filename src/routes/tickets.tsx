@@ -55,13 +55,13 @@ import {
 export const Route = createFileRoute("/tickets")({
   head: () => ({
     meta: [
-      { title: "Daftar Ticket — Reporting Care Center 3" },
+      { title: "Daftar Ticket — Reporting CC 3" },
       {
         name: "description",
         content:
           "Kelola data ticket gangguan: tambah, edit, hapus dengan konfirmasi, rollback data terhapus, filter multi pilihan dan export Excel.",
       },
-      { property: "og:title", content: "Daftar Ticket — Reporting Care Center 3" },
+      { property: "og:title", content: "Daftar Ticket — Reporting CC 3" },
       {
         property: "og:description",
         content:
