@@ -15,6 +15,9 @@
   --color-warning-foreground: var(--warning-foreground);
   --color-info: var(--info);
   --color-info-foreground: var(--info-foreground);
+  --color-status-red: var(--status-red);
+  --color-status-orange: var(--status-orange);
+  --color-status-brown: var(--status-brown);
   --shadow-panel: var(--shadow-panel-value);
 }
 
@@ -101,6 +104,9 @@
   --warning-foreground: oklch(0.3 0.09 60);
   --info: oklch(0.62 0.15 250);
   --info-foreground: oklch(0.99 0.005 250);
+  --status-red: oklch(0.62 0.16 22);
+  --status-orange: oklch(0.7 0.14 55);
+  --status-brown: oklch(0.55 0.09 55);
   --border: oklch(0.918 0.014 255);
   --input: oklch(0.918 0.014 255);
   --ring: oklch(0.55 0.196 261.5);
@@ -145,6 +151,9 @@
   --warning-foreground: oklch(0.24 0.07 60);
   --info: oklch(0.66 0.14 250);
   --info-foreground: oklch(0.99 0.005 250);
+  --status-red: oklch(0.7 0.15 22);
+  --status-orange: oklch(0.77 0.13 58);
+  --status-brown: oklch(0.68 0.08 58);
   --shadow-panel-value: 0 1px 2px 0 oklch(0 0 0 / 0.4), 0 8px 24px -12px oklch(0 0 0 / 0.6);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
@@ -174,6 +183,38 @@
     color: var(--color-foreground);
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Lighter, snappier interactions across the app */
+  button,
+  a,
+  [role="button"] {
+    transition-duration: 140ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  table {
+    contain: layout style;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 
