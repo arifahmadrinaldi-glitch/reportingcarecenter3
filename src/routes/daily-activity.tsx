@@ -54,13 +54,13 @@ import {
 export const Route = createFileRoute("/daily-activity")({
   head: () => ({
     meta: [
-      { title: "Daily Activity — Ticket Care Center 3" },
+      { title: "Daily Activity — Reporting Care Center 3" },
       {
         name: "description",
         content:
           "Catat aktivitas harian tim: on duty, shift, kategori, sumber informasi, produk, RFO general hingga status penyelesaian.",
       },
-      { property: "og:title", content: "Daily Activity — Ticket Care Center 3" },
+      { property: "og:title", content: "Daily Activity — Reporting Care Center 3" },
       {
         property: "og:description",
         content:
