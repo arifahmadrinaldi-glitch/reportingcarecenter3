@@ -54,13 +54,13 @@ import {
 export const Route = createFileRoute("/daily-activity")({
   head: () => ({
     meta: [
-      { title: "Daily Activity — Reporting Care Center 3" },
+      { title: "Daily Activity — Reporting CC 3" },
       {
         name: "description",
         content:
           "Catat aktivitas harian tim: on duty, shift, kategori, sumber informasi, produk, RFO general hingga status penyelesaian.",
       },
-      { property: "og:title", content: "Daily Activity — Reporting Care Center 3" },
+      { property: "og:title", content: "Daily Activity — Reporting CC 3" },
       {
         property: "og:description",
         content:
@@ -232,7 +232,7 @@ function DailyActivityPage() {
   return (
     <AppShell
       title="Daily Activity"
-      subtitle="Pencatatan aktivitas harian tim Care Center 3"
+      subtitle="Pencatatan aktivitas harian tim Reporting CC 3"
       actions={
         <Button size="sm" onClick={addRow}>
           <Plus className="size-4" /> Tambah Activity
