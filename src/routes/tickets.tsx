@@ -461,10 +461,10 @@ function TicketsPage() {
         </div>
 
         <div className="mt-4 overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-[1900px] border-collapse text-xs">
+          <table className="w-full min-w-[1500px] border-collapse text-[11px] leading-tight">
             <thead>
               <tr className="border-b border-border bg-muted/60">
-                <th className="cell-center w-10 px-2 py-3">
+                <th className="cell-center w-8 px-1.5 py-2">
                   <Checkbox
                     checked={allPageSelected}
                     onCheckedChange={(checked) =>
@@ -477,16 +477,16 @@ function TicketsPage() {
                     aria-label="Pilih semua baris"
                   />
                 </th>
-                <th className="cell-center w-14 px-2 py-3 text-[11px] font-bold tracking-wide uppercase">
+                <th className="cell-center w-10 px-1.5 py-2 text-[10px] font-bold tracking-wide uppercase">
                   Nomor
                 </th>
-                <th className="cell-center w-20 px-2 py-3 text-[11px] font-bold tracking-wide uppercase">
+                <th className="cell-center w-16 px-1.5 py-2 text-[10px] font-bold tracking-wide uppercase">
                   Aksi
                 </th>
                 {columns.map((col) => (
                   <th
                     key={col.key}
-                    className={`px-3 py-3 text-[11px] font-bold tracking-wide whitespace-nowrap uppercase ${
+                    className={`px-2 py-2 text-[10px] font-bold tracking-wide whitespace-nowrap uppercase ${
                       col.align === "center" ? "cell-center" : "text-left"
                     }`}
                   >
@@ -517,7 +517,7 @@ function TicketsPage() {
                     key={ticket.id}
                     className="border-b border-border last:border-0 hover:bg-muted/40"
                   >
-                    <td className="cell-center px-2 py-3">
+                    <td className="cell-center px-1.5 py-1.5">
                       <Checkbox
                         checked={selected.includes(ticket.id)}
                         onCheckedChange={(checked) =>
@@ -530,41 +530,41 @@ function TicketsPage() {
                         aria-label={`Pilih ticket ${ticket.customer ?? ""}`}
                       />
                     </td>
-                    <td className="cell-center px-2 py-3 font-semibold">
+                    <td className="cell-center px-1.5 py-1.5 font-semibold">
                       {(currentPage - 1) * perPage + index + 1}
                     </td>
-                    <td className="cell-center px-2 py-3">
-                      <div className="flex items-center justify-center gap-1">
+                    <td className="cell-center px-1.5 py-1.5">
+                      <div className="flex items-center justify-center gap-0.5">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-7 text-primary"
+                          className="size-6 text-primary"
                           onClick={() => setDetail(ticket)}
                           aria-label="Lihat detail"
                         >
-                          <Eye className="size-4" />
+                          <Eye className="size-3.5" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="size-7 text-primary"
+                          className="size-6 text-primary"
                           onClick={() => {
                             setEditing(ticket);
                             setFormOpen(true);
                           }}
                           aria-label="Edit ticket"
                         >
-                          <Pencil className="size-4" />
+                          <Pencil className="size-3.5" />
                         </Button>
                       </div>
                     </td>
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-3 py-3 ${
+                        className={`px-2 py-1.5 ${
                           col.align === "center"
                             ? "cell-center whitespace-nowrap"
-                            : "cell-wrap max-w-[260px] min-w-[180px]"
+                            : "cell-wrap max-w-[200px] min-w-[130px]"
                         }`}
                       >
                         {col.key === "status" ? (

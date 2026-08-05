@@ -282,10 +282,10 @@ function DailyActivityPage() {
         </div>
 
         <div className="mt-4 overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-[2400px] border-collapse text-xs">
+          <table className="w-full min-w-[1900px] border-collapse text-[11px] leading-tight">
             <thead>
               <tr className="border-b border-border bg-muted/60">
-                <th className="cell-center w-10 px-2 py-3">
+                <th className="cell-center w-8 px-1.5 py-2">
                   <Checkbox
                     checked={allSelected}
                     onCheckedChange={(checked) =>
@@ -294,11 +294,11 @@ function DailyActivityPage() {
                     aria-label="Pilih semua activity"
                   />
                 </th>
-                <th className="cell-center w-12 px-2 py-3 text-[11px] font-bold uppercase">No</th>
+                <th className="cell-center w-9 px-1.5 py-2 text-[10px] font-bold uppercase">No</th>
                 {headers.map((h) => (
                   <th
                     key={h.key}
-                    className="cell-center px-3 py-3 text-[11px] font-bold tracking-wide whitespace-nowrap uppercase"
+                    className="cell-center px-2 py-2 text-[10px] font-bold tracking-wide whitespace-nowrap uppercase"
                   >
                     {h.label}
                   </th>
@@ -324,7 +324,7 @@ function DailyActivityPage() {
               ) : (
                 filtered.map((row, index) => (
                   <tr key={row.id} className="border-b border-border last:border-0 align-top">
-                    <td className="cell-center px-2 py-2">
+                    <td className="cell-center px-1.5 py-1.5">
                       <Checkbox
                         checked={selected.includes(row.id)}
                         onCheckedChange={(checked) =>
@@ -335,27 +335,27 @@ function DailyActivityPage() {
                         aria-label={`Pilih activity ${index + 1}`}
                       />
                     </td>
-                    <td className="cell-center px-2 py-2 font-semibold">{index + 1}</td>
+                    <td className="cell-center px-1.5 py-1.5 font-semibold">{index + 1}</td>
                     {headers.map((h) => (
-                      <td key={h.key} className="px-2 py-2 align-middle">
+                      <td key={h.key} className="px-1.5 py-1 align-middle">
                         {h.kind === "date" ? (
                           <Input
                             type="date"
                             value={(row.tanggal as string | null) ?? ""}
                             onChange={(e) => updateField(row.id, "tanggal", e.target.value)}
-                            className="h-8 w-[150px] text-center text-xs"
+                            className="h-7 w-[118px] px-1 text-center text-[11px]"
                           />
                         ) : h.kind === "select" ? (
                           <Select
                             value={(row[h.key] as string | null) ?? ""}
                             onValueChange={(v) => updateField(row.id, h.key, v)}
                           >
-                            <SelectTrigger className="h-8 w-[190px] justify-center text-xs">
+                            <SelectTrigger className="h-7 w-[140px] justify-center px-2 text-[11px]">
                               <SelectValue placeholder="Pilih" />
                             </SelectTrigger>
                             <SelectContent className="max-h-72">
                               {(dropdowns[h.key] ?? []).map((option) => (
-                                <SelectItem key={option} value={option} className="text-xs">
+                                <SelectItem key={option} value={option} className="text-[11px]">
                                   {option}
                                 </SelectItem>
                               ))}
@@ -372,7 +372,7 @@ function DailyActivityPage() {
                             }}
                             rows={2}
                             placeholder="Tulis di sini…"
-                            className="min-h-8 w-[220px] resize-y text-xs break-words whitespace-pre-wrap"
+                            className="min-h-7 w-[170px] resize-y px-1.5 py-1 text-[11px] leading-snug break-words whitespace-pre-wrap"
                           />
                         )}
                       </td>
