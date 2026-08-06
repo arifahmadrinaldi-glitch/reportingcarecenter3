@@ -5,6 +5,7 @@ const toneClass = {
   success: "border-success/30 bg-success/12 text-success",
   warning: "border-warning/40 bg-warning/15 text-warning",
   orange: "border-status-orange/35 bg-status-orange/15 text-status-orange",
+  purple: "border-status-purple/35 bg-status-purple/15 text-status-purple",
   brown: "border-status-brown/35 bg-status-brown/15 text-status-brown",
   danger: "border-status-red/35 bg-status-red/15 text-status-red",
   info: "border-info/30 bg-info/12 text-info",
