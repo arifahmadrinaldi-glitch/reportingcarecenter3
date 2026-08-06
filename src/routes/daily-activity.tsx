@@ -1,7 +1,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { FileSpreadsheet, History, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+  FileSpreadsheet,
+  History,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -35,6 +43,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { parseSheetFile, pick } from "@/lib/import-sheet";
 import {
   ACTIVITY_STATUS_OPTIONS,
   CATEGORY_OPTIONS,
@@ -54,13 +63,13 @@ import {
 export const Route = createFileRoute("/daily-activity")({
   head: () => ({
     meta: [
-      { title: "Daily Activity — Ticket Care Center 3" },
+      { title: "Daily Activity — Reporting CC 3" },
       {
         name: "description",
         content:
           "Catat aktivitas harian tim: on duty, shift, kategori, sumber informasi, produk, RFO general hingga status penyelesaian.",
       },
-      { property: "og:title", content: "Daily Activity — Ticket Care Center 3" },
+      { property: "og:title", content: "Daily Activity — Reporting CC 3" },
       {
         property: "og:description",
         content:
@@ -110,6 +119,7 @@ function DailyActivityPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [rollbackOpen, setRollbackOpen] = useState(false);
   const [filters, setFilters] = useState(emptyDailyFilters);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const { data: rows = [], isPending } = useQuery({
     queryKey: ["daily-activities", "active"],
@@ -232,7 +242,7 @@ function DailyActivityPage() {
   return (
     <AppShell
       title="Daily Activity"
-      subtitle="Pencatatan aktivitas harian tim Care Center 3"
+      subtitle="Pencatatan aktivitas harian tim Reporting CC 3"
       actions={
         <Button size="sm" onClick={addRow}>
           <Plus className="size-4" /> Tambah Activity
@@ -250,6 +260,20 @@ function DailyActivityPage() {
           <Button variant="outline" size="sm" onClick={exportExcel}>
             <FileSpreadsheet className="size-4" /> Excel
           </Button>
+          <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
+            <Upload className="size-4" /> Import
+          </Button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void importFile(file);
+            }}
+          />
           <Button variant="outline" size="sm" onClick={() => setRollbackOpen(true)}>
             <History className="size-4" /> Rollback
             {deleted.length > 0 ? (
