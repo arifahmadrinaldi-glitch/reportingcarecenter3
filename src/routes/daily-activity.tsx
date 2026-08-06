@@ -212,8 +212,57 @@ function DailyActivityPage() {
 
   const allSelected = filtered.length > 0 && filtered.every((r) => selected.includes(r.id));
 
+  const parseImportDate = (value: string) => {
+    if (!value) return null;
+    const dmy = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    const pad = (n: string) => n.padStart(2, "0");
+    if (dmy) return `${dmy[3]}-${pad(dmy[2]!)}-${pad(dmy[1]!)}`;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toISOString().slice(0, 10);
+  };
+
+  const importFile = async (file: File) => {
+    try {
+      const parsed = await parseSheetFile(file);
+      const payload = parsed
+        .map((row) => ({
+          tanggal: parseImportDate(pick(row, "Date", "Tanggal")),
+          on_duty: pick(row, "On Duty") || null,
+          shift: pick(row, "Shift") || null,
+          category: pick(row, "Category") || null,
+          source_information: pick(row, "Source Information") || null,
+          to_do: pick(row, "To Do") || null,
+          product: pick(row, "Product") || null,
+          customer: pick(row, "Customer") || null,
+          nama_lokasi: pick(row, "Nama Lokasi") || null,
+          kontak_pic: pick(row, "Kontak PIC") || null,
+          rfo_general: pick(row, "RFO General") || null,
+          type_modem_sn: pick(row, "Type Modem & SN KIT", "Type Modem") || null,
+          problem: pick(row, "Problem") || null,
+          action: pick(row, "Action") || null,
+          status: pick(row, "Status") || "Open",
+        }))
+        .filter((row) => Object.values(row).some((value) => value && value !== "Open"));
+      if (payload.length === 0) {
+        toast.error("Tidak ada data yang bisa diimport", {
+          description: "Pastikan judul kolom sama seperti hasil export Excel.",
+        });
+        return;
+      }
+      const { error } = await supabase.from("daily_activities").insert(payload);
+      if (error) {
+        toast.error("Gagal import activity", { description: error.message });
+        return;
+      }
+      toast.success(`${payload.length} activity berhasil diimport`);
+      refresh();
+    } catch {
+      toast.error("File tidak bisa dibaca", { description: "Gunakan file .xlsx, .xls atau .csv" });
+    }
+  };
+
   const exportExcel = () => {
-    const head = ["No", ...headers.map((h) => h.label)];
     const head = ["No", ...headers.map((h) => h.label)];
     const body = filtered.map((row, index) => [
       String(index + 1),
