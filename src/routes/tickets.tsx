@@ -340,16 +340,6 @@ function TicketsPage() {
     queryClient.invalidateQueries({ queryKey: ["tickets"] });
   };
 
-  const exportExcel = () => {
-    const head = ["Nomor", ...columns.map((c) => c.label)];
-    const rows = filtered.map((t, index) => [
-      String(index + 1),
-      ...columns.map((c) => cellValue(t, c.key)),
-    ]);
-    void head;
-    void rows;
-  };
-
   const importFile = async (file: File) => {
     try {
       const parsed = await parseSheetFile(file);
@@ -391,7 +381,7 @@ function TicketsPage() {
     }
   };
 
-  const exportExcelFile = () => {
+  const exportExcel = () => {
     const head = ["Nomor", ...columns.map((c) => c.label)];
     const rows = filtered.map((t, index) => [
       String(index + 1),
