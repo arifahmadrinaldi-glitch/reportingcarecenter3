@@ -214,6 +214,7 @@ function DailyActivityPage() {
 
   const exportExcel = () => {
     const head = ["No", ...headers.map((h) => h.label)];
+    const head = ["No", ...headers.map((h) => h.label)];
     const body = filtered.map((row, index) => [
       String(index + 1),
       ...headers.map((h) =>
