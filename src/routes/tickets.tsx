@@ -1,19 +1,20 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  Eye,
   FileSpreadsheet,
   History,
+  Upload,
   Pencil,
   Plus,
   RefreshCw,
   Search,
   Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
+import { JenisBadge } from "@/components/tickets/JenisBadge";
 import { RollbackDialog } from "@/components/tickets/RollbackDialog";
 import { StatusBadge } from "@/components/tickets/StatusBadge";
 import { TicketDetailDialog } from "@/components/tickets/TicketDetailDialog";
@@ -40,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { parseSheetFile, pick } from "@/lib/import-sheet";
 import { notifyNewTicket } from "@/lib/telegram.functions";
 import {
   BULAN_OPTIONS,
@@ -55,13 +57,13 @@ import {
 export const Route = createFileRoute("/tickets")({
   head: () => ({
     meta: [
-      { title: "Daftar Ticket — Ticket Care Center 3" },
+      { title: "Daftar Ticket — Reporting CC 3" },
       {
         name: "description",
         content:
           "Kelola data ticket gangguan: tambah, edit, hapus dengan konfirmasi, rollback data terhapus, filter multi pilihan dan export Excel.",
       },
-      { property: "og:title", content: "Daftar Ticket — Ticket Care Center 3" },
+      { property: "og:title", content: "Daftar Ticket — Reporting CC 3" },
       {
         property: "og:description",
         content:
