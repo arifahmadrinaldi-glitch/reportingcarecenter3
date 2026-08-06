@@ -126,6 +126,7 @@ function TicketsPage() {
   const [detail, setDetail] = useState<TicketRow | null>(null);
   const [rollbackOpen, setRollbackOpen] = useState(false);
   const [filtersReady, setFiltersReady] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   // Restore filter state from localStorage on mount so selections survive
   // refresh, delete, or rollback operations.
