@@ -346,6 +346,57 @@ function TicketsPage() {
       String(index + 1),
       ...columns.map((c) => cellValue(t, c.key)),
     ]);
+    void head;
+    void rows;
+  };
+
+  const importFile = async (file: File) => {
+    try {
+      const parsed = await parseSheetFile(file);
+      const payload = parsed
+        .map((row) => ({
+          status: pick(row, "Status") || "Diagnose",
+          keterangan: pick(row, "Keterangan") || null,
+          customer: pick(row, "Customer") || null,
+          nama_lokasi: pick(row, "Nama Lokasi") || null,
+          tiket_mantools: pick(row, "Tiket Mantools") || null,
+          tiket_noxis: pick(row, "Tiket Noxis") || null,
+          layanan: pick(row, "Layanan") || null,
+          jenis_ticket: pick(row, "Jenis Ticket", "Jenis") || null,
+          asal_gangguan: pick(row, "Asal Gangguan") || null,
+          regional: pick(row, "Regional") || null,
+          indikasi_gangguan: pick(row, "Indikasi Gangguan") || null,
+          last_update: pick(row, "Last Update") || null,
+          team_sem: pick(row, "Team SEM", "Tim SEM") || null,
+          open_by: pick(row, "Open By") || null,
+          durasi: pick(row, "Durasi") || null,
+          teknisi: pick(row, "Teknisi") || null,
+        }))
+        .filter((row) => Object.values(row).some((value) => value && value !== "Diagnose"));
+      if (payload.length === 0) {
+        toast.error("Tidak ada data yang bisa diimport", {
+          description: "Pastikan judul kolom sama seperti hasil export Excel.",
+        });
+        return;
+      }
+      const { error } = await supabase.from("tickets").insert(payload);
+      if (error) {
+        toast.error("Gagal import ticket", { description: error.message });
+        return;
+      }
+      toast.success(`${payload.length} ticket berhasil diimport`);
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+    } catch {
+      toast.error("File tidak bisa dibaca", { description: "Gunakan file .xlsx, .xls atau .csv" });
+    }
+  };
+
+  const exportExcelFile = () => {
+    const head = ["Nomor", ...columns.map((c) => c.label)];
+    const rows = filtered.map((t, index) => [
+      String(index + 1),
+      ...columns.map((c) => cellValue(t, c.key)),
+    ]);
     const escape = (value: string) =>
       value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const html = `<html><head><meta charset="utf-8" /></head><body><table border="1"><thead><tr>${head
