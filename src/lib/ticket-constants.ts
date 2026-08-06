@@ -142,6 +142,7 @@ export type StatusTone =
   | "success"
   | "warning"
   | "orange"
+  | "purple"
   | "brown"
   | "danger"
   | "info"
@@ -150,10 +151,29 @@ export type StatusTone =
 export const statusTone = (status: string): StatusTone => {
   if (status === "Close" || status === "Technical Close") return "success";
   if (status === "Diagnose" || status === "Engineer Assignment") return "danger";
-  if (status === "Pending Spare") return "orange";
+  if (status === "Pending Spare") return "purple";
   if (status === "Pending") return "brown";
   if (status.startsWith("Pending")) return "warning";
   if ((OPEN_STATUSES as readonly string[]).includes(status)) return "info";
+  return "muted";
+};
+
+/** Short labels for Jenis Ticket, e.g. "Corrective Maintenance" -> "CM". */
+export const JENIS_SHORT: Record<string, string> = {
+  "Corrective Maintenance": "CM",
+  "Preventive Maintenance": "PM",
+  Instalasi: "INS",
+  Relokasi: "RLK",
+};
+
+export const jenisShort = (value: string | null) => {
+  if (!value) return "-";
+  return JENIS_SHORT[value] ?? value;
+};
+
+export const jenisTone = (value: string | null): "danger" | "success" | "muted" => {
+  if (value === "Corrective Maintenance") return "danger";
+  if (value === "Preventive Maintenance") return "success";
   return "muted";
 };
 

@@ -1,19 +1,20 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
-  Eye,
   FileSpreadsheet,
   History,
+  Upload,
   Pencil,
   Plus,
   RefreshCw,
   Search,
   Trash2,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
+import { JenisBadge } from "@/components/tickets/JenisBadge";
 import { RollbackDialog } from "@/components/tickets/RollbackDialog";
 import { StatusBadge } from "@/components/tickets/StatusBadge";
 import { TicketDetailDialog } from "@/components/tickets/TicketDetailDialog";
@@ -40,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { parseSheetFile, pick } from "@/lib/import-sheet";
 import { notifyNewTicket } from "@/lib/telegram.functions";
 import {
   BULAN_OPTIONS,
@@ -55,13 +57,13 @@ import {
 export const Route = createFileRoute("/tickets")({
   head: () => ({
     meta: [
-      { title: "Daftar Ticket — Ticket Care Center 3" },
+      { title: "Daftar Ticket — Reporting CC 3" },
       {
         name: "description",
         content:
           "Kelola data ticket gangguan: tambah, edit, hapus dengan konfirmasi, rollback data terhapus, filter multi pilihan dan export Excel.",
       },
-      { property: "og:title", content: "Daftar Ticket — Ticket Care Center 3" },
+      { property: "og:title", content: "Daftar Ticket — Reporting CC 3" },
       {
         property: "og:description",
         content:
@@ -124,6 +126,7 @@ function TicketsPage() {
   const [detail, setDetail] = useState<TicketRow | null>(null);
   const [rollbackOpen, setRollbackOpen] = useState(false);
   const [filtersReady, setFiltersReady] = useState(false);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   // Restore filter state from localStorage on mount so selections survive
   // refresh, delete, or rollback operations.
@@ -337,6 +340,47 @@ function TicketsPage() {
     queryClient.invalidateQueries({ queryKey: ["tickets"] });
   };
 
+  const importFile = async (file: File) => {
+    try {
+      const parsed = await parseSheetFile(file);
+      const payload = parsed
+        .map((row) => ({
+          status: pick(row, "Status") || "Diagnose",
+          keterangan: pick(row, "Keterangan") || null,
+          customer: pick(row, "Customer") || null,
+          nama_lokasi: pick(row, "Nama Lokasi") || null,
+          tiket_mantools: pick(row, "Tiket Mantools") || null,
+          tiket_noxis: pick(row, "Tiket Noxis") || null,
+          layanan: pick(row, "Layanan") || null,
+          jenis_ticket: pick(row, "Jenis Ticket", "Jenis") || null,
+          asal_gangguan: pick(row, "Asal Gangguan") || null,
+          regional: pick(row, "Regional") || null,
+          indikasi_gangguan: pick(row, "Indikasi Gangguan") || null,
+          last_update: pick(row, "Last Update") || null,
+          team_sem: pick(row, "Team SEM", "Tim SEM") || null,
+          open_by: pick(row, "Open By") || null,
+          durasi: pick(row, "Durasi") || null,
+          teknisi: pick(row, "Teknisi") || null,
+        }))
+        .filter((row) => Object.values(row).some((value) => value && value !== "Diagnose"));
+      if (payload.length === 0) {
+        toast.error("Tidak ada data yang bisa diimport", {
+          description: "Pastikan judul kolom sama seperti hasil export Excel.",
+        });
+        return;
+      }
+      const { error } = await supabase.from("tickets").insert(payload);
+      if (error) {
+        toast.error("Gagal import ticket", { description: error.message });
+        return;
+      }
+      toast.success(`${payload.length} ticket berhasil diimport`);
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+    } catch {
+      toast.error("File tidak bisa dibaca", { description: "Gunakan file .xlsx, .xls atau .csv" });
+    }
+  };
+
   const exportExcel = () => {
     const head = ["Nomor", ...columns.map((c) => c.label)];
     const rows = filtered.map((t, index) => [
@@ -408,6 +452,20 @@ function TicketsPage() {
             <Button variant="outline" onClick={exportExcel}>
               <FileSpreadsheet className="size-4" /> Excel
             </Button>
+            <Button variant="outline" onClick={() => importInputRef.current?.click()}>
+              <Upload className="size-4" /> Import
+            </Button>
+            <input
+              ref={importInputRef}
+              type="file"
+              accept=".xlsx,.xls,.csv"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                e.target.value = "";
+                if (file) void importFile(file);
+              }}
+            />
             <Button variant="outline" onClick={() => setRollbackOpen(true)}>
               <History className="size-4" /> Rollback
               {deleted.length > 0 ? (
@@ -539,15 +597,6 @@ function TicketsPage() {
                           variant="ghost"
                           size="icon"
                           className="size-6 text-primary"
-                          onClick={() => setDetail(ticket)}
-                          aria-label="Lihat detail"
-                        >
-                          <Eye className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-6 text-primary"
                           onClick={() => {
                             setEditing(ticket);
                             setFormOpen(true);
@@ -569,6 +618,16 @@ function TicketsPage() {
                       >
                         {col.key === "status" ? (
                           <StatusBadge status={ticket.status} />
+                        ) : col.key === "jenis_ticket" ? (
+                          <JenisBadge jenis={ticket.jenis_ticket} />
+                        ) : col.key === "nama_lokasi" ? (
+                          <button
+                            type="button"
+                            onClick={() => setDetail(ticket)}
+                            className="text-left font-medium text-primary hover:underline"
+                          >
+                            {ticket.nama_lokasi ?? "-"}
+                          </button>
                         ) : (
                           cellValue(ticket, col.key)
                         )}

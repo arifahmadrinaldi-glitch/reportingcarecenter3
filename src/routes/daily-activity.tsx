@@ -1,7 +1,15 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { FileSpreadsheet, History, Plus, RefreshCw, RotateCcw, Trash2 } from "lucide-react";
-import { useMemo, useState } from "react";
+import {
+  FileSpreadsheet,
+  History,
+  Plus,
+  RefreshCw,
+  RotateCcw,
+  Trash2,
+  Upload,
+} from "lucide-react";
+import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -35,6 +43,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { parseSheetFile, pick } from "@/lib/import-sheet";
 import {
   ACTIVITY_STATUS_OPTIONS,
   CATEGORY_OPTIONS,
@@ -54,13 +63,13 @@ import {
 export const Route = createFileRoute("/daily-activity")({
   head: () => ({
     meta: [
-      { title: "Daily Activity — Ticket Care Center 3" },
+      { title: "Daily Activity — Reporting CC 3" },
       {
         name: "description",
         content:
           "Catat aktivitas harian tim: on duty, shift, kategori, sumber informasi, produk, RFO general hingga status penyelesaian.",
       },
-      { property: "og:title", content: "Daily Activity — Ticket Care Center 3" },
+      { property: "og:title", content: "Daily Activity — Reporting CC 3" },
       {
         property: "og:description",
         content:
@@ -110,6 +119,7 @@ function DailyActivityPage() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [rollbackOpen, setRollbackOpen] = useState(false);
   const [filters, setFilters] = useState(emptyDailyFilters);
+  const importInputRef = useRef<HTMLInputElement>(null);
 
   const { data: rows = [], isPending } = useQuery({
     queryKey: ["daily-activities", "active"],
@@ -202,6 +212,56 @@ function DailyActivityPage() {
 
   const allSelected = filtered.length > 0 && filtered.every((r) => selected.includes(r.id));
 
+  const parseImportDate = (value: string) => {
+    if (!value) return null;
+    const dmy = value.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    const pad = (n: string) => n.padStart(2, "0");
+    if (dmy) return `${dmy[3]}-${pad(dmy[2]!)}-${pad(dmy[1]!)}`;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return null;
+    return parsed.toISOString().slice(0, 10);
+  };
+
+  const importFile = async (file: File) => {
+    try {
+      const parsed = await parseSheetFile(file);
+      const payload = parsed
+        .map((row) => ({
+          tanggal: parseImportDate(pick(row, "Date", "Tanggal")),
+          on_duty: pick(row, "On Duty") || null,
+          shift: pick(row, "Shift") || null,
+          category: pick(row, "Category") || null,
+          source_information: pick(row, "Source Information") || null,
+          to_do: pick(row, "To Do") || null,
+          product: pick(row, "Product") || null,
+          customer: pick(row, "Customer") || null,
+          nama_lokasi: pick(row, "Nama Lokasi") || null,
+          kontak_pic: pick(row, "Kontak PIC") || null,
+          rfo_general: pick(row, "RFO General") || null,
+          type_modem_sn: pick(row, "Type Modem & SN KIT", "Type Modem") || null,
+          problem: pick(row, "Problem") || null,
+          action: pick(row, "Action") || null,
+          status: pick(row, "Status") || "Open",
+        }))
+        .filter((row) => Object.values(row).some((value) => value && value !== "Open"));
+      if (payload.length === 0) {
+        toast.error("Tidak ada data yang bisa diimport", {
+          description: "Pastikan judul kolom sama seperti hasil export Excel.",
+        });
+        return;
+      }
+      const { error } = await supabase.from("daily_activities").insert(payload);
+      if (error) {
+        toast.error("Gagal import activity", { description: error.message });
+        return;
+      }
+      toast.success(`${payload.length} activity berhasil diimport`);
+      refresh();
+    } catch {
+      toast.error("File tidak bisa dibaca", { description: "Gunakan file .xlsx, .xls atau .csv" });
+    }
+  };
+
   const exportExcel = () => {
     const head = ["No", ...headers.map((h) => h.label)];
     const body = filtered.map((row, index) => [
@@ -232,7 +292,7 @@ function DailyActivityPage() {
   return (
     <AppShell
       title="Daily Activity"
-      subtitle="Pencatatan aktivitas harian tim Care Center 3"
+      subtitle="Pencatatan aktivitas harian tim Reporting CC 3"
       actions={
         <Button size="sm" onClick={addRow}>
           <Plus className="size-4" /> Tambah Activity
@@ -250,6 +310,20 @@ function DailyActivityPage() {
           <Button variant="outline" size="sm" onClick={exportExcel}>
             <FileSpreadsheet className="size-4" /> Excel
           </Button>
+          <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
+            <Upload className="size-4" /> Import
+          </Button>
+          <input
+            ref={importInputRef}
+            type="file"
+            accept=".xlsx,.xls,.csv"
+            className="hidden"
+            onChange={(e) => {
+              const file = e.target.files?.[0];
+              e.target.value = "";
+              if (file) void importFile(file);
+            }}
+          />
           <Button variant="outline" size="sm" onClick={() => setRollbackOpen(true)}>
             <History className="size-4" /> Rollback
             {deleted.length > 0 ? (
