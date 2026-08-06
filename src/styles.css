@@ -18,6 +18,7 @@
   --color-status-red: var(--status-red);
   --color-status-orange: var(--status-orange);
   --color-status-brown: var(--status-brown);
+  --color-status-purple: var(--status-purple);
   --shadow-panel: var(--shadow-panel-value);
 }
 
@@ -107,6 +108,7 @@
   --status-red: oklch(0.62 0.16 22);
   --status-orange: oklch(0.7 0.14 55);
   --status-brown: oklch(0.55 0.09 55);
+  --status-purple: oklch(0.55 0.16 300);
   --border: oklch(0.918 0.014 255);
   --input: oklch(0.918 0.014 255);
   --ring: oklch(0.55 0.196 261.5);
@@ -154,6 +156,7 @@
   --status-red: oklch(0.7 0.15 22);
   --status-orange: oklch(0.77 0.13 58);
   --status-brown: oklch(0.68 0.08 58);
+  --status-purple: oklch(0.72 0.14 300);
   --shadow-panel-value: 0 1px 2px 0 oklch(0 0 0 / 0.4), 0 8px 24px -12px oklch(0 0 0 / 0.6);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
