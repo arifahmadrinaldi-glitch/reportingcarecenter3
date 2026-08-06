@@ -42,13 +42,13 @@ import { BULAN_OPTIONS, OPEN_STATUSES, type TicketRow } from "@/lib/ticket-const
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Dashboard — Ticket Care Center 3" },
+      { title: "Dashboard — Reporting CC 3" },
       {
         name: "description",
         content:
           "Ringkasan ticket gangguan: jumlah open, progress, pending dan close beserta ticket terbaru.",
       },
-      { property: "og:title", content: "Dashboard — Ticket Care Center 3" },
+      { property: "og:title", content: "Dashboard — Reporting CC 3" },
       {
         property: "og:description",
         content: "Ringkasan status ticket gangguan dan aktivitas terbaru dalam satu halaman.",
