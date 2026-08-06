@@ -542,15 +542,6 @@ function TicketsPage() {
                           variant="ghost"
                           size="icon"
                           className="size-6 text-primary"
-                          onClick={() => setDetail(ticket)}
-                          aria-label="Lihat detail"
-                        >
-                          <Eye className="size-3.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-6 text-primary"
                           onClick={() => {
                             setEditing(ticket);
                             setFormOpen(true);
@@ -572,6 +563,16 @@ function TicketsPage() {
                       >
                         {col.key === "status" ? (
                           <StatusBadge status={ticket.status} />
+                        ) : col.key === "jenis_ticket" ? (
+                          <JenisBadge jenis={ticket.jenis_ticket} />
+                        ) : col.key === "nama_lokasi" ? (
+                          <button
+                            type="button"
+                            onClick={() => setDetail(ticket)}
+                            className="text-left font-medium text-primary hover:underline"
+                          >
+                            {ticket.nama_lokasi ?? "-"}
+                          </button>
                         ) : (
                           cellValue(ticket, col.key)
                         )}
