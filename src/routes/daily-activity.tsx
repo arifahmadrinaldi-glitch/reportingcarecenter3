@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
+import { useAccess } from "@/lib/app-access";
 import { parseSheetFile, pick } from "@/lib/import-sheet";
 import {
   ACTIVITY_STATUS_OPTIONS,
@@ -115,6 +116,7 @@ const headers: { key: Field; label: string; kind: "date" | "select" | "text" }[]
 
 function DailyActivityPage() {
   const queryClient = useQueryClient();
+  const { isAdmin } = useAccess();
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [rollbackOpen, setRollbackOpen] = useState(false);
@@ -324,18 +326,25 @@ function DailyActivityPage() {
               if (file) void importFile(file);
             }}
           />
-          <Button variant="outline" size="sm" onClick={() => setRollbackOpen(true)}>
-            <History className="size-4" /> Rollback
-            {deleted.length > 0 ? (
-              <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
-                {deleted.length}
-              </span>
-            ) : null}
-          </Button>
+          {isAdmin ? (
+            <Button variant="outline" size="sm" onClick={() => setRollbackOpen(true)}>
+              <History className="size-4" /> Rollback
+              {deleted.length > 0 ? (
+                <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                  {deleted.length}
+                </span>
+              ) : null}
+            </Button>
+          ) : null}
           <span className="text-xs text-muted-foreground">
             Menampilkan {filtered.length} dari {rows.length} activity
           </span>
-          {selected.length > 0 ? (
+          {!isAdmin ? (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
+              Mode user · hapus &amp; rollback khusus super user
+            </span>
+          ) : null}
+          {isAdmin && selected.length > 0 ? (
             <Button
               variant="destructive"
               size="sm"
@@ -359,6 +368,7 @@ function DailyActivityPage() {
           <table className="w-full min-w-[1900px] border-collapse text-[11px] leading-tight">
             <thead>
               <tr className="border-b border-border bg-muted/60">
+                {isAdmin ? (
                 <th className="cell-center w-8 px-1.5 py-2">
                   <Checkbox
                     checked={allSelected}
@@ -368,6 +378,7 @@ function DailyActivityPage() {
                     aria-label="Pilih semua activity"
                   />
                 </th>
+                ) : null}
                 <th className="cell-center w-9 px-1.5 py-2 text-[10px] font-bold uppercase">No</th>
                 {headers.map((h) => (
                   <th
@@ -382,14 +393,14 @@ function DailyActivityPage() {
             <tbody>
               {isPending ? (
                 <tr>
-                  <td colSpan={headers.length + 2} className="cell-center px-3 py-10">
+                  <td colSpan={headers.length + (isAdmin ? 2 : 1)} className="cell-center px-3 py-10">
                     Memuat data…
                   </td>
                 </tr>
               ) : filtered.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={headers.length + 2}
+                    colSpan={headers.length + (isAdmin ? 2 : 1)}
                     className="cell-center px-3 py-10 text-muted-foreground"
                   >
                     Belum ada activity. Klik “Tambah Activity” untuk membuat baris baru.
@@ -398,6 +409,7 @@ function DailyActivityPage() {
               ) : (
                 filtered.map((row, index) => (
                   <tr key={row.id} className="border-b border-border last:border-0 align-top">
+                    {isAdmin ? (
                     <td className="cell-center px-1.5 py-1.5">
                       <Checkbox
                         checked={selected.includes(row.id)}
@@ -409,6 +421,7 @@ function DailyActivityPage() {
                         aria-label={`Pilih activity ${index + 1}`}
                       />
                     </td>
+                    ) : null}
                     <td className="cell-center px-1.5 py-1.5 font-semibold">{index + 1}</td>
                     {headers.map((h) => (
                       <td key={h.key} className="px-1.5 py-1 align-middle">
