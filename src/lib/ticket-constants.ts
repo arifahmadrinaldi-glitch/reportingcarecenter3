@@ -87,6 +87,24 @@ export const BULAN_OPTIONS = [
   "Desember",
 ] as const;
 
+/** One entry of the ticket update log (newest first when rendered). */
+export type UpdateEntry = {
+  at: string;
+  text: string;
+  status?: string | null;
+};
+
+export const parseUpdateHistory = (value: unknown): UpdateEntry[] => {
+  if (!Array.isArray(value)) return [];
+  return value
+    .filter((item): item is UpdateEntry => !!item && typeof item === "object" && "at" in item)
+    .map((item) => ({
+      at: String(item.at),
+      text: String(item.text ?? ""),
+      status: item.status ? String(item.status) : null,
+    }));
+};
+
 export type TicketRow = {
   id: string;
   status: string;
@@ -107,6 +125,7 @@ export type TicketRow = {
   tanggal_close: string | null;
   durasi: string | null;
   teknisi: string | null;
+  update_history?: unknown;
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
@@ -114,7 +133,7 @@ export type TicketRow = {
 
 export type TicketFormValues = Omit<
   TicketRow,
-  "id" | "deleted_at" | "created_at" | "updated_at"
+  "id" | "deleted_at" | "created_at" | "updated_at" | "update_history"
 >;
 
 export const emptyTicket = (): TicketFormValues => ({

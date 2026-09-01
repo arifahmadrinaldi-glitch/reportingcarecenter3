@@ -12,6 +12,8 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
+import { LockScreen } from "@/components/AccessControls";
+import { AccessProvider } from "@/lib/app-access";
 
 function NotFoundComponent() {
   return (
@@ -126,8 +128,11 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-      <Outlet />
+      <AccessProvider>
+        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+        <Outlet />
+        <LockScreen />
+      </AccessProvider>
       <Toaster position="top-right" richColors />
     </QueryClientProvider>
   );

@@ -41,6 +41,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useAccess } from "@/lib/app-access";
 import { parseSheetFile, pick } from "@/lib/import-sheet";
 import { notifyNewTicket } from "@/lib/telegram.functions";
 import {
@@ -50,6 +51,7 @@ import {
   REGIONAL_OPTIONS,
   STATUS_OPTIONS,
   formatDateTime,
+  parseUpdateHistory,
   type TicketFormValues,
   type TicketRow,
 } from "@/lib/ticket-constants";
@@ -76,7 +78,7 @@ export const Route = createFileRoute("/tickets")({
   component: TicketsPage,
 });
 
-type Align = "center" | "wrap";
+type Align = "center" | "wrap" | "wide";
 
 const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
   { key: "status", label: "Status", align: "center" },
@@ -90,7 +92,7 @@ const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
   { key: "asal_gangguan", label: "Asal Gangguan", align: "center" },
   { key: "regional", label: "Regional", align: "center" },
   { key: "indikasi_gangguan", label: "Indikasi Gangguan", align: "wrap" },
-  { key: "last_update", label: "Last Update", align: "wrap" },
+  { key: "last_update", label: "Last Update", align: "wide" },
   { key: "team_sem", label: "Team SEM", align: "center" },
   { key: "open_by", label: "Open By", align: "center" },
   { key: "tanggal_open", label: "Tanggal Open", align: "center" },
@@ -109,6 +111,7 @@ const cellValue = (ticket: TicketRow, key: keyof TicketRow) => {
 
 function TicketsPage() {
   const queryClient = useQueryClient();
+  const { isAdmin } = useAccess();
   const [search, setSearch] = useState("");
   const [bulan, setBulan] = useState<string[]>([]);
   const [tahun, setTahun] = useState<string[]>([]);
@@ -274,15 +277,29 @@ function TicketsPage() {
   };
 
   const saveTicket = async (values: TicketFormValues) => {
+    const now = new Date().toISOString();
     if (editing) {
-      const { error } = await supabase.from("tickets").update(values).eq("id", editing.id);
+      const previous = parseUpdateHistory(editing.update_history);
+      const note = (values.last_update ?? "").trim();
+      const changed = note !== ((editing.last_update ?? "").trim());
+      const history = changed && note
+        ? [...previous, { at: now, text: note, status: values.status }]
+        : previous;
+      const { error } = await supabase
+        .from("tickets")
+        .update({ ...values, last_update: note || null, update_history: history })
+        .eq("id", editing.id);
       if (error) {
         toast.error("Gagal menyimpan ticket", { description: error.message });
         return;
       }
       toast.success("Ticket diperbarui");
     } else {
-      const { error } = await supabase.from("tickets").insert(values);
+      const note = (values.last_update ?? "").trim();
+      const { error } = await supabase.from("tickets").insert({
+        ...values,
+        update_history: note ? [{ at: now, text: note, status: values.status }] : [],
+      });
       if (error) {
         toast.error("Gagal menambah ticket", { description: error.message });
         return;
@@ -466,14 +483,16 @@ function TicketsPage() {
                 if (file) void importFile(file);
               }}
             />
-            <Button variant="outline" onClick={() => setRollbackOpen(true)}>
-              <History className="size-4" /> Rollback
-              {deleted.length > 0 ? (
-                <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
-                  {deleted.length}
-                </span>
-              ) : null}
-            </Button>
+            {isAdmin ? (
+              <Button variant="outline" onClick={() => setRollbackOpen(true)}>
+                <History className="size-4" /> Rollback
+                {deleted.length > 0 ? (
+                  <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    {deleted.length}
+                  </span>
+                ) : null}
+              </Button>
+            ) : null}
             <Button
               variant="outline"
               onClick={() => {
@@ -503,7 +522,12 @@ function TicketsPage() {
           <button onClick={resetFilters} className="text-primary hover:underline">
             Reset semua filter
           </button>
-          {selected.length > 0 ? (
+          {!isAdmin ? (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase">
+              Mode user · hapus &amp; rollback khusus super user
+            </span>
+          ) : null}
+          {isAdmin && selected.length > 0 ? (
             <>
               <span className="font-medium text-foreground">{selected.length} dipilih</span>
               <Button
@@ -522,6 +546,7 @@ function TicketsPage() {
           <table className="w-full min-w-[1500px] border-collapse text-[11px] leading-tight">
             <thead>
               <tr className="border-b border-border bg-muted/60">
+                {isAdmin ? (
                 <th className="cell-center w-8 px-1.5 py-2">
                   <Checkbox
                     checked={allPageSelected}
@@ -535,6 +560,7 @@ function TicketsPage() {
                     aria-label="Pilih semua baris"
                   />
                 </th>
+                ) : null}
                 <th className="cell-center w-10 px-1.5 py-2 text-[10px] font-bold tracking-wide uppercase">
                   Nomor
                 </th>
@@ -556,14 +582,14 @@ function TicketsPage() {
             <tbody>
               {activeQuery.isPending ? (
                 <tr>
-                  <td colSpan={columns.length + 3} className="cell-center px-3 py-10">
+                  <td colSpan={columns.length + (isAdmin ? 3 : 2)} className="cell-center px-3 py-10">
                     Memuat data…
                   </td>
                 </tr>
               ) : pageRows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={columns.length + 3}
+                    colSpan={columns.length + (isAdmin ? 3 : 2)}
                     className="cell-center px-3 py-10 text-muted-foreground"
                   >
                     Tidak ada ticket yang cocok dengan filter.
@@ -575,6 +601,7 @@ function TicketsPage() {
                     key={ticket.id}
                     className="border-b border-border last:border-0 hover:bg-muted/40"
                   >
+                    {isAdmin ? (
                     <td className="cell-center px-1.5 py-1.5">
                       <Checkbox
                         checked={selected.includes(ticket.id)}
@@ -588,6 +615,7 @@ function TicketsPage() {
                         aria-label={`Pilih ticket ${ticket.customer ?? ""}`}
                       />
                     </td>
+                    ) : null}
                     <td className="cell-center px-1.5 py-1.5 font-semibold">
                       {(currentPage - 1) * perPage + index + 1}
                     </td>
@@ -613,7 +641,9 @@ function TicketsPage() {
                         className={`px-2 py-1.5 ${
                           col.align === "center"
                             ? "cell-center whitespace-nowrap"
-                            : "cell-wrap max-w-[200px] min-w-[130px]"
+                            : col.align === "wide"
+                              ? "cell-wrap w-[420px] max-w-[420px] min-w-[300px]"
+                              : "cell-wrap max-w-[200px] min-w-[130px]"
                         }`}
                       >
                         {col.key === "status" ? (
