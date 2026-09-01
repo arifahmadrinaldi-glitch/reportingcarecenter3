@@ -483,14 +483,16 @@ function TicketsPage() {
                 if (file) void importFile(file);
               }}
             />
-            <Button variant="outline" onClick={() => setRollbackOpen(true)}>
-              <History className="size-4" /> Rollback
-              {deleted.length > 0 ? (
-                <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
-                  {deleted.length}
-                </span>
-              ) : null}
-            </Button>
+            {isAdmin ? (
+              <Button variant="outline" onClick={() => setRollbackOpen(true)}>
+                <History className="size-4" /> Rollback
+                {deleted.length > 0 ? (
+                  <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    {deleted.length}
+                  </span>
+                ) : null}
+              </Button>
+            ) : null}
             <Button
               variant="outline"
               onClick={() => {
@@ -520,7 +522,12 @@ function TicketsPage() {
           <button onClick={resetFilters} className="text-primary hover:underline">
             Reset semua filter
           </button>
-          {selected.length > 0 ? (
+          {!isAdmin ? (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase">
+              Mode user · hapus &amp; rollback khusus super user
+            </span>
+          ) : null}
+          {isAdmin && selected.length > 0 ? (
             <>
               <span className="font-medium text-foreground">{selected.length} dipilih</span>
               <Button
@@ -539,6 +546,7 @@ function TicketsPage() {
           <table className="w-full min-w-[1500px] border-collapse text-[11px] leading-tight">
             <thead>
               <tr className="border-b border-border bg-muted/60">
+                {isAdmin ? (
                 <th className="cell-center w-8 px-1.5 py-2">
                   <Checkbox
                     checked={allPageSelected}
@@ -552,6 +560,7 @@ function TicketsPage() {
                     aria-label="Pilih semua baris"
                   />
                 </th>
+                ) : null}
                 <th className="cell-center w-10 px-1.5 py-2 text-[10px] font-bold tracking-wide uppercase">
                   Nomor
                 </th>
@@ -573,14 +582,14 @@ function TicketsPage() {
             <tbody>
               {activeQuery.isPending ? (
                 <tr>
-                  <td colSpan={columns.length + 3} className="cell-center px-3 py-10">
+                  <td colSpan={columns.length + (isAdmin ? 3 : 2)} className="cell-center px-3 py-10">
                     Memuat data…
                   </td>
                 </tr>
               ) : pageRows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={columns.length + 3}
+                    colSpan={columns.length + (isAdmin ? 3 : 2)}
                     className="cell-center px-3 py-10 text-muted-foreground"
                   >
                     Tidak ada ticket yang cocok dengan filter.
@@ -592,6 +601,7 @@ function TicketsPage() {
                     key={ticket.id}
                     className="border-b border-border last:border-0 hover:bg-muted/40"
                   >
+                    {isAdmin ? (
                     <td className="cell-center px-1.5 py-1.5">
                       <Checkbox
                         checked={selected.includes(ticket.id)}
@@ -605,6 +615,7 @@ function TicketsPage() {
                         aria-label={`Pilih ticket ${ticket.customer ?? ""}`}
                       />
                     </td>
+                    ) : null}
                     <td className="cell-center px-1.5 py-1.5 font-semibold">
                       {(currentPage - 1) * perPage + index + 1}
                     </td>
