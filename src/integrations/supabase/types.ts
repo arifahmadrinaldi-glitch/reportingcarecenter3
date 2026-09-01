@@ -103,6 +103,7 @@ export type Database = {
           teknisi: string | null
           tiket_mantools: string | null
           tiket_noxis: string | null
+          update_history: Json
           updated_at: string
         }
         Insert: {
@@ -127,6 +128,7 @@ export type Database = {
           teknisi?: string | null
           tiket_mantools?: string | null
           tiket_noxis?: string | null
+          update_history?: Json
           updated_at?: string
         }
         Update: {
@@ -151,6 +153,7 @@ export type Database = {
           teknisi?: string | null
           tiket_mantools?: string | null
           tiket_noxis?: string | null
+          update_history?: Json
           updated_at?: string
         }
         Relationships: []
