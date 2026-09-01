@@ -125,6 +125,7 @@ export type TicketRow = {
   tanggal_close: string | null;
   durasi: string | null;
   teknisi: string | null;
+  update_history?: unknown;
   deleted_at: string | null;
   created_at: string;
   updated_at: string;
@@ -132,7 +133,7 @@ export type TicketRow = {
 
 export type TicketFormValues = Omit<
   TicketRow,
-  "id" | "deleted_at" | "created_at" | "updated_at"
+  "id" | "deleted_at" | "created_at" | "updated_at" | "update_history"
 >;
 
 export const emptyTicket = (): TicketFormValues => ({
