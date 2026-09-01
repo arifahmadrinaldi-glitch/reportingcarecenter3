@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router";
 import { ClipboardList, LayoutGrid, Radio, Ticket } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
+import { AccessControls } from "@/components/AccessControls";
 import { ThemeToggle } from "@/components/ThemeToggle";
 
 const navItems = [
@@ -93,6 +94,7 @@ export function AppShell({
                 </Link>
               ))}
             </nav>
+            <AccessControls />
             <ThemeToggle />
           </div>
         </header>
