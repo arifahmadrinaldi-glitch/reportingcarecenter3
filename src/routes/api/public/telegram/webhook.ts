@@ -104,7 +104,7 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
 
         const update = (await request.json()) as {
           message?: { chat?: { id?: number; title?: string; username?: string }; text?: string };
-          edited_message?: { chat?: { id?: number }; text?: string };
+          edited_message?: { chat?: { id?: number; title?: string; username?: string }; text?: string };
         };
 
         const message = update.message ?? update.edited_message;
