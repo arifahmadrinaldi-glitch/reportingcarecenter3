@@ -80,6 +80,33 @@ export type Database = {
         }
         Relationships: []
       }
+      telegram_chats: {
+        Row: {
+          chat_id: number
+          created_at: string
+          id: string
+          is_active: boolean
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          chat_id: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chat_id?: number
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       tickets: {
         Row: {
           asal_gangguan: string | null
