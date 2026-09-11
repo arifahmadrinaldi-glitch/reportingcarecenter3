@@ -2,7 +2,24 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { createHash, timingSafeEqual } from "crypto";
 
-import { OPEN_STATUSES } from "@/lib/ticket-constants";
+import { buildTicketMessage, type NewTicketPayload } from "@/lib/telegram.server";
+
+const CLOSED_STATUSES = ["Close", "Technical Close"];
+
+const BULAN = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
 
 function deriveSecret(telegramApiKey: string): string {
   return createHash("sha256").update(`telegram-webhook:${telegramApiKey}`).digest("base64url");
@@ -41,11 +58,39 @@ async function reply(chatId: number, text: string) {
 const escapeHtml = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
+type Row = Record<string, string | null>;
+
+const TICKET_FIELDS =
+  "status, customer, nama_lokasi, tiket_mantools, tiket_noxis, layanan, jenis_ticket, regional, indikasi_gangguan, open_by, teknisi, last_update, tanggal_open, tanggal_close";
+
+const asPayload = (row: Row): NewTicketPayload => ({
+  status: row["status"] ?? "",
+  customer: row["customer"] ?? "",
+  nama_lokasi: row["nama_lokasi"] ?? "",
+  tiket_mantools: row["tiket_mantools"] ?? "",
+  tiket_noxis: row["tiket_noxis"] ?? "",
+  layanan: row["layanan"] ?? "",
+  jenis_ticket: row["jenis_ticket"] ?? "",
+  regional: row["regional"] ?? "",
+  indikasi_gangguan: row["indikasi_gangguan"] ?? "",
+  open_by: row["open_by"] ?? "",
+  teknisi: row["teknisi"] ?? "",
+  last_update: row["last_update"] ?? "",
+});
+
+const fmtDate = (value: string | null) => {
+  if (!value) return "-";
+  const d = new Date(value);
+  if (Number.isNaN(d.getTime())) return value;
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};
+
 async function buildOpenTicketSummary(): Promise<string> {
   const supabase = getSupabase();
   const { data, error } = await supabase
     .from("tickets")
-    .select("status, customer, nama_lokasi, tiket_mantools, layanan, regional, last_update")
+    .select(TICKET_FIELDS)
     .is("deleted_at", null)
     .not("status", "in", '("Close","Technical Close")')
     .order("created_at", { ascending: true })
@@ -56,38 +101,139 @@ async function buildOpenTicketSummary(): Promise<string> {
     return "⚠️ Gagal mengambil data tiket.";
   }
 
-  const rows = (data ?? []) as Array<Record<string, string | null>>;
+  const rows = (data ?? []) as Row[];
   if (rows.length === 0) return "✅ Tidak ada tiket yang masih open.";
 
-  const counts = new Map<string, number>();
-  for (const row of rows) {
-    const status = row["status"] ?? "-";
-    counts.set(status, (counts.get(status) ?? 0) + 1);
+  const cards = rows.slice(0, 15).map((row) => buildTicketMessage(asPayload(row)));
+  const more = rows.length > 15 ? `\n\n…dan ${rows.length - 15} tiket lainnya.` : "";
+  return `🎫 <b>Tiket Belum Close</b> (total ${rows.length})\n\n${cards.join("\n\n")}${more}`;
+}
+
+/** /rekap [bulan] [tahun] — rekap tiket dalam satu bulan. */
+async function buildRekap(args: string[]): Promise<string> {
+  const now = new Date();
+  let monthIndex = now.getMonth();
+  let year = now.getFullYear();
+
+  for (const arg of args) {
+    const numeric = Number(arg);
+    if (Number.isFinite(numeric) && numeric >= 1000) {
+      year = numeric;
+    } else if (Number.isFinite(numeric) && numeric >= 1 && numeric <= 12) {
+      monthIndex = numeric - 1;
+    } else {
+      const found = BULAN.findIndex((b) => b.toLowerCase().startsWith(arg.toLowerCase()));
+      if (found >= 0) monthIndex = found;
+    }
   }
 
-  const recap = [...counts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([status, total]) => `• ${escapeHtml(status)}: <b>${total}</b>`)
-    .join("\n");
+  const start = new Date(year, monthIndex, 1);
+  const end = new Date(year, monthIndex + 1, 1);
 
-  const details = rows
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("tickets")
+    .select(TICKET_FIELDS)
+    .is("deleted_at", null)
+    .gte("tanggal_open", start.toISOString())
+    .lt("tanggal_open", end.toISOString());
+
+  if (error) {
+    console.error(`Gagal rekap tiket: ${error.message}`);
+    return "⚠️ Gagal mengambil rekap tiket.";
+  }
+
+  const rows = (data ?? []) as Row[];
+  const label = `${BULAN[monthIndex]} ${year}`;
+  if (rows.length === 0) return `📊 <b>Rekap ${escapeHtml(label)}</b>\n\nTidak ada tiket.`;
+
+  const tally = (key: string) => {
+    const counts = new Map<string, number>();
+    for (const row of rows) {
+      const value = (row[key] ?? "-") || "-";
+      counts.set(value, (counts.get(value) ?? 0) + 1);
+    }
+    return [...counts.entries()]
+      .sort((a, b) => b[1] - a[1])
+      .map(([name, total]) => `• ${escapeHtml(name)}: <b>${total}</b>`)
+      .join("\n");
+  };
+
+  const closed = rows.filter((r) => CLOSED_STATUSES.includes(r["status"] ?? "")).length;
+  const open = rows.length - closed;
+
+  return (
+    `📊 <b>Rekap ${escapeHtml(label)}</b>\n\n` +
+    `Total tiket: <b>${rows.length}</b>\nClose: <b>${closed}</b>\nBelum close: <b>${open}</b>\n\n` +
+    `<b>Per Status</b>\n${tally("status")}\n\n` +
+    `<b>Per Layanan</b>\n${tally("layanan")}\n\n` +
+    `<b>Per Regional</b>\n${tally("regional")}`
+  );
+}
+
+/** /tiketclose — tiket yang close hari ini (berdasarkan tanggal close aktual). */
+async function buildCloseToday(): Promise<string> {
+  const now = new Date();
+  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const end = new Date(start.getTime() + 86400000);
+
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("tickets")
+    .select(TICKET_FIELDS)
+    .is("deleted_at", null)
+    .gte("tanggal_close", start.toISOString())
+    .lt("tanggal_close", end.toISOString())
+    .order("tanggal_close", { ascending: true });
+
+  if (error) {
+    console.error(`Gagal ambil tiket close: ${error.message}`);
+    return "⚠️ Gagal mengambil data tiket close.";
+  }
+
+  const rows = (data ?? []) as Row[];
+  const label = fmtDate(start.toISOString()).slice(0, 10);
+  if (rows.length === 0) return `✅ <b>Tiket Close ${label}</b>\n\nBelum ada tiket yang close hari ini.`;
+
+  const cards = rows
     .slice(0, 15)
-    .map((row, index) => {
-      const parts = [
-        `${index + 1}. <b>${escapeHtml(row["nama_lokasi"] ?? "-")}</b>`,
-        `   Customer: ${escapeHtml(row["customer"] ?? "-")}`,
-        `   Status: ${escapeHtml(row["status"] ?? "-")}`,
-        `   Tiket: ${escapeHtml(row["tiket_mantools"] ?? "-")} | ${escapeHtml(row["layanan"] ?? "-")} | ${escapeHtml(row["regional"] ?? "-")}`,
-      ];
-      if (row["last_update"]) parts.push(`   Update: ${escapeHtml(row["last_update"])}`);
-      return parts.join("\n");
-    })
-    .join("\n\n");
-
+    .map(
+      (row) =>
+        `${buildTicketMessage(asPayload(row))}\nClose: ${escapeHtml(fmtDate(row["tanggal_close"]))}`,
+    );
   const more = rows.length > 15 ? `\n\n…dan ${rows.length - 15} tiket lainnya.` : "";
-  const activeInfo = `\n\n<i>Status open: ${OPEN_STATUSES.join(", ")}, dan status Pending.</i>`;
+  return `✅ <b>Tiket Close ${label}</b> (total ${rows.length})\n\n${cards.join("\n\n")}${more}`;
+}
 
-  return `🎫 <b>Tiket Belum Close</b> (total ${rows.length})\n\n${recap}\n\n${details}${more}${activeInfo}`;
+/** /caritiket <kode> — cari tiket berdasarkan kode mantools / noxis / lokasi. */
+async function buildCariTiket(query: string): Promise<string> {
+  if (!query) return "🔍 Format: <code>/caritiket KODE_TIKET</code>";
+
+  const supabase = getSupabase();
+  const like = `%${query}%`;
+  const { data, error } = await supabase
+    .from("tickets")
+    .select(TICKET_FIELDS)
+    .is("deleted_at", null)
+    .or(
+      `tiket_mantools.ilike.${like},tiket_noxis.ilike.${like},nama_lokasi.ilike.${like},customer.ilike.${like}`,
+    )
+    .order("created_at", { ascending: false })
+    .limit(10);
+
+  if (error) {
+    console.error(`Gagal cari tiket: ${error.message}`);
+    return "⚠️ Gagal mencari tiket.";
+  }
+
+  const rows = (data ?? []) as Row[];
+  if (rows.length === 0) return `🔍 Tiket <b>${escapeHtml(query)}</b> tidak ditemukan.`;
+
+  const cards = rows.map(
+    (row) =>
+      `${buildTicketMessage(asPayload(row))}\nOpen: ${escapeHtml(fmtDate(row["tanggal_open"]))}\nClose: ${escapeHtml(fmtDate(row["tanggal_close"]))}`,
+  );
+  return `🔍 <b>Hasil pencarian "${escapeHtml(query)}"</b> (${rows.length})\n\n${cards.join("\n\n")}`;
 }
 
 export const Route = createFileRoute("/api/public/telegram/webhook")({
@@ -104,7 +250,10 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
 
         const update = (await request.json()) as {
           message?: { chat?: { id?: number; title?: string; username?: string }; text?: string };
-          edited_message?: { chat?: { id?: number; title?: string; username?: string }; text?: string };
+          edited_message?: {
+            chat?: { id?: number; title?: string; username?: string };
+            text?: string;
+          };
         };
 
         const message = update.message ?? update.edited_message;
@@ -123,16 +272,31 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
             { onConflict: "chat_id" },
           );
 
-        const text = (message?.text ?? "").trim().toLowerCase().split(/\s|@/)[0];
+        const raw = (message?.text ?? "").trim();
+        const parts = raw.split(/\s+/);
+        const command = (parts[0] ?? "").toLowerCase().split("@")[0];
+        const args = parts.slice(1);
 
-        if (text === "/ping") {
+        if (command === "/ping") {
           await reply(chatId, "🏓 Pong! Bot Reporting CC 3 aktif.");
-        } else if (text === "/tiketopen") {
+        } else if (command === "/tiketopen") {
           await reply(chatId, await buildOpenTicketSummary());
-        } else if (text === "/start" || text === "/help") {
+        } else if (command === "/rekap") {
+          await reply(chatId, await buildRekap(args));
+        } else if (command === "/tiketclose") {
+          await reply(chatId, await buildCloseToday());
+        } else if (command === "/caritiket") {
+          await reply(chatId, await buildCariTiket(args.join(" ")));
+        } else if (command === "/start" || command === "/help") {
           await reply(
             chatId,
-            "👋 Bot Reporting CC 3 siap.\n\n/ping — cek bot aktif\n/tiketopen — resume tiket yang belum close\n\nNotifikasi tiket baru akan dikirim ke chat ini.",
+            "👋 Bot Reporting CC 3 siap.\n\n" +
+              "/ping — cek bot aktif\n" +
+              "/tiketopen — tiket yang belum close\n" +
+              "/rekap [bulan] — rekap tiket per bulan (contoh: /rekap September)\n" +
+              "/tiketclose — tiket close hari ini\n" +
+              "/caritiket [kode] — cari tiket berdasarkan kode/lokasi\n\n" +
+              "Notifikasi tiket baru akan dikirim ke chat ini.",
           );
         }
 
