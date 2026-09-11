@@ -80,25 +80,25 @@ export const Route = createFileRoute("/tickets")({
 
 type Align = "center" | "wrap" | "wide";
 
-const columns: { key: keyof TicketRow; label: string; align: Align; width: string }[] = [
-  { key: "status", label: "Status", align: "center", width: "4.5%" },
-  { key: "keterangan", label: "Keterangan", align: "wrap", width: "4.5%" },
-  { key: "customer", label: "Customer", align: "wrap", width: "4.5%" },
-  { key: "nama_lokasi", label: "Nama Lokasi", align: "wrap", width: "6.5%" },
-  { key: "tiket_mantools", label: "Tiket Mantools", align: "center", width: "4.5%" },
-  { key: "tiket_noxis", label: "Tiket Noxis", align: "center", width: "4.5%" },
-  { key: "layanan", label: "Layanan", align: "center", width: "4%" },
-  { key: "jenis_ticket", label: "Jenis Ticket", align: "center", width: "3%" },
-  { key: "asal_gangguan", label: "Asal Gangguan", align: "center", width: "4%" },
-  { key: "regional", label: "Regional", align: "center", width: "3%" },
-  { key: "indikasi_gangguan", label: "Indikasi Gangguan", align: "wrap", width: "4.5%" },
-  { key: "last_update", label: "Last Update", align: "wide", width: "20%" },
-  { key: "team_sem", label: "Team SEM", align: "center", width: "4.5%" },
-  { key: "open_by", label: "Open By", align: "center", width: "3%" },
-  { key: "tanggal_open", label: "Tanggal Open", align: "center", width: "4%" },
-  { key: "tanggal_close", label: "Tanggal Close", align: "center", width: "4%" },
-  { key: "durasi", label: "Durasi", align: "center", width: "4%" },
-  { key: "teknisi", label: "Teknisi", align: "center", width: "4%" },
+const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
+  { key: "status", label: "Status", align: "center" },
+  { key: "keterangan", label: "Keterangan", align: "wrap" },
+  { key: "customer", label: "Customer", align: "wrap" },
+  { key: "nama_lokasi", label: "Nama Lokasi", align: "wrap" },
+  { key: "tiket_mantools", label: "Tiket Mantools", align: "center" },
+  { key: "tiket_noxis", label: "Tiket Noxis", align: "center" },
+  { key: "layanan", label: "Layanan", align: "center" },
+  { key: "jenis_ticket", label: "Jenis Ticket", align: "center" },
+  { key: "asal_gangguan", label: "Asal Gangguan", align: "center" },
+  { key: "regional", label: "Regional", align: "center" },
+  { key: "indikasi_gangguan", label: "Indikasi Gangguan", align: "wrap" },
+  { key: "last_update", label: "Last Update", align: "wide" },
+  { key: "team_sem", label: "Team SEM", align: "center" },
+  { key: "open_by", label: "Open By", align: "center" },
+  { key: "tanggal_open", label: "Tanggal Open", align: "center" },
+  { key: "tanggal_close", label: "Tanggal Close", align: "center" },
+  { key: "durasi", label: "Durasi", align: "center" },
+  { key: "teknisi", label: "Teknisi", align: "center" },
 ];
 
 const cellValue = (ticket: TicketRow, key: keyof TicketRow) => {
@@ -550,11 +550,11 @@ function TicketsPage() {
         </div>
 
         <div className="mt-4 overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-full table-fixed border-collapse text-[11px] leading-tight">
+          <table className="w-full min-w-[1500px] border-collapse text-[11px] leading-tight">
             <thead>
               <tr className="border-b border-border bg-muted/60">
                 {isAdmin ? (
-                <th className="cell-center px-1 py-1.5" style={{ width: "2%" }}>
+                <th className="cell-center w-8 px-1.5 py-2">
                   <Checkbox
                     checked={allPageSelected}
                     onCheckedChange={(checked) =>
@@ -568,19 +568,18 @@ function TicketsPage() {
                   />
                 </th>
                 ) : null}
-                <th className="cell-center px-1 py-1.5 text-[10px] font-bold tracking-wide uppercase" style={{ width: "3%" }}>
+                <th className="cell-center w-10 px-1.5 py-2 text-[10px] font-bold tracking-wide uppercase">
                   Nomor
                 </th>
-                <th className="cell-center px-1 py-1.5 text-[10px] font-bold tracking-wide uppercase" style={{ width: "4%" }}>
+                <th className="cell-center w-16 px-1.5 py-2 text-[10px] font-bold tracking-wide uppercase">
                   Aksi
                 </th>
                 {columns.map((col) => (
                   <th
                     key={col.key}
-                    className={`px-1 py-1.5 text-[10px] font-bold tracking-wide whitespace-nowrap uppercase ${
+                    className={`px-2 py-2 text-[10px] font-bold tracking-wide whitespace-nowrap uppercase ${
                       col.align === "center" ? "cell-center" : "text-left"
                     }`}
-                    style={{ width: col.width }}
                   >
                     {col.label}
                   </th>
@@ -610,7 +609,7 @@ function TicketsPage() {
                     className="border-b border-border last:border-0 hover:bg-muted/40"
                   >
                     {isAdmin ? (
-                    <td className="cell-center px-1 py-1" style={{ width: "2%" }}>
+                    <td className="cell-center px-1.5 py-1.5">
                       <Checkbox
                         checked={selected.includes(ticket.id)}
                         onCheckedChange={(checked) =>
@@ -624,10 +623,10 @@ function TicketsPage() {
                       />
                     </td>
                     ) : null}
-                    <td className="cell-center px-1 py-1 font-semibold" style={{ width: "3%" }}>
+                    <td className="cell-center px-1.5 py-1.5 font-semibold">
                       {(currentPage - 1) * perPage + index + 1}
                     </td>
-                    <td className="cell-center px-1 py-1" style={{ width: "4%" }}>
+                    <td className="cell-center px-1.5 py-1.5">
                       <div className="flex items-center justify-center gap-0.5">
                         <Button
                           variant="ghost"
@@ -646,12 +645,13 @@ function TicketsPage() {
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-1 py-1 ${
+                        className={`px-2 py-1.5 ${
                           col.align === "center"
                             ? "cell-center whitespace-nowrap"
-                            : "cell-wrap break-words"
+                            : col.align === "wide"
+                              ? "cell-wrap w-[520px] max-w-[520px] min-w-[360px]"
+                              : "cell-wrap max-w-[200px] min-w-[130px]"
                         }`}
-                        style={{ width: col.width }}
                       >
                         {col.key === "status" ? (
                           <StatusBadge status={ticket.status} />
