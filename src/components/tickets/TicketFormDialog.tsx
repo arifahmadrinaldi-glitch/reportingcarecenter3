@@ -49,10 +49,12 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
   const [values, setValues] = useState<TicketFormValues>(emptyTicket());
   const [openAt, setOpenAt] = useState("");
   const [closeAt, setCloseAt] = useState("");
+  const [newUpdate, setNewUpdate] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setNewUpdate("");
     if (ticket) {
       const { id: _id, deleted_at: _d, created_at: _c, updated_at: _u, ...rest } = ticket;
       setValues(rest);
@@ -78,8 +80,10 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
     try {
       const tanggalOpen = toIso(openAt);
       const tanggalClose = toIso(closeAt);
+      const note = newUpdate.trim();
       await onSubmit({
         ...values,
+        last_update: note || values.last_update,
         tanggal_open: tanggalOpen,
         tanggal_close: tanggalClose,
         durasi: computeDurasi(tanggalOpen, tanggalClose),
@@ -172,7 +176,31 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
             {selectField("Regional", "regional", REGIONAL_OPTIONS)}
             {textField("Teknisi", "teknisi")}
             {textareaField("Indikasi Gangguan", "indikasi_gangguan", 3)}
-            {textareaField("Last Update", "last_update", 3, false)}
+            {ticket ? (
+              <>
+                <div className="space-y-1.5 sm:col-span-2">
+                  {fieldLabel("Update Terakhir Tersimpan", false)}
+                  <Textarea
+                    rows={2}
+                    readOnly
+                    value={values.last_update ?? ""}
+                    className="bg-muted/60 text-muted-foreground"
+                  />
+                </div>
+                <div className="space-y-1.5 sm:col-span-2">
+                  {fieldLabel("Tambah Update Terbaru", false)}
+                  <Textarea
+                    rows={3}
+                    value={newUpdate}
+                    onChange={(e) => setNewUpdate(e.target.value)}
+                    placeholder="Tulis update terbaru… otomatis tersimpan dengan tanggal & jam"
+                    className="bg-surface"
+                  />
+                </div>
+              </>
+            ) : (
+              textareaField("Last Update", "last_update", 3, false)
+            )}
             <div className="space-y-1.5 sm:col-span-2">
               {fieldLabel("Keterangan")}
               <Input
