@@ -106,22 +106,44 @@ async function buildOpenTicketSummary(): Promise<string> {
 
   // Status summary like the dashboard (statuses with at least one ticket).
   const statusCounts = new Map<string, number>();
+  const jenisCounts = new Map<string, number>();
   for (const row of rows) {
     const status = row["status"] ?? "-";
     statusCounts.set(status, (statusCounts.get(status) ?? 0) + 1);
+    const jenis = row["jenis_ticket"] ?? "-";
+    jenisCounts.set(jenis, (jenisCounts.get(jenis) ?? 0) + 1);
   }
   const statusLines = [...statusCounts.entries()]
     .sort((a, b) => b[1] - a[1])
     .map(([name, total]) => `• ${escapeHtml(name)}: <b>${total}</b>`)
     .join("\n");
 
+  const cmTotal = jenisCounts.get("Corrective Maintenance") ?? 0;
+  const pmTotal = jenisCounts.get("Preventive Maintenance") ?? 0;
+  const jenisLines = `• CM: <b>${cmTotal}</b>\n• PM: <b>${pmTotal}</b>`;
+
   const cards = rows
     .slice(0, 15)
-    .map((row, index) => `${index + 1}. ${buildTicketMessage(asPayload(row))}`);
+    .map((row, index) => {
+      const payload = asPayload(row);
+      const jenis = escapeHtml(shortJenis(payload.jenis_ticket ?? ""));
+      const layanan = escapeHtml(payload.layanan ?? "-");
+      const regional = escapeHtml(shortRegional(payload.regional ?? ""));
+      return (
+        `<b>${index + 1}. ${escapeHtml(payload.nama_lokasi || "-")}</b>\n` +
+        `Customer: ${escapeHtml(payload.customer || "-")}\n` +
+        `Tiket: ${escapeHtml(payload.tiket_mantools || "-")}${payload.tiket_noxis ? ` / ${escapeHtml(payload.tiket_noxis)}` : ""}\n` +
+        `Status: ${escapeHtml(payload.status || "-")}\n` +
+        `Jenis: ${jenis} | ${layanan} | ${regional}\n` +
+        `Teknisi: ${escapeHtml((payload.teknisi ?? "").trim() || "-")}\n` +
+        `Update: ${escapeHtml((payload.last_update ?? "").trim() || "-")}`
+      );
+    });
   const more = rows.length > 15 ? `\n\n…dan ${rows.length - 15} tiket lainnya.` : "";
   return (
     `🎫 <b>Tiket Belum Close</b> (total ${rows.length})\n\n` +
     `${statusLines}\n\n` +
+    `${jenisLines}\n\n` +
     `${cards.join("\n\n")}${more}`
   );
 }
