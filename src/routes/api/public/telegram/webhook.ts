@@ -272,10 +272,12 @@ async function buildCariTiket(query: string): Promise<string> {
   if (rows.length === 0) return `🔍 Tiket <b>${escapeHtml(query)}</b> tidak ditemukan.`;
 
   const cards = rows.map(
-    (row) =>
-      `${buildTicketMessage(asPayload(row))}\nOpen: ${escapeHtml(fmtDate(row["tanggal_open"]))}\nClose: ${escapeHtml(fmtDate(row["tanggal_close"]))}`,
+    (row, index) =>
+      `${index + 1}. ${buildTicketMessage(asPayload(row))}\n   Open : ${escapeHtml(fmtDate(row["tanggal_open"]))}\n   Close: ${escapeHtml(fmtDate(row["tanggal_close"]))}`,
   );
-  return `🔍 <b>Hasil pencarian "${escapeHtml(query)}"</b> (${rows.length})\n\n${cards.join("\n\n")}`;
+  return mono(
+    `🔍 HASIL PENCARIAN "${escapeHtml(query)}" (${rows.length})\n\n${cards.join("\n\n")}`,
+  );
 }
 
 export const Route = createFileRoute("/api/public/telegram/webhook")({
