@@ -80,8 +80,10 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
     try {
       const tanggalOpen = toIso(openAt);
       const tanggalClose = toIso(closeAt);
+      const note = newUpdate.trim();
       await onSubmit({
         ...values,
+        last_update: note || values.last_update,
         tanggal_open: tanggalOpen,
         tanggal_close: tanggalClose,
         durasi: computeDurasi(tanggalOpen, tanggalClose),
