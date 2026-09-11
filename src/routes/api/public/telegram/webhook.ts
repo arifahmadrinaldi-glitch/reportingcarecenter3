@@ -78,7 +78,7 @@ const asPayload = (row: Row): NewTicketPayload => ({
   last_update: row["last_update"] ?? "",
 });
 
-const fmtDate = (value: string | null) => {
+const fmtDate = (value: string | null | undefined) => {
   if (!value) return "-";
   const d = new Date(value);
   if (Number.isNaN(d.getTime())) return value;
