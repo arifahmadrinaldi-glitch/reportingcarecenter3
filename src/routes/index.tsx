@@ -29,13 +29,7 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { DailyActivityDashboard } from "@/components/daily/DailyActivityDashboard";
 import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { BULAN_OPTIONS, OPEN_STATUSES, type TicketRow } from "@/lib/ticket-constants";
 
@@ -45,8 +39,7 @@ export const Route = createFileRoute("/")({
       { title: "Dashboard — Reporting CC 3" },
       {
         name: "description",
-        content:
-          "Ringkasan ticket gangguan: jumlah open, progress, pending dan close beserta ticket terbaru.",
+        content: "Ringkasan ticket gangguan: jumlah open, progress, pending dan close beserta ticket terbaru.",
       },
       { property: "og:title", content: "Dashboard — Reporting CC 3" },
       {
@@ -71,15 +64,7 @@ const CHART_COLORS = [
   "oklch(0.6 0.17 25)",
 ];
 
-function Panel({
-  title,
-  subtitle,
-  children,
-}: {
-  title: string;
-  subtitle: string;
-  children: React.ReactNode;
-}) {
+function Panel({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
   return (
     <div className="panel p-5">
       <div className="flex items-start justify-between gap-3">
@@ -94,20 +79,11 @@ function Panel({
   );
 }
 
-function DonutLegend({
-  data,
-  total,
-}: {
-  data: { name: string; value: number }[];
-  total: number;
-}) {
+function DonutLegend({ data, total }: { data: { name: string; value: number }[]; total: number }) {
   return (
     <div className="flex flex-col gap-1.5">
       {data.map((item, index) => (
-        <div
-          key={item.name}
-          className="flex items-center gap-2 rounded-md bg-muted/60 px-3 py-2 text-[10px]"
-        >
+        <div key={item.name} className="flex items-center gap-2 rounded-md bg-muted/60 px-3 py-2 text-[10px]">
           <span
             className="size-2 shrink-0 rounded-full"
             style={{ backgroundColor: CHART_COLORS[index % CHART_COLORS.length] }}
@@ -147,10 +123,7 @@ function Donut({
             stroke="none"
           >
             {(data.length ? data : [{ name: "Kosong", value: 1 }]).map((entry, index) => (
-              <Cell
-                key={entry.name}
-                fill={data.length ? CHART_COLORS[index % CHART_COLORS.length] : "var(--muted)"}
-              />
+              <Cell key={entry.name} fill={data.length ? CHART_COLORS[index % CHART_COLORS.length] : "var(--muted)"} />
             ))}
           </Pie>
           <Tooltip
@@ -166,9 +139,7 @@ function Donut({
       </ResponsiveContainer>
       <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
         <span className="text-xl font-bold">{centerValue}</span>
-        <span className="text-[9px] tracking-widest text-muted-foreground uppercase">
-          {centerLabel}
-        </span>
+        <span className="text-[9px] tracking-widest text-muted-foreground uppercase">{centerLabel}</span>
       </div>
     </div>
   );
@@ -219,8 +190,7 @@ function Index() {
   );
 
   const count = (predicate: (t: TicketRow) => boolean) => filtered.filter(predicate).length;
-  const uniqueCount = (key: "customer" | "teknisi") =>
-    new Set(filtered.map((t) => t[key]).filter(Boolean)).size;
+  const uniqueCount = (key: "customer" | "teknisi") => new Set(filtered.map((t) => t[key]).filter(Boolean)).size;
 
   const stats = [
     { label: "Total Ticket", value: filtered.length, icon: TicketIcon, tone: "primary" },
@@ -265,9 +235,7 @@ function Index() {
       if (!value) return;
       map.set(value, (map.get(value) ?? 0) + 1);
     });
-    return Array.from(map, ([name, value]) => ({ name, value })).sort(
-      (a, b) => b.value - a.value,
-    );
+    return Array.from(map, ([name, value]) => ({ name, value })).sort((a, b) => b.value - a.value);
   };
 
   const perCustomer = groupBy("customer");
@@ -299,8 +267,8 @@ function Index() {
 
   return (
     <AppShell
-      title="Dashboard Analitik"
-      subtitle="Ringkasan performa penanganan ticket gangguan"
+      title="Dashboard Analisis"
+      subtitle="Ringkasan performa penanganan ticket gangguan dan Daily Activity"
       actions={
         <Button asChild variant="outline" size="sm">
           <Link to="/tickets">
@@ -311,9 +279,7 @@ function Index() {
     >
       <div className="panel grid gap-4 p-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
         <label className="block">
-          <span className="text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">
-            Filter Bulan
-          </span>
+          <span className="text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">Filter Bulan</span>
           <Select value={bulan} onValueChange={setBulan}>
             <SelectTrigger className="mt-1.5 w-full bg-surface text-[11px]">
               <SelectValue>
@@ -332,9 +298,7 @@ function Index() {
           </Select>
         </label>
         <label className="block">
-          <span className="text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">
-            Filter Tahun
-          </span>
+          <span className="text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">Filter Tahun</span>
           <Select value={tahun} onValueChange={setTahun}>
             <SelectTrigger className="mt-1.5 w-full bg-surface text-[11px]">
               <SelectValue>
@@ -388,10 +352,7 @@ function Index() {
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <Panel
-          title="Jumlah Ticket per Customer"
-          subtitle="Urut dari terbanyak, mengikuti filter bulan & tahun"
-        >
+        <Panel title="Jumlah Ticket per Customer" subtitle="Urut dari terbanyak, mengikuti filter bulan & tahun">
           <div className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={perCustomer} layout="vertical" margin={{ left: 8, right: 16 }}>
@@ -416,10 +377,7 @@ function Index() {
           </div>
         </Panel>
 
-        <Panel
-          title="Produktivitas Open Tiket"
-          subtitle="Jumlah ticket yang dibuka per petugas (Open By)"
-        >
+        <Panel title="Produktivitas Open Tiket" subtitle="Jumlah ticket yang dibuka per petugas (Open By)">
           <div className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={perOpenBy} margin={{ left: 8, right: 16, top: 8 }}>
@@ -441,11 +399,7 @@ function Index() {
 
         <Panel title="Distribusi Ticket berdasarkan Regional" subtitle="Proporsi per regional">
           <div className="grid gap-4 md:grid-cols-2 md:items-center">
-            <Donut
-              data={perRegional}
-              centerValue={totalRegional}
-              centerLabel="Regional"
-            />
+            <Donut data={perRegional} centerValue={totalRegional} centerLabel="Regional" />
             <DonutLegend data={perRegional} total={totalRegional} />
           </div>
         </Panel>
