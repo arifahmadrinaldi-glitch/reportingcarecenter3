@@ -286,15 +286,20 @@ function TicketsPage() {
     setPage(1);
   };
 
-  const saveTicket = async (values: TicketFormValues) => {
+  const saveTicket = async (values: TicketFormValues, meta?: SaveMeta) => {
     const now = new Date().toISOString();
     if (editing) {
       const previous = parseUpdateHistory(editing.update_history);
       const note = (values.last_update ?? "").trim();
       const changed = note !== ((editing.last_update ?? "").trim());
-      const history = changed && note
-        ? [...previous, { at: now, text: note, status: values.status }]
-        : previous;
+      let history = previous;
+      if (meta?.editLastAt) {
+        // Super user memperbaiki keterangan/tanggal update terakhir yang tersimpan.
+        const entry = { at: meta.editLastAt, text: note, status: values.status };
+        history = previous.length > 0 ? [...previous.slice(0, -1), entry] : note ? [entry] : [];
+      } else if (changed && note) {
+        history = [...previous, { at: now, text: note, status: values.status }];
+      }
       const { error } = await supabase
         .from("tickets")
         .update({ ...values, last_update: note || null, update_history: history })
