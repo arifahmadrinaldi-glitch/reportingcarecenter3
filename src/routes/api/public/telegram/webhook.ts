@@ -104,9 +104,26 @@ async function buildOpenTicketSummary(): Promise<string> {
   const rows = (data ?? []) as Row[];
   if (rows.length === 0) return "✅ Tidak ada tiket yang masih open.";
 
-  const cards = rows.slice(0, 15).map((row) => buildTicketMessage(asPayload(row)));
+  // Status summary like the dashboard (statuses with at least one ticket).
+  const statusCounts = new Map<string, number>();
+  for (const row of rows) {
+    const status = row["status"] ?? "-";
+    statusCounts.set(status, (statusCounts.get(status) ?? 0) + 1);
+  }
+  const statusLines = [...statusCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, total]) => `• ${escapeHtml(name)}: <b>${total}</b>`)
+    .join("\n");
+
+  const cards = rows
+    .slice(0, 15)
+    .map((row, index) => `${index + 1}. ${buildTicketMessage(asPayload(row))}`);
   const more = rows.length > 15 ? `\n\n…dan ${rows.length - 15} tiket lainnya.` : "";
-  return `🎫 <b>Tiket Belum Close</b> (total ${rows.length})\n\n${cards.join("\n\n")}${more}`;
+  return (
+    `🎫 <b>Tiket Belum Close</b> (total ${rows.length})\n\n` +
+    `${statusLines}\n\n` +
+    `${cards.join("\n\n")}${more}`
+  );
 }
 
 /** /rekap [bulan] [tahun] — rekap tiket dalam satu bulan. */
