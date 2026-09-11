@@ -234,16 +234,17 @@ async function buildCloseToday(): Promise<string> {
 
   const rows = (data ?? []) as Row[];
   const label = fmtDate(start.toISOString()).slice(0, 10);
-  if (rows.length === 0) return `✅ <b>Tiket Close ${label}</b>\n\nBelum ada tiket yang close hari ini.`;
+  if (rows.length === 0)
+    return mono(`✅ TIKET CLOSE ${label}\n\nBelum ada tiket yang close hari ini.`);
 
   const cards = rows
     .slice(0, 15)
     .map(
-      (row) =>
-        `${buildTicketMessage(asPayload(row))}\nClose: ${escapeHtml(fmtDate(row["tanggal_close"]))}`,
+      (row, index) =>
+        `${index + 1}. ${buildTicketMessage(asPayload(row))}\n   Close: ${escapeHtml(fmtDate(row["tanggal_close"]))}`,
     );
   const more = rows.length > 15 ? `\n\n…dan ${rows.length - 15} tiket lainnya.` : "";
-  return `✅ <b>Tiket Close ${label}</b> (total ${rows.length})\n\n${cards.join("\n\n")}${more}`;
+  return mono(`✅ TIKET CLOSE ${label} (total ${rows.length})\n\n${cards.join("\n\n")}${more}`);
 }
 
 /** /caritiket <kode> — cari tiket berdasarkan kode mantools / noxis / lokasi. */
