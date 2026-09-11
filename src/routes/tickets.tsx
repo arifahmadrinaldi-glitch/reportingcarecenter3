@@ -329,6 +329,8 @@ function TicketsPage() {
             regional: values.regional ?? "",
             indikasi_gangguan: values.indikasi_gangguan ?? "",
             open_by: values.open_by ?? "",
+            teknisi: values.teknisi ?? "",
+            last_update: values.last_update ?? "",
           },
         });
         if (result?.sent) toast.success("Notifikasi Telegram terkirim");
