@@ -554,7 +554,7 @@ function TicketsPage() {
             <thead>
               <tr className="border-b border-border bg-muted/60">
                 {isAdmin ? (
-                <th className="cell-center px-1 py-1.5" style={{ width: "2%" }}>
+                <th className="cell-center w-8 px-1.5 py-2">
                   <Checkbox
                     checked={allPageSelected}
                     onCheckedChange={(checked) =>
@@ -568,19 +568,18 @@ function TicketsPage() {
                   />
                 </th>
                 ) : null}
-                <th className="cell-center px-1 py-1.5 text-[10px] font-bold tracking-wide uppercase" style={{ width: "3%" }}>
+                <th className="cell-center w-10 px-1.5 py-2 text-[10px] font-bold tracking-wide uppercase">
                   Nomor
                 </th>
-                <th className="cell-center px-1 py-1.5 text-[10px] font-bold tracking-wide uppercase" style={{ width: "4%" }}>
+                <th className="cell-center w-16 px-1.5 py-2 text-[10px] font-bold tracking-wide uppercase">
                   Aksi
                 </th>
                 {columns.map((col) => (
                   <th
                     key={col.key}
-                    className={`px-1 py-1.5 text-[10px] font-bold tracking-wide whitespace-nowrap uppercase ${
+                    className={`px-2 py-2 text-[10px] font-bold tracking-wide whitespace-nowrap uppercase ${
                       col.align === "center" ? "cell-center" : "text-left"
                     }`}
-                    style={{ width: col.width }}
                   >
                     {col.label}
                   </th>
@@ -610,7 +609,7 @@ function TicketsPage() {
                     className="border-b border-border last:border-0 hover:bg-muted/40"
                   >
                     {isAdmin ? (
-                    <td className="cell-center px-1 py-1" style={{ width: "2%" }}>
+                    <td className="cell-center px-1.5 py-1.5">
                       <Checkbox
                         checked={selected.includes(ticket.id)}
                         onCheckedChange={(checked) =>
@@ -624,10 +623,10 @@ function TicketsPage() {
                       />
                     </td>
                     ) : null}
-                    <td className="cell-center px-1 py-1 font-semibold" style={{ width: "3%" }}>
+                    <td className="cell-center px-1.5 py-1.5 font-semibold">
                       {(currentPage - 1) * perPage + index + 1}
                     </td>
-                    <td className="cell-center px-1 py-1" style={{ width: "4%" }}>
+                    <td className="cell-center px-1.5 py-1.5">
                       <div className="flex items-center justify-center gap-0.5">
                         <Button
                           variant="ghost"
@@ -646,12 +645,13 @@ function TicketsPage() {
                     {columns.map((col) => (
                       <td
                         key={col.key}
-                        className={`px-1 py-1 ${
+                        className={`px-2 py-1.5 ${
                           col.align === "center"
                             ? "cell-center whitespace-nowrap"
-                            : "cell-wrap break-words"
+                            : col.align === "wide"
+                              ? "cell-wrap w-[520px] max-w-[520px] min-w-[360px]"
+                              : "cell-wrap max-w-[200px] min-w-[130px]"
                         }`}
-                        style={{ width: col.width }}
                       >
                         {col.key === "status" ? (
                           <StatusBadge status={ticket.status} />
