@@ -30,8 +30,12 @@ export const shortJenis = (value: string) => {
 /** "Regional 2" -> "Reg 2". */
 export const shortRegional = (value: string) => value.replace(/^regional\s*/i, "Reg ");
 
+/** Wrap a report body in a monospace block so tree characters line up neatly. */
+export const mono = (body: string) => `<pre>${body}</pre>`;
+
 /**
  * Standard ticket card used both for new-ticket notifications and bot replies.
+ * Plain text (already HTML-escaped) so it can live inside a <pre> block.
  */
 export function buildTicketMessage(ticket: NewTicketPayload) {
   const jenisLine = [
@@ -49,7 +53,7 @@ export function buildTicketMessage(ticket: NewTicketPayload) {
     .join(" / ");
 
   return (
-    `<b>${escapeHtml(ticket.nama_lokasi || "-")}</b>\n` +
+    `${escapeHtml(ticket.nama_lokasi || "-")}\n` +
     `├ Customer: ${escapeHtml(ticket.customer || "-")}\n` +
     `├ Tiket: ${escapeHtml(tiket || "-")}\n` +
     `├ Status: ${escapeHtml(ticket.status || "-")}\n` +
@@ -108,7 +112,7 @@ export async function sendTelegramTicket(
       },
       body: JSON.stringify({
         chat_id: chatId,
-        text: buildTicketMessage(ticket),
+        text: mono(`TIKET BARU\n\n${buildTicketMessage(ticket)}`),
         parse_mode: "HTML",
       }),
     });

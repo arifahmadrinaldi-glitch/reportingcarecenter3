@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { createHash, timingSafeEqual } from "crypto";
 
-import { buildTicketMessage, shortJenis, shortRegional, type NewTicketPayload } from "@/lib/telegram.server";
+import { buildTicketMessage, mono, shortJenis, shortRegional, type NewTicketPayload } from "@/lib/telegram.server";
 
 const CLOSED_STATUSES = ["Close", "Technical Close"];
 
@@ -115,40 +115,38 @@ async function buildOpenTicketSummary(): Promise<string> {
   }
   const statusLines = [...statusCounts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .map(([name, total]) => `• ${escapeHtml(name)}: <b>${total}</b>`)
+    .map(([name, total]) => `• ${escapeHtml(name)}: ${total}`)
     .join("\n");
 
   const cmTotal = jenisCounts.get("Corrective Maintenance") ?? 0;
   const pmTotal = jenisCounts.get("Preventive Maintenance") ?? 0;
-  const jenisLines = `• CM: <b>${cmTotal}</b>\n• PM: <b>${pmTotal}</b>`;
+  const jenisLines = `• CM: ${cmTotal}\n• PM: ${pmTotal}`;
 
-  const cards = rows
-    .slice(0, 15)
-    .map((row, index) => {
-      const payload = asPayload(row);
-      const jenis = escapeHtml(shortJenis(payload.jenis_ticket ?? ""));
-      const layanan = escapeHtml(payload.layanan ?? "-");
-      const regional = escapeHtml(shortRegional(payload.regional ?? ""));
-      const tiket = [payload.tiket_mantools, payload.tiket_noxis]
-        .map((part) => (part ?? "").trim())
-        .filter(Boolean)
-        .join(" / ");
-      return (
-        `<b>${index + 1}. ${escapeHtml(payload.nama_lokasi || "-")}</b>\n` +
-        `├ Customer: ${escapeHtml(payload.customer || "-")}\n` +
-        `├ Tiket: ${escapeHtml(tiket || "-")}\n` +
-        `├ Status: ${escapeHtml(payload.status || "-")}\n` +
-        `├ Jenis: ${jenis} | ${layanan} | ${regional}\n` +
-        `├ Teknisi: ${escapeHtml((payload.teknisi ?? "").trim() || "-")}\n` +
-        `└ Update: ${escapeHtml((payload.last_update ?? "").trim() || "-")}`
-      );
-    });
+  const cards = rows.slice(0, 15).map((row, index) => {
+    const payload = asPayload(row);
+    const jenis = escapeHtml(shortJenis(payload.jenis_ticket ?? ""));
+    const layanan = escapeHtml(payload.layanan ?? "-");
+    const regional = escapeHtml(shortRegional(payload.regional ?? ""));
+    const tiket = [payload.tiket_mantools, payload.tiket_noxis]
+      .map((part) => (part ?? "").trim())
+      .filter(Boolean)
+      .join(" / ");
+    return (
+      `${index + 1}. ${escapeHtml(payload.nama_lokasi || "-")}\n` +
+      `├ Customer: ${escapeHtml(payload.customer || "-")}\n` +
+      `├ Tiket: ${escapeHtml(tiket || "-")}\n` +
+      `├ Status: ${escapeHtml(payload.status || "-")}\n` +
+      `├ Jenis: ${jenis} | ${layanan} | ${regional}\n` +
+      `├ Teknisi: ${escapeHtml((payload.teknisi ?? "").trim() || "-")}\n` +
+      `└ Update: ${escapeHtml((payload.last_update ?? "").trim() || "-")}`
+    );
+  });
   const more = rows.length > 15 ? `\n\n…dan ${rows.length - 15} tiket lainnya.` : "";
-  return (
-    `🎫 <b>Tiket Belum Close</b> (total ${rows.length})\n\n` +
-    `${statusLines}\n\n` +
-    `${jenisLines}\n\n` +
-    `${cards.join("\n\n")}${more}`
+  return mono(
+    `🎫 TIKET BELUM CLOSE (total ${rows.length})\n\n` +
+      `${statusLines}\n\n` +
+      `${jenisLines}\n\n` +
+      `${cards.join("\n\n")}${more}`,
   );
 }
 
@@ -188,7 +186,7 @@ async function buildRekap(args: string[]): Promise<string> {
 
   const rows = (data ?? []) as Row[];
   const label = `${BULAN[monthIndex]} ${year}`;
-  if (rows.length === 0) return `📊 <b>Rekap ${escapeHtml(label)}</b>\n\nTidak ada tiket.`;
+  if (rows.length === 0) return mono(`📊 REKAP ${escapeHtml(label).toUpperCase()}\n\nTidak ada tiket.`);
 
   const tally = (key: string) => {
     const counts = new Map<string, number>();
@@ -198,19 +196,19 @@ async function buildRekap(args: string[]): Promise<string> {
     }
     return [...counts.entries()]
       .sort((a, b) => b[1] - a[1])
-      .map(([name, total]) => `• ${escapeHtml(name)}: <b>${total}</b>`)
+      .map(([name, total]) => `• ${escapeHtml(name)}: ${total}`)
       .join("\n");
   };
 
   const closed = rows.filter((r) => CLOSED_STATUSES.includes(r["status"] ?? "")).length;
   const open = rows.length - closed;
 
-  return (
-    `📊 <b>Rekap ${escapeHtml(label)}</b>\n\n` +
-    `Total tiket: <b>${rows.length}</b>\nClose: <b>${closed}</b>\nBelum close: <b>${open}</b>\n\n` +
-    `<b>Per Status</b>\n${tally("status")}\n\n` +
-    `<b>Per Layanan</b>\n${tally("layanan")}\n\n` +
-    `<b>Per Regional</b>\n${tally("regional")}`
+  return mono(
+    `📊 REKAP ${escapeHtml(label).toUpperCase()}\n\n` +
+      `Total tiket : ${rows.length}\nClose       : ${closed}\nBelum close : ${open}\n\n` +
+      `Per Status\n${tally("status")}\n\n` +
+      `Per Layanan\n${tally("layanan")}\n\n` +
+      `Per Regional\n${tally("regional")}`,
   );
 }
 
@@ -236,16 +234,17 @@ async function buildCloseToday(): Promise<string> {
 
   const rows = (data ?? []) as Row[];
   const label = fmtDate(start.toISOString()).slice(0, 10);
-  if (rows.length === 0) return `✅ <b>Tiket Close ${label}</b>\n\nBelum ada tiket yang close hari ini.`;
+  if (rows.length === 0)
+    return mono(`✅ TIKET CLOSE ${label}\n\nBelum ada tiket yang close hari ini.`);
 
   const cards = rows
     .slice(0, 15)
     .map(
-      (row) =>
-        `${buildTicketMessage(asPayload(row))}\nClose: ${escapeHtml(fmtDate(row["tanggal_close"]))}`,
+      (row, index) =>
+        `${index + 1}. ${buildTicketMessage(asPayload(row))}\n   Close: ${escapeHtml(fmtDate(row["tanggal_close"]))}`,
     );
   const more = rows.length > 15 ? `\n\n…dan ${rows.length - 15} tiket lainnya.` : "";
-  return `✅ <b>Tiket Close ${label}</b> (total ${rows.length})\n\n${cards.join("\n\n")}${more}`;
+  return mono(`✅ TIKET CLOSE ${label} (total ${rows.length})\n\n${cards.join("\n\n")}${more}`);
 }
 
 /** /caritiket <kode> — cari tiket berdasarkan kode mantools / noxis / lokasi. */
@@ -273,10 +272,12 @@ async function buildCariTiket(query: string): Promise<string> {
   if (rows.length === 0) return `🔍 Tiket <b>${escapeHtml(query)}</b> tidak ditemukan.`;
 
   const cards = rows.map(
-    (row) =>
-      `${buildTicketMessage(asPayload(row))}\nOpen: ${escapeHtml(fmtDate(row["tanggal_open"]))}\nClose: ${escapeHtml(fmtDate(row["tanggal_close"]))}`,
+    (row, index) =>
+      `${index + 1}. ${buildTicketMessage(asPayload(row))}\n   Open : ${escapeHtml(fmtDate(row["tanggal_open"]))}\n   Close: ${escapeHtml(fmtDate(row["tanggal_close"]))}`,
   );
-  return `🔍 <b>Hasil pencarian "${escapeHtml(query)}"</b> (${rows.length})\n\n${cards.join("\n\n")}`;
+  return mono(
+    `🔍 HASIL PENCARIAN "${escapeHtml(query)}" (${rows.length})\n\n${cards.join("\n\n")}`,
+  );
 }
 
 export const Route = createFileRoute("/api/public/telegram/webhook")({
