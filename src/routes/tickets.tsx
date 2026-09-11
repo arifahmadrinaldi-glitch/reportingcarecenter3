@@ -670,6 +670,15 @@ function TicketsPage() {
                           >
                             {ticket.nama_lokasi ?? "-"}
                           </button>
+                        ) : col.key === "update_history" ? (
+                          <button
+                            type="button"
+                            onClick={() => setDetail(ticket)}
+                            className="whitespace-nowrap font-medium text-primary hover:underline"
+                            title="Lihat semua riwayat update"
+                          >
+                            {lastUpdateAt(ticket)}
+                          </button>
                         ) : (
                           cellValue(ticket, col.key)
                         )}
