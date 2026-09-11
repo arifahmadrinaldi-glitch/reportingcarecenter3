@@ -93,6 +93,7 @@ const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
   { key: "regional", label: "Regional", align: "center" },
   { key: "indikasi_gangguan", label: "Indikasi Gangguan", align: "wrap" },
   { key: "last_update", label: "Last Update", align: "wide" },
+  { key: "update_history", label: "Waktu Update", align: "center" },
   { key: "team_sem", label: "Team SEM", align: "center" },
   { key: "open_by", label: "Open By", align: "center" },
   { key: "tanggal_open", label: "Tanggal Open", align: "center" },
