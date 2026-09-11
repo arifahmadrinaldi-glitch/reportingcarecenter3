@@ -31,25 +31,31 @@ import {
   TEAM_SEM_OPTIONS,
   computeDurasi,
   emptyTicket,
+  parseUpdateHistory,
   toInputDateTime,
   type TicketFormValues,
   type TicketRow,
 } from "@/lib/ticket-constants";
+import { useAccess } from "@/lib/app-access";
+
+export type SaveMeta = { editLastAt?: string | null };
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ticket: TicketRow | null;
-  onSubmit: (values: TicketFormValues) => Promise<void>;
+  onSubmit: (values: TicketFormValues, meta?: SaveMeta) => Promise<void>;
 };
 
 const toIso = (value: string) => (value ? new Date(value).toISOString() : null);
 
 export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props) {
+  const { isAdmin } = useAccess();
   const [values, setValues] = useState<TicketFormValues>(emptyTicket());
   const [openAt, setOpenAt] = useState("");
   const [closeAt, setCloseAt] = useState("");
   const [newUpdate, setNewUpdate] = useState("");
+  const [lastUpdateAt, setLastUpdateAt] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -60,10 +66,14 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
       setValues(rest);
       setOpenAt(toInputDateTime(ticket.tanggal_open));
       setCloseAt(toInputDateTime(ticket.tanggal_close));
+      const history = parseUpdateHistory(ticket.update_history);
+      const latest = history[history.length - 1];
+      setLastUpdateAt(toInputDateTime(latest?.at ?? ticket.updated_at));
     } else {
       setValues(emptyTicket());
       setOpenAt(toInputDateTime(new Date().toISOString()));
       setCloseAt("");
+      setLastUpdateAt("");
     }
   }, [open, ticket]);
 
@@ -81,13 +91,16 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
       const tanggalOpen = toIso(openAt);
       const tanggalClose = toIso(closeAt);
       const note = newUpdate.trim();
-      await onSubmit({
-        ...values,
-        last_update: note || values.last_update,
-        tanggal_open: tanggalOpen,
-        tanggal_close: tanggalClose,
-        durasi: computeDurasi(tanggalOpen, tanggalClose),
-      });
+      await onSubmit(
+        {
+          ...values,
+          last_update: note || values.last_update,
+          tanggal_open: tanggalOpen,
+          tanggal_close: tanggalClose,
+          durasi: computeDurasi(tanggalOpen, tanggalClose),
+        },
+        note ? {} : { editLastAt: isAdmin && ticket ? toIso(lastUpdateAt) : null },
+      );
       onOpenChange(false);
     } finally {
       setSaving(false);
