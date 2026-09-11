@@ -129,14 +129,18 @@ async function buildOpenTicketSummary(): Promise<string> {
       const jenis = escapeHtml(shortJenis(payload.jenis_ticket ?? ""));
       const layanan = escapeHtml(payload.layanan ?? "-");
       const regional = escapeHtml(shortRegional(payload.regional ?? ""));
+      const tiket = [payload.tiket_mantools, payload.tiket_noxis]
+        .map((part) => (part ?? "").trim())
+        .filter(Boolean)
+        .join(" / ");
       return (
         `<b>${index + 1}. ${escapeHtml(payload.nama_lokasi || "-")}</b>\n` +
-        `Customer: ${escapeHtml(payload.customer || "-")}\n` +
-        `Tiket: ${escapeHtml(payload.tiket_mantools || "-")}${payload.tiket_noxis ? ` / ${escapeHtml(payload.tiket_noxis)}` : ""}\n` +
-        `Status: ${escapeHtml(payload.status || "-")}\n` +
-        `Jenis: ${jenis} | ${layanan} | ${regional}\n` +
-        `Teknisi: ${escapeHtml((payload.teknisi ?? "").trim() || "-")}\n` +
-        `Update: ${escapeHtml((payload.last_update ?? "").trim() || "-")}`
+        `├ Customer: ${escapeHtml(payload.customer || "-")}\n` +
+        `├ Tiket: ${escapeHtml(tiket || "-")}\n` +
+        `├ Status: ${escapeHtml(payload.status || "-")}\n` +
+        `├ Jenis: ${jenis} | ${layanan} | ${regional}\n` +
+        `├ Teknisi: ${escapeHtml((payload.teknisi ?? "").trim() || "-")}\n` +
+        `└ Update: ${escapeHtml((payload.last_update ?? "").trim() || "-")}`
       );
     });
   const more = rows.length > 15 ? `\n\n…dan ${rows.length - 15} tiket lainnya.` : "";

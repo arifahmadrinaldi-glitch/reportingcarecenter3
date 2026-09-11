@@ -50,12 +50,12 @@ export function buildTicketMessage(ticket: NewTicketPayload) {
 
   return (
     `<b>${escapeHtml(ticket.nama_lokasi || "-")}</b>\n` +
-    `Customer: ${escapeHtml(ticket.customer || "-")}\n` +
-    `Tiket: ${escapeHtml(tiket || "-")}\n` +
-    `Status: ${escapeHtml(ticket.status || "-")}\n` +
-    `Jenis: ${escapeHtml(jenisLine || "-")}\n` +
-    `Teknisi : ${escapeHtml((ticket.teknisi ?? "").trim() || "-")}\n` +
-    `Update: ${escapeHtml((ticket.last_update ?? "").trim() || "-")}`
+    `├ Customer: ${escapeHtml(ticket.customer || "-")}\n` +
+    `├ Tiket: ${escapeHtml(tiket || "-")}\n` +
+    `├ Status: ${escapeHtml(ticket.status || "-")}\n` +
+    `├ Jenis: ${escapeHtml(jenisLine || "-")}\n` +
+    `├ Teknisi: ${escapeHtml((ticket.teknisi ?? "").trim() || "-")}\n` +
+    `└ Update: ${escapeHtml((ticket.last_update ?? "").trim() || "-")}`
   );
 }
 
