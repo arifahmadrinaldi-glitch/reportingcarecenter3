@@ -11,27 +11,51 @@ export type NewTicketPayload = {
   regional: string;
   indikasi_gangguan: string;
   open_by: string;
+  teknisi?: string;
+  last_update?: string;
 };
 
 const escapeHtml = (value: string) =>
   value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-const line = (label: string, value: string) =>
-  value ? `<b>${label}:</b> ${escapeHtml(value)}\n` : "";
+/** "Corrective Maintenance" -> "CM", "Preventive Maintenance" -> "PM". */
+export const shortJenis = (value: string) => {
+  if (/^corrective/i.test(value)) return "CM";
+  if (/^preventive/i.test(value)) return "PM";
+  if (/^instalasi/i.test(value)) return "INS";
+  if (/^relokasi/i.test(value)) return "RLK";
+  return value;
+};
 
+/** "Regional 2" -> "Reg 2". */
+export const shortRegional = (value: string) => value.replace(/^regional\s*/i, "Reg ");
+
+/**
+ * Standard ticket card used both for new-ticket notifications and bot replies.
+ */
 export function buildTicketMessage(ticket: NewTicketPayload) {
+  const jenisLine = [
+    shortJenis(ticket.jenis_ticket ?? ""),
+    ticket.layanan ?? "",
+    shortRegional(ticket.regional ?? ""),
+  ]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join(" | ");
+
+  const tiket = [ticket.tiket_mantools, ticket.tiket_noxis]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" / ");
+
   return (
-    `🎫 <b>Ticket Baru</b>\n\n` +
-    line("Status", ticket.status) +
-    line("Customer", ticket.customer) +
-    line("Nama Lokasi", ticket.nama_lokasi) +
-    line("Tiket Mantools", ticket.tiket_mantools) +
-    line("Tiket Noxis", ticket.tiket_noxis) +
-    line("Layanan", ticket.layanan) +
-    line("Jenis Ticket", ticket.jenis_ticket) +
-    line("Regional", ticket.regional) +
-    line("Indikasi Gangguan", ticket.indikasi_gangguan) +
-    line("Open By", ticket.open_by)
+    `<b>${escapeHtml(ticket.nama_lokasi || "-")}</b>\n` +
+    `Customer: ${escapeHtml(ticket.customer || "-")}\n` +
+    `Tiket: ${escapeHtml(tiket || "-")}\n` +
+    `Status: ${escapeHtml(ticket.status || "-")}\n` +
+    `Jenis: ${escapeHtml(jenisLine || "-")}\n` +
+    `Teknisi : ${escapeHtml((ticket.teknisi ?? "").trim() || "-")}\n` +
+    `Update: ${escapeHtml((ticket.last_update ?? "").trim() || "-")}`
   );
 }
 
