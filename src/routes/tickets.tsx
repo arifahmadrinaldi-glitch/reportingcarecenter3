@@ -102,10 +102,19 @@ const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
   { key: "teknisi", label: "Teknisi", align: "center" },
 ];
 
+/** Waktu update terakhir dari riwayat update tiket. */
+const lastUpdateAt = (ticket: TicketRow) => {
+  const history = parseUpdateHistory(ticket.update_history);
+  if (history.length === 0) return "-";
+  const latest = history.reduce((a, b) => (a.at > b.at ? a : b));
+  return formatDateTime(latest.at);
+};
+
 const cellValue = (ticket: TicketRow, key: keyof TicketRow) => {
   if (key === "tanggal_open" || key === "tanggal_close") {
     return formatDateTime(ticket[key] as string | null);
   }
+  if (key === "update_history") return lastUpdateAt(ticket);
   const value = ticket[key];
   return value ? String(value) : "-";
 };
