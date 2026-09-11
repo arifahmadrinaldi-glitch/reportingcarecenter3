@@ -112,7 +112,7 @@ export async function sendTelegramTicket(
       },
       body: JSON.stringify({
         chat_id: chatId,
-        text: buildTicketMessage(ticket),
+        text: mono(`TIKET BARU\n\n${buildTicketMessage(ticket)}`),
         parse_mode: "HTML",
       }),
     });
