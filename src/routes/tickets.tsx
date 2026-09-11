@@ -80,25 +80,25 @@ export const Route = createFileRoute("/tickets")({
 
 type Align = "center" | "wrap" | "wide";
 
-const columns: { key: keyof TicketRow; label: string; align: Align; width: string }[] = [
-  { key: "status", label: "Status", align: "center", width: "4.5%" },
-  { key: "keterangan", label: "Keterangan", align: "wrap", width: "4.5%" },
-  { key: "customer", label: "Customer", align: "wrap", width: "4.5%" },
-  { key: "nama_lokasi", label: "Nama Lokasi", align: "wrap", width: "6.5%" },
-  { key: "tiket_mantools", label: "Tiket Mantools", align: "center", width: "4.5%" },
-  { key: "tiket_noxis", label: "Tiket Noxis", align: "center", width: "4.5%" },
-  { key: "layanan", label: "Layanan", align: "center", width: "4%" },
-  { key: "jenis_ticket", label: "Jenis Ticket", align: "center", width: "3%" },
-  { key: "asal_gangguan", label: "Asal Gangguan", align: "center", width: "4%" },
-  { key: "regional", label: "Regional", align: "center", width: "3%" },
-  { key: "indikasi_gangguan", label: "Indikasi Gangguan", align: "wrap", width: "4.5%" },
-  { key: "last_update", label: "Last Update", align: "wide", width: "20%" },
-  { key: "team_sem", label: "Team SEM", align: "center", width: "4.5%" },
-  { key: "open_by", label: "Open By", align: "center", width: "3%" },
-  { key: "tanggal_open", label: "Tanggal Open", align: "center", width: "4%" },
-  { key: "tanggal_close", label: "Tanggal Close", align: "center", width: "4%" },
-  { key: "durasi", label: "Durasi", align: "center", width: "4%" },
-  { key: "teknisi", label: "Teknisi", align: "center", width: "4%" },
+const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
+  { key: "status", label: "Status", align: "center" },
+  { key: "keterangan", label: "Keterangan", align: "wrap" },
+  { key: "customer", label: "Customer", align: "wrap" },
+  { key: "nama_lokasi", label: "Nama Lokasi", align: "wrap" },
+  { key: "tiket_mantools", label: "Tiket Mantools", align: "center" },
+  { key: "tiket_noxis", label: "Tiket Noxis", align: "center" },
+  { key: "layanan", label: "Layanan", align: "center" },
+  { key: "jenis_ticket", label: "Jenis Ticket", align: "center" },
+  { key: "asal_gangguan", label: "Asal Gangguan", align: "center" },
+  { key: "regional", label: "Regional", align: "center" },
+  { key: "indikasi_gangguan", label: "Indikasi Gangguan", align: "wrap" },
+  { key: "last_update", label: "Last Update", align: "wide" },
+  { key: "team_sem", label: "Team SEM", align: "center" },
+  { key: "open_by", label: "Open By", align: "center" },
+  { key: "tanggal_open", label: "Tanggal Open", align: "center" },
+  { key: "tanggal_close", label: "Tanggal Close", align: "center" },
+  { key: "durasi", label: "Durasi", align: "center" },
+  { key: "teknisi", label: "Teknisi", align: "center" },
 ];
 
 const cellValue = (ticket: TicketRow, key: keyof TicketRow) => {
