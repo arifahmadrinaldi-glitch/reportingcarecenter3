@@ -51,7 +51,6 @@ import {
   REGIONAL_OPTIONS,
   STATUS_OPTIONS,
   formatDateTime,
-  parseUpdateHistory,
   type TicketFormValues,
   type TicketRow,
 } from "@/lib/ticket-constants";
@@ -93,7 +92,6 @@ const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
   { key: "regional", label: "Regional", align: "center" },
   { key: "indikasi_gangguan", label: "Indikasi Gangguan", align: "wrap" },
   { key: "last_update", label: "Last Update", align: "wide" },
-  { key: "update_history", label: "Waktu Update", align: "center" },
   { key: "team_sem", label: "Team SEM", align: "center" },
   { key: "open_by", label: "Open By", align: "center" },
   { key: "tanggal_open", label: "Tanggal Open", align: "center" },
@@ -102,19 +100,10 @@ const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
   { key: "teknisi", label: "Teknisi", align: "center" },
 ];
 
-/** Waktu update terakhir dari riwayat update tiket. */
-const lastUpdateAt = (ticket: TicketRow) => {
-  const history = parseUpdateHistory(ticket.update_history);
-  if (history.length === 0) return "-";
-  const latest = history.reduce((a, b) => (a.at > b.at ? a : b));
-  return formatDateTime(latest.at);
-};
-
 const cellValue = (ticket: TicketRow, key: keyof TicketRow) => {
   if (key === "tanggal_open" || key === "tanggal_close") {
     return formatDateTime(ticket[key] as string | null);
   }
-  if (key === "update_history") return lastUpdateAt(ticket);
   const value = ticket[key];
   return value ? String(value) : "-";
 };
@@ -674,15 +663,6 @@ function TicketsPage() {
                             className="text-left font-medium text-primary hover:underline"
                           >
                             {ticket.nama_lokasi ?? "-"}
-                          </button>
-                        ) : col.key === "update_history" ? (
-                          <button
-                            type="button"
-                            onClick={() => setDetail(ticket)}
-                            className="whitespace-nowrap font-medium text-primary hover:underline"
-                            title="Lihat semua riwayat update"
-                          >
-                            {lastUpdateAt(ticket)}
                           </button>
                         ) : (
                           cellValue(ticket, col.key)
