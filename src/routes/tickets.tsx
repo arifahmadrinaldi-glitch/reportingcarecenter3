@@ -18,7 +18,7 @@ import { JenisBadge } from "@/components/tickets/JenisBadge";
 import { RollbackDialog } from "@/components/tickets/RollbackDialog";
 import { StatusBadge } from "@/components/tickets/StatusBadge";
 import { TicketDetailDialog } from "@/components/tickets/TicketDetailDialog";
-import { TicketFormDialog } from "@/components/tickets/TicketFormDialog";
+import { TicketFormDialog, type SaveMeta } from "@/components/tickets/TicketFormDialog";
 import {
   AlertDialog,
   AlertDialogAction,
