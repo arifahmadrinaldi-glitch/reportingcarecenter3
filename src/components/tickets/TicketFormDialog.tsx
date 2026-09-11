@@ -49,10 +49,12 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
   const [values, setValues] = useState<TicketFormValues>(emptyTicket());
   const [openAt, setOpenAt] = useState("");
   const [closeAt, setCloseAt] = useState("");
+  const [newUpdate, setNewUpdate] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (!open) return;
+    setNewUpdate("");
     if (ticket) {
       const { id: _id, deleted_at: _d, created_at: _c, updated_at: _u, ...rest } = ticket;
       setValues(rest);
