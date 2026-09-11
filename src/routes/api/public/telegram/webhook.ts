@@ -94,6 +94,7 @@ async function buildOpenTicketSummary(): Promise<string> {
     .is("deleted_at", null)
     .not("status", "in", '("Close","Technical Close")')
     .order("created_at", { ascending: true })
+    .order("id", { ascending: true })
     .limit(40);
 
   if (error) {
