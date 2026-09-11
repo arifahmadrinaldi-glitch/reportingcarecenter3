@@ -186,7 +186,7 @@ async function buildRekap(args: string[]): Promise<string> {
 
   const rows = (data ?? []) as Row[];
   const label = `${BULAN[monthIndex]} ${year}`;
-  if (rows.length === 0) return `📊 <b>Rekap ${escapeHtml(label)}</b>\n\nTidak ada tiket.`;
+  if (rows.length === 0) return mono(`📊 REKAP ${escapeHtml(label).toUpperCase()}\n\nTidak ada tiket.`);
 
   const tally = (key: string) => {
     const counts = new Map<string, number>();
@@ -196,19 +196,19 @@ async function buildRekap(args: string[]): Promise<string> {
     }
     return [...counts.entries()]
       .sort((a, b) => b[1] - a[1])
-      .map(([name, total]) => `• ${escapeHtml(name)}: <b>${total}</b>`)
+      .map(([name, total]) => `• ${escapeHtml(name)}: ${total}`)
       .join("\n");
   };
 
   const closed = rows.filter((r) => CLOSED_STATUSES.includes(r["status"] ?? "")).length;
   const open = rows.length - closed;
 
-  return (
-    `📊 <b>Rekap ${escapeHtml(label)}</b>\n\n` +
-    `Total tiket: <b>${rows.length}</b>\nClose: <b>${closed}</b>\nBelum close: <b>${open}</b>\n\n` +
-    `<b>Per Status</b>\n${tally("status")}\n\n` +
-    `<b>Per Layanan</b>\n${tally("layanan")}\n\n` +
-    `<b>Per Regional</b>\n${tally("regional")}`
+  return mono(
+    `📊 REKAP ${escapeHtml(label).toUpperCase()}\n\n` +
+      `Total tiket : ${rows.length}\nClose       : ${closed}\nBelum close : ${open}\n\n` +
+      `Per Status\n${tally("status")}\n\n` +
+      `Per Layanan\n${tally("layanan")}\n\n` +
+      `Per Regional\n${tally("regional")}`,
   );
 }
 
