@@ -51,6 +51,7 @@ import {
   REGIONAL_OPTIONS,
   STATUS_OPTIONS,
   formatDateTime,
+  parseUpdateHistory,
   type TicketFormValues,
   type TicketRow,
 } from "@/lib/ticket-constants";
