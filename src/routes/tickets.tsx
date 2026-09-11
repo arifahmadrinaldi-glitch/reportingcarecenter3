@@ -550,7 +550,7 @@ function TicketsPage() {
         </div>
 
         <div className="mt-4 overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-full table-fixed border-collapse text-[11px] leading-tight">
+          <table className="w-full min-w-[1500px] border-collapse text-[11px] leading-tight">
             <thead>
               <tr className="border-b border-border bg-muted/60">
                 {isAdmin ? (
