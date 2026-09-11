@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { createHash, timingSafeEqual } from "crypto";
 
-import { buildTicketMessage, type NewTicketPayload } from "@/lib/telegram.server";
+import { buildTicketMessage, shortJenis, shortRegional, type NewTicketPayload } from "@/lib/telegram.server";
 
 const CLOSED_STATUSES = ["Close", "Technical Close"];
 
