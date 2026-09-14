@@ -1,6 +1,9 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
+  CheckCircle2,
+  Clock3,
+  PackageOpen,
   FileSpreadsheet,
   History,
   Upload,
@@ -9,6 +12,7 @@ import {
   RefreshCw,
   Search,
   Trash2,
+  Tickets,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -116,6 +120,37 @@ function Subline({ label, value }: { label: string; value: string | null | undef
     </span>
   );
 }
+
+const summaryCards = [
+  {
+    label: "Total Ticket",
+    status: null,
+    icon: Tickets,
+    tone: "primary",
+    note: "ticket dalam hasil filter",
+  },
+  {
+    label: "Pending Transport",
+    status: "Pending Transport",
+    icon: Clock3,
+    tone: "warning",
+    note: "menunggu transportasi",
+  },
+  {
+    label: "Pending Spare",
+    status: "Pending Spare",
+    icon: PackageOpen,
+    tone: "purple",
+    note: "menunggu suku cadang",
+  },
+  {
+    label: "Technical Close",
+    status: "Technical Close",
+    icon: CheckCircle2,
+    tone: "success",
+    note: "siap ditutup",
+  },
+] as const;
 
 function TicketsPage() {
   const queryClient = useQueryClient();
@@ -459,7 +494,44 @@ function TicketsPage() {
 
   return (
     <AppShell title="Daftar Ticket" subtitle="Data ticket gangguan tersinkron realtime">
-      <div className="panel p-4 md:p-5">
+      <section className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan ticket">
+        {summaryCards.map((card) => {
+          const value = card.status
+            ? filtered.filter((ticket) => ticket.status === card.status).length
+            : filtered.length;
+          const Icon = card.icon;
+          const toneClass =
+            card.tone === "warning"
+              ? "border-warning/35 bg-warning/5 text-warning"
+              : card.tone === "purple"
+                ? "border-status-purple/35 bg-status-purple/5 text-status-purple"
+                : card.tone === "success"
+                  ? "border-success/35 bg-success/5 text-success"
+                  : "border-ops-blue/35 bg-ops-blue/5 text-ops-blue";
+
+          return (
+            <article
+              key={card.label}
+              className={`group relative min-h-28 overflow-hidden rounded-lg border bg-surface p-4 shadow-panel transition-transform hover:-translate-y-0.5 ${toneClass}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <h2 className="text-[10px] font-bold tracking-wide uppercase">{card.label}</h2>
+                  <p className="mt-3 font-display text-2xl font-bold tabular-nums text-foreground">{value}</p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">{card.note}</p>
+                </div>
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-current/10">
+                  <Icon className="size-4" />
+                </span>
+              </div>
+              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-current opacity-60" />
+            </article>
+          );
+        })}
+      </section>
+
+      <div className="panel overflow-hidden border-ops-blue/20">
+        <div className="border-b border-border bg-ops-mist/45 p-4 md:p-5 dark:bg-ops-mist/20">
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -557,11 +629,12 @@ function TicketsPage() {
             </>
           ) : null}
         </div>
+        </div>
 
-        <div className="mt-4 overflow-x-auto rounded-lg border border-border">
+        <div className="overflow-x-auto">
           <table className="w-full min-w-[1180px] border-collapse text-[10px] leading-tight">
             <thead>
-              <tr className="border-b border-border bg-muted/60">
+              <tr className="border-b border-border bg-ops-navy text-primary-foreground dark:bg-ops-mist">
                 {isAdmin ? (
                 <th className="cell-center w-8 px-1.5 py-2">
                   <Checkbox
@@ -613,7 +686,7 @@ function TicketsPage() {
                 pageRows.map((ticket, index) => (
                   <tr
                     key={ticket.id}
-                    className="border-b border-border last:border-0 hover:bg-muted/40"
+                    className="border-b border-border last:border-0 even:bg-ops-mist/20 hover:bg-ops-blue/10"
                   >
                     {isAdmin ? (
                     <td className="cell-center px-1.5 py-1.5">
@@ -693,7 +766,7 @@ function TicketsPage() {
           </table>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-ops-mist/30 p-4 dark:bg-ops-mist/15">
           <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <span>Baris per halaman</span>
             <Select
