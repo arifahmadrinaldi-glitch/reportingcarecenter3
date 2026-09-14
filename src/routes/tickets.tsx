@@ -107,10 +107,20 @@ const cellValue = (ticket: TicketRow, key: keyof TicketRow) => {
   return value ? String(value) : "-";
 };
 
-function Subline({ label, value }: { label: string; value: string | null | undefined }) {
+function Subline({
+  label,
+  value,
+  emphasis = false,
+}: {
+  label: string;
+  value: string | null | undefined;
+  emphasis?: boolean;
+}) {
   return (
-    <span className="block text-[9px] leading-4 text-muted-foreground">
-      <span className="font-semibold uppercase">{label}:</span> {value || "-"}
+    <span
+      className={`block leading-4 ${emphasis ? "mt-1 text-[10px] font-medium text-foreground" : "text-[9px] text-muted-foreground"}`}
+    >
+      <span className="text-[8px] font-bold uppercase text-muted-foreground">{label}:</span> {value || "-"}
     </span>
   );
 }
@@ -614,7 +624,7 @@ function TicketsPage() {
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1180px] border-collapse text-[10px] leading-tight">
+          <table className="w-full min-w-[1120px] border-collapse text-[10px] leading-tight">
             <thead>
               <tr className="border-b border-border bg-ops-navy text-primary-foreground dark:bg-ops-mist">
                 {isAdmin ? (
@@ -633,7 +643,6 @@ function TicketsPage() {
                   </th>
                 ) : null}
                 <th className="cell-center w-9 px-1.5 py-2 text-[9px] font-bold tracking-wide uppercase">#</th>
-                <th className="cell-center w-32 px-2 py-2 text-[9px] font-bold tracking-wide uppercase">Status</th>
                 <th className="w-48 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">
                   Lokasi &amp; Pelanggan
                 </th>
@@ -653,13 +662,13 @@ function TicketsPage() {
             <tbody>
               {activeQuery.isPending ? (
                 <tr>
-                  <td colSpan={isAdmin ? 10 : 9} className="cell-center px-3 py-10">
+                  <td colSpan={isAdmin ? 9 : 8} className="cell-center px-3 py-10">
                     Memuat data…
                   </td>
                 </tr>
               ) : pageRows.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 10 : 9} className="cell-center px-3 py-10 text-muted-foreground">
+                  <td colSpan={isAdmin ? 9 : 8} className="cell-center px-3 py-10 text-muted-foreground">
                     Tidak ada ticket yang cocok dengan filter.
                   </td>
                 </tr>
@@ -684,9 +693,6 @@ function TicketsPage() {
                     ) : null}
                     <td className="cell-center px-1.5 py-1.5 font-semibold">
                       {(currentPage - 1) * perPage + index + 1}
-                    </td>
-                    <td className="cell-center px-2 py-2">
-                      <StatusBadge status={ticket.status} />
                     </td>
                     <td className="cell-wrap px-2 py-2">
                       <Button
@@ -717,8 +723,12 @@ function TicketsPage() {
                     </td>
                     <td className="cell-wrap px-2 py-2">{ticket.indikasi_gangguan || "-"}</td>
                     <td className="cell-wrap px-2 py-2">
-                      <p>{ticket.keterangan || "-"}</p>
-                      <p className="mt-1 text-muted-foreground">{ticket.last_update || "-"}</p>
+                      <p className="text-[10px] font-semibold leading-4 text-foreground">{ticket.keterangan || "-"}</p>
+                      <p className="mt-1 text-[10px] leading-4 text-muted-foreground">{ticket.last_update || "-"}</p>
+                      <span className="mt-1 flex items-baseline gap-1 text-[10px] leading-4">
+                        <span className="text-[8px] font-bold uppercase text-muted-foreground">Status:</span>
+                        <StatusBadge status={ticket.status} />
+                      </span>
                       <Subline label="Open by" value={ticket.open_by} />
                     </td>
                     <td className="cell-wrap px-2 py-2 font-semibold">
