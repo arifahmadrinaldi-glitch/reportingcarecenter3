@@ -6,7 +6,8 @@
 
 @theme inline {
   --font-sans:
-    "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+    "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Sora", ui-sans-serif, system-ui, sans-serif;
   --color-surface: var(--surface);
   --color-surface-foreground: var(--surface-foreground);
   --color-success: var(--success);
@@ -19,6 +20,9 @@
   --color-status-orange: var(--status-orange);
   --color-status-brown: var(--status-brown);
   --color-status-purple: var(--status-purple);
+  --color-ops-navy: var(--ops-navy);
+  --color-ops-blue: var(--ops-blue);
+  --color-ops-mist: var(--ops-mist);
   --shadow-panel: var(--shadow-panel-value);
 }
 
@@ -109,6 +113,9 @@
   --status-orange: oklch(0.7 0.14 55);
   --status-brown: oklch(0.55 0.09 55);
   --status-purple: oklch(0.55 0.16 300);
+  --ops-navy: oklch(0.2333 0.0673 266.58);
+  --ops-blue: oklch(0.5281 0.0957 248.81);
+  --ops-mist: oklch(0.944 0.0097 252.81);
   --border: oklch(0.918 0.014 255);
   --input: oklch(0.918 0.014 255);
   --ring: oklch(0.55 0.196 261.5);
@@ -157,6 +164,9 @@
   --status-orange: oklch(0.77 0.13 58);
   --status-brown: oklch(0.68 0.08 58);
   --status-purple: oklch(0.72 0.14 300);
+  --ops-navy: oklch(0.944 0.0097 252.81);
+  --ops-blue: oklch(0.68 0.11 248.81);
+  --ops-mist: oklch(0.28 0.055 256.04);
   --shadow-panel-value: 0 1px 2px 0 oklch(0 0 0 / 0.4), 0 8px 24px -12px oklch(0 0 0 / 0.6);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
@@ -188,6 +198,12 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-display);
   }
 
   html {
