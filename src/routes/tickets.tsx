@@ -490,7 +490,7 @@ function TicketsPage() {
   );
 
   return (
-    <AppShell title="Daftar Ticket" subtitle="Data ticket gangguan tersinkron realtime">
+    <AppShell title="Daftar Ticket" subtitle="Data ticket gangguan realtime">
       <section className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan ticket">
         {summaryCards.map((card) => {
           const value = card.status
