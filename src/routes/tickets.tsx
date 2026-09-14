@@ -135,7 +135,7 @@ const summaryCards = [
     status: "Pending Spare",
     icon: PackageOpen,
     tone: "purple",
-    note: "menunggu sparepart",
+    note: "menunggu spare",
   },
   {
     label: "Technical Close",
