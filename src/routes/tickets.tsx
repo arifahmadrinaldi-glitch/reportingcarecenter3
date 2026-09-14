@@ -37,13 +37,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { MultiSelect } from "@/components/ui/multi-select";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAccess } from "@/lib/app-access";
 import { parseSheetFile, pick } from "@/lib/import-sheet";
@@ -141,7 +135,7 @@ const summaryCards = [
     status: "Pending Spare",
     icon: PackageOpen,
     tone: "purple",
-    note: "menunggu suku cadang",
+    note: "menunggu sparepart",
   },
   {
     label: "Technical Close",
@@ -262,8 +256,7 @@ function TicketsPage() {
   }, [queryClient]);
 
   const customerOptions = useMemo(
-    () =>
-      Array.from(new Set(tickets.map((t) => t.customer).filter(Boolean) as string[])).sort(),
+    () => Array.from(new Set(tickets.map((t) => t.customer).filter(Boolean) as string[])).sort(),
     [tickets],
   );
   const tahunOptions = useMemo(
@@ -291,8 +284,7 @@ function TicketsPage() {
       if (bulan.length || tahun.length) {
         if (!t.tanggal_open) return false;
         const date = new Date(t.tanggal_open);
-        if (bulan.length && !bulan.includes(BULAN_OPTIONS[date.getMonth()] as string))
-          return false;
+        if (bulan.length && !bulan.includes(BULAN_OPTIONS[date.getMonth()] as string)) return false;
         if (tahun.length && !tahun.includes(String(date.getFullYear()))) return false;
       }
       if (!term) return true;
@@ -325,7 +317,7 @@ function TicketsPage() {
     if (editing) {
       const previous = parseUpdateHistory(editing.update_history);
       const note = (values.last_update ?? "").trim();
-      const changed = note !== ((editing.last_update ?? "").trim());
+      const changed = note !== (editing.last_update ?? "").trim();
       let history = previous;
       if (meta?.editLastAt) {
         // Super user memperbaiki keterangan/tanggal update terakhir yang tersimpan.
@@ -451,12 +443,8 @@ function TicketsPage() {
 
   const exportExcel = () => {
     const head = ["Nomor", ...columns.map((c) => c.label)];
-    const rows = filtered.map((t, index) => [
-      String(index + 1),
-      ...columns.map((c) => cellValue(t, c.key)),
-    ]);
-    const escape = (value: string) =>
-      value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const rows = filtered.map((t, index) => [String(index + 1), ...columns.map((c) => cellValue(t, c.key))]);
+    const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const html = `<html><head><meta charset="utf-8" /></head><body><table border="1"><thead><tr>${head
       .map((h) => `<th>${escape(h)}</th>`)
       .join("")}</tr></thead><tbody>${rows
@@ -472,8 +460,7 @@ function TicketsPage() {
     toast.success("Export Excel dimulai");
   };
 
-  const allPageSelected =
-    pageRows.length > 0 && pageRows.every((row) => selected.includes(row.id));
+  const allPageSelected = pageRows.length > 0 && pageRows.every((row) => selected.includes(row.id));
 
   const filterSelect = (
     label: string,
@@ -532,103 +519,98 @@ function TicketsPage() {
 
       <div className="panel overflow-hidden border-ops-blue/20">
         <div className="border-b border-border bg-ops-mist/45 p-4 md:p-5 dark:bg-ops-mist/20">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <div className="relative flex-1">
-            <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
-                setPage(1);
-              }}
-              placeholder="Pencarian cepat…"
-              className="h-10 rounded-full pl-9"
-            />
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button
-              onClick={() => {
-                setEditing(null);
-                setFormOpen(true);
-              }}
-            >
-              <Plus className="size-4" /> Tambah Ticket
-            </Button>
-            <Button variant="outline" onClick={exportExcel}>
-              <FileSpreadsheet className="size-4" /> Excel
-            </Button>
-            <Button variant="outline" onClick={() => importInputRef.current?.click()}>
-              <Upload className="size-4" /> Import
-            </Button>
-            <input
-              ref={importInputRef}
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                e.target.value = "";
-                if (file) void importFile(file);
-              }}
-            />
-            {isAdmin ? (
-              <Button variant="outline" onClick={() => setRollbackOpen(true)}>
-                <History className="size-4" /> Rollback
-                {deleted.length > 0 ? (
-                  <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
-                    {deleted.length}
-                  </span>
-                ) : null}
-              </Button>
-            ) : null}
-            <Button
-              variant="outline"
-              onClick={() => {
-                queryClient.invalidateQueries({ queryKey: ["tickets"] });
-                toast.success("Data disegarkan");
-              }}
-            >
-              <RefreshCw className="size-4" /> Refresh
-            </Button>
-          </div>
-        </div>
-
-        <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-          {filterSelect("Bulan", bulan, setBulan, BULAN_OPTIONS)}
-          {filterSelect("Tahun", tahun, setTahun, tahunOptions)}
-          {filterSelect("Status", status, setStatus, STATUS_OPTIONS)}
-          {filterSelect("Regional", regional, setRegional, REGIONAL_OPTIONS)}
-          {filterSelect("Customer", customer, setCustomer, customerOptions)}
-          {filterSelect("Jenis", jenis, setJenis, JENIS_OPTIONS)}
-          {filterSelect("Layanan", layanan, setLayanan, LAYANAN_OPTIONS)}
-        </div>
-
-        <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-          <span>
-            Menampilkan {filtered.length} dari {tickets.length} ticket
-          </span>
-          <button onClick={resetFilters} className="text-primary hover:underline">
-            Reset semua filter
-          </button>
-          {!isAdmin ? (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase">
-              Mode user · hapus &amp; rollback khusus super user
-            </span>
-          ) : null}
-          {isAdmin && selected.length > 0 ? (
-            <>
-              <span className="font-medium text-foreground">{selected.length} dipilih</span>
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <div className="relative flex-1">
+              <Search className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                value={search}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
+                placeholder="Pencarian cepat…"
+                className="h-10 rounded-full pl-9"
+              />
+            </div>
+            <div className="flex flex-wrap gap-2">
               <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => setConfirmDelete(true)}
-                className="h-7"
+                onClick={() => {
+                  setEditing(null);
+                  setFormOpen(true);
+                }}
               >
-                <Trash2 className="size-3.5" /> Hapus terpilih
+                <Plus className="size-4" /> Tambah Ticket
               </Button>
-            </>
-          ) : null}
-        </div>
+              <Button variant="outline" onClick={exportExcel}>
+                <FileSpreadsheet className="size-4" /> Excel
+              </Button>
+              <Button variant="outline" onClick={() => importInputRef.current?.click()}>
+                <Upload className="size-4" /> Import
+              </Button>
+              <input
+                ref={importInputRef}
+                type="file"
+                accept=".xlsx,.xls,.csv"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  e.target.value = "";
+                  if (file) void importFile(file);
+                }}
+              />
+              {isAdmin ? (
+                <Button variant="outline" onClick={() => setRollbackOpen(true)}>
+                  <History className="size-4" /> Rollback
+                  {deleted.length > 0 ? (
+                    <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                      {deleted.length}
+                    </span>
+                  ) : null}
+                </Button>
+              ) : null}
+              <Button
+                variant="outline"
+                onClick={() => {
+                  queryClient.invalidateQueries({ queryKey: ["tickets"] });
+                  toast.success("Data disegarkan");
+                }}
+              >
+                <RefreshCw className="size-4" /> Refresh
+              </Button>
+            </div>
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+            {filterSelect("Bulan", bulan, setBulan, BULAN_OPTIONS)}
+            {filterSelect("Tahun", tahun, setTahun, tahunOptions)}
+            {filterSelect("Status", status, setStatus, STATUS_OPTIONS)}
+            {filterSelect("Regional", regional, setRegional, REGIONAL_OPTIONS)}
+            {filterSelect("Customer", customer, setCustomer, customerOptions)}
+            {filterSelect("Jenis", jenis, setJenis, JENIS_OPTIONS)}
+            {filterSelect("Layanan", layanan, setLayanan, LAYANAN_OPTIONS)}
+          </div>
+
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+            <span>
+              Menampilkan {filtered.length} dari {tickets.length} ticket
+            </span>
+            <button onClick={resetFilters} className="text-primary hover:underline">
+              Reset semua filter
+            </button>
+            {!isAdmin ? (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase">
+                Mode user · hapus &amp; rollback khusus super user
+              </span>
+            ) : null}
+            {isAdmin && selected.length > 0 ? (
+              <>
+                <span className="font-medium text-foreground">{selected.length} dipilih</span>
+                <Button variant="destructive" size="sm" onClick={() => setConfirmDelete(true)} className="h-7">
+                  <Trash2 className="size-3.5" /> Hapus terpilih
+                </Button>
+              </>
+            ) : null}
+          </div>
         </div>
 
         <div className="overflow-x-auto">
@@ -636,32 +618,34 @@ function TicketsPage() {
             <thead>
               <tr className="border-b border-border bg-ops-navy text-primary-foreground dark:bg-ops-mist">
                 {isAdmin ? (
-                <th className="cell-center w-8 px-1.5 py-2">
-                  <Checkbox
-                    checked={allPageSelected}
-                    onCheckedChange={(checked) =>
-                      setSelected((prev) =>
-                        checked
-                          ? Array.from(new Set([...prev, ...pageRows.map((r) => r.id)]))
-                          : prev.filter((id) => !pageRows.some((r) => r.id === id)),
-                      )
-                    }
-                    aria-label="Pilih semua baris"
-                  />
-                </th>
+                  <th className="cell-center w-8 px-1.5 py-2">
+                    <Checkbox
+                      checked={allPageSelected}
+                      onCheckedChange={(checked) =>
+                        setSelected((prev) =>
+                          checked
+                            ? Array.from(new Set([...prev, ...pageRows.map((r) => r.id)]))
+                            : prev.filter((id) => !pageRows.some((r) => r.id === id)),
+                        )
+                      }
+                      aria-label="Pilih semua baris"
+                    />
+                  </th>
                 ) : null}
-                <th className="cell-center w-9 px-1.5 py-2 text-[9px] font-bold tracking-wide uppercase">
-                  #
+                <th className="cell-center w-9 px-1.5 py-2 text-[9px] font-bold tracking-wide uppercase">#</th>
+                <th className="cell-center w-32 px-2 py-2 text-[9px] font-bold tracking-wide uppercase">Status</th>
+                <th className="w-48 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">
+                  Lokasi &amp; Pelanggan
                 </th>
-                <th className="cell-center w-32 px-2 py-2 text-[9px] font-bold tracking-wide uppercase">
-                  Status
-                </th>
-                <th className="w-48 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Lokasi &amp; Pelanggan</th>
                 <th className="w-36 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">No. Ticket</th>
                 <th className="w-36 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Layanan</th>
                 <th className="w-36 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Regional</th>
-                <th className="w-40 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Indikasi Gangguan</th>
-                <th className="min-w-80 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Keterangan &amp; Log Terakhir</th>
+                <th className="w-40 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">
+                  Indikasi Gangguan
+                </th>
+                <th className="min-w-80 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">
+                  Keterangan &amp; Log Terakhir
+                </th>
                 <th className="w-40 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Durasi</th>
                 <th className="cell-center w-14 px-1.5 py-2 text-[9px] font-bold tracking-wide uppercase">Aksi</th>
               </tr>
@@ -675,10 +659,7 @@ function TicketsPage() {
                 </tr>
               ) : pageRows.length === 0 ? (
                 <tr>
-                  <td
-                    colSpan={isAdmin ? 10 : 9}
-                    className="cell-center px-3 py-10 text-muted-foreground"
-                  >
+                  <td colSpan={isAdmin ? 10 : 9} className="cell-center px-3 py-10 text-muted-foreground">
                     Tidak ada ticket yang cocok dengan filter.
                   </td>
                 </tr>
@@ -689,19 +670,17 @@ function TicketsPage() {
                     className="border-b border-border last:border-0 even:bg-ops-mist/20 hover:bg-ops-blue/10"
                   >
                     {isAdmin ? (
-                    <td className="cell-center px-1.5 py-1.5">
-                      <Checkbox
-                        checked={selected.includes(ticket.id)}
-                        onCheckedChange={(checked) =>
-                          setSelected((prev) =>
-                            checked
-                              ? [...prev, ticket.id]
-                              : prev.filter((id) => id !== ticket.id),
-                          )
-                        }
-                        aria-label={`Pilih ticket ${ticket.customer ?? ""}`}
-                      />
-                    </td>
+                      <td className="cell-center px-1.5 py-1.5">
+                        <Checkbox
+                          checked={selected.includes(ticket.id)}
+                          onCheckedChange={(checked) =>
+                            setSelected((prev) =>
+                              checked ? [...prev, ticket.id] : prev.filter((id) => id !== ticket.id),
+                            )
+                          }
+                          aria-label={`Pilih ticket ${ticket.customer ?? ""}`}
+                        />
+                      </td>
                     ) : null}
                     <td className="cell-center px-1.5 py-1.5 font-semibold">
                       {(currentPage - 1) * perPage + index + 1}
@@ -726,7 +705,9 @@ function TicketsPage() {
                     </td>
                     <td className="cell-wrap px-2 py-2 font-semibold">
                       {ticket.layanan || "-"}
-                      <span className="mt-1 block"><JenisBadge jenis={ticket.jenis_ticket} /></span>
+                      <span className="mt-1 block">
+                        <JenisBadge jenis={ticket.jenis_ticket} />
+                      </span>
                       <Subline label="Teknisi" value={ticket.teknisi} />
                     </td>
                     <td className="cell-wrap px-2 py-2 font-semibold">
@@ -789,12 +770,7 @@ function TicketsPage() {
             </Select>
           </div>
           <div className="flex items-center gap-2 text-xs">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage <= 1}
-              onClick={() => setPage(currentPage - 1)}
-            >
+            <Button variant="outline" size="sm" disabled={currentPage <= 1} onClick={() => setPage(currentPage - 1)}>
               Sebelumnya
             </Button>
             <span className="text-muted-foreground">
@@ -812,12 +788,7 @@ function TicketsPage() {
         </div>
       </div>
 
-      <TicketFormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        ticket={editing}
-        onSubmit={saveTicket}
-      />
+      <TicketFormDialog open={formOpen} onOpenChange={setFormOpen} ticket={editing} onSubmit={saveTicket} />
       <TicketDetailDialog ticket={detail} onOpenChange={() => setDetail(null)} />
       <RollbackDialog
         open={rollbackOpen}
@@ -833,8 +804,8 @@ function TicketsPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus {selected.length} ticket?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ticket yang dipilih akan dipindahkan ke daftar terhapus. Data masih bisa
-              dikembalikan melalui menu Rollback.
+              Ticket yang dipilih akan dipindahkan ke daftar terhapus. Data masih bisa dikembalikan melalui menu
+              Rollback.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
