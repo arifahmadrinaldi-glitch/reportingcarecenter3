@@ -1,14 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import {
-  Activity,
-  CheckCircle2,
-  PauseCircle,
-  ShieldCheck,
   Ticket as TicketIcon,
-  UserRound,
-  Users,
-  Wrench,
 } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
@@ -31,7 +24,7 @@ import { DailyActivityDashboard } from "@/components/daily/DailyActivityDashboar
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { BULAN_OPTIONS, OPEN_STATUSES, type TicketRow } from "@/lib/ticket-constants";
+import { BULAN_OPTIONS, type TicketRow } from "@/lib/ticket-constants";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -190,44 +183,6 @@ function Index() {
   );
 
   const count = (predicate: (t: TicketRow) => boolean) => filtered.filter(predicate).length;
-  const uniqueCount = (key: "customer" | "teknisi") => new Set(filtered.map((t) => t[key]).filter(Boolean)).size;
-
-  const stats = [
-    { label: "Total Ticket", value: filtered.length, icon: TicketIcon, tone: "primary" },
-    {
-      label: "Total Open",
-      value: count((t) => (OPEN_STATUSES as readonly string[]).includes(t.status)),
-      icon: Activity,
-      tone: "primary",
-    },
-    {
-      label: "Total Pending",
-      value: count((t) => t.status.startsWith("Pending")),
-      icon: PauseCircle,
-      tone: "warning",
-    },
-    {
-      label: "Total Close",
-      value: count((t) => t.status === "Close"),
-      icon: CheckCircle2,
-      tone: "success",
-    },
-    {
-      label: "Corrective Maintenance",
-      value: count((t) => t.jenis_ticket === "Corrective Maintenance"),
-      icon: Wrench,
-      tone: "primary",
-    },
-    {
-      label: "Preventive Maintenance",
-      value: count((t) => t.jenis_ticket === "Preventive Maintenance"),
-      icon: ShieldCheck,
-      tone: "success",
-    },
-    { label: "Total Customer", value: uniqueCount("customer"), icon: UserRound, tone: "primary" },
-    { label: "Total Teknisi", value: uniqueCount("teknisi"), icon: Users, tone: "primary" },
-  ] as const;
-
   const groupBy = (key: keyof TicketRow) => {
     const map = new Map<string, number>();
     filtered.forEach((t) => {
@@ -325,30 +280,6 @@ function Index() {
         >
           Reset filter
         </button>
-      </div>
-
-      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.label} className="panel flex items-start justify-between gap-3 p-4">
-            <div className="min-w-0">
-              <p className="truncate text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">
-                {stat.label}
-              </p>
-              <p className="mt-1 text-xl font-bold">{stat.value}</p>
-            </div>
-            <span
-              className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${
-                stat.tone === "warning"
-                  ? "bg-warning/15 text-warning"
-                  : stat.tone === "success"
-                    ? "bg-success/15 text-success"
-                    : "bg-primary/10 text-primary"
-              }`}
-            >
-              <stat.icon className="size-4" />
-            </span>
-          </div>
-        ))}
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
