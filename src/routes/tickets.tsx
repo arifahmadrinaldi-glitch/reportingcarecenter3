@@ -142,7 +142,7 @@ const summaryCards = [
     status: "Technical Close",
     icon: CheckCircle2,
     tone: "success",
-    note: "siap ditutup",
+    note: "siap diclose",
   },
 ] as const;
 
