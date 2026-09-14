@@ -109,6 +109,14 @@ const cellValue = (ticket: TicketRow, key: keyof TicketRow) => {
   return value ? String(value) : "-";
 };
 
+function Subline({ label, value }: { label: string; value: string | null | undefined }) {
+  return (
+    <span className="block text-[9px] leading-4 text-muted-foreground">
+      <span className="font-semibold uppercase">{label}:</span> {value || "-"}
+    </span>
+  );
+}
+
 function TicketsPage() {
   const queryClient = useQueryClient();
   const { isAdmin } = useAccess();
@@ -551,7 +559,7 @@ function TicketsPage() {
         </div>
 
         <div className="mt-4 overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-[1500px] border-collapse text-[11px] leading-tight">
+          <table className="w-full min-w-[1180px] border-collapse text-[10px] leading-tight">
             <thead>
               <tr className="border-b border-border bg-muted/60">
                 {isAdmin ? (
@@ -569,35 +577,33 @@ function TicketsPage() {
                   />
                 </th>
                 ) : null}
-                <th className="cell-center w-10 px-1.5 py-2 text-[10px] font-bold tracking-wide uppercase">
-                  Nomor
+                <th className="cell-center w-9 px-1.5 py-2 text-[9px] font-bold tracking-wide uppercase">
+                  #
                 </th>
-                <th className="cell-center w-16 px-1.5 py-2 text-[10px] font-bold tracking-wide uppercase">
-                  Aksi
+                <th className="cell-center w-32 px-2 py-2 text-[9px] font-bold tracking-wide uppercase">
+                  Status
                 </th>
-                {columns.map((col) => (
-                  <th
-                    key={col.key}
-                    className={`px-2 py-2 text-[10px] font-bold tracking-wide whitespace-nowrap uppercase ${
-                      col.align === "center" ? "cell-center" : "text-left"
-                    }`}
-                  >
-                    {col.label}
-                  </th>
-                ))}
+                <th className="w-48 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Lokasi &amp; Pelanggan</th>
+                <th className="w-36 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">No. Ticket</th>
+                <th className="w-36 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Layanan</th>
+                <th className="w-36 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Regional</th>
+                <th className="w-40 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Indikasi Gangguan</th>
+                <th className="min-w-80 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Keterangan &amp; Log Terakhir</th>
+                <th className="w-40 px-2 py-2 text-left text-[9px] font-bold tracking-wide uppercase">Durasi</th>
+                <th className="cell-center w-14 px-1.5 py-2 text-[9px] font-bold tracking-wide uppercase">Aksi</th>
               </tr>
             </thead>
             <tbody>
               {activeQuery.isPending ? (
                 <tr>
-                  <td colSpan={columns.length + (isAdmin ? 3 : 2)} className="cell-center px-3 py-10">
+                  <td colSpan={isAdmin ? 10 : 9} className="cell-center px-3 py-10">
                     Memuat data…
                   </td>
                 </tr>
               ) : pageRows.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={columns.length + (isAdmin ? 3 : 2)}
+                    colSpan={isAdmin ? 10 : 9}
                     className="cell-center px-3 py-10 text-muted-foreground"
                   >
                     Tidak ada ticket yang cocok dengan filter.
@@ -627,50 +633,59 @@ function TicketsPage() {
                     <td className="cell-center px-1.5 py-1.5 font-semibold">
                       {(currentPage - 1) * perPage + index + 1}
                     </td>
-                    <td className="cell-center px-1.5 py-1.5">
-                      <div className="flex items-center justify-center gap-0.5">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="size-6 text-primary"
-                          onClick={() => {
-                            setEditing(ticket);
-                            setFormOpen(true);
-                          }}
-                          aria-label="Edit ticket"
-                        >
-                          <Pencil className="size-3.5" />
-                        </Button>
-                      </div>
+                    <td className="cell-center px-2 py-2">
+                      <StatusBadge status={ticket.status} />
                     </td>
-                    {columns.map((col) => (
-                      <td
-                        key={col.key}
-                        className={`px-2 py-1.5 ${
-                          col.align === "center"
-                            ? "cell-center whitespace-nowrap"
-                            : col.align === "wide"
-                              ? "cell-wrap w-[520px] max-w-[520px] min-w-[360px]"
-                              : "cell-wrap max-w-[200px] min-w-[130px]"
-                        }`}
+                    <td className="cell-wrap px-2 py-2">
+                      <Button
+                        type="button"
+                        variant="link"
+                        onClick={() => setDetail(ticket)}
+                        className="h-auto max-w-full justify-start whitespace-normal p-0 text-left text-[10px] font-bold leading-4"
                       >
-                        {col.key === "status" ? (
-                          <StatusBadge status={ticket.status} />
-                        ) : col.key === "jenis_ticket" ? (
-                          <JenisBadge jenis={ticket.jenis_ticket} />
-                        ) : col.key === "nama_lokasi" ? (
-                          <button
-                            type="button"
-                            onClick={() => setDetail(ticket)}
-                            className="text-left font-medium text-primary hover:underline"
-                          >
-                            {ticket.nama_lokasi ?? "-"}
-                          </button>
-                        ) : (
-                          cellValue(ticket, col.key)
-                        )}
-                      </td>
-                    ))}
+                        {ticket.nama_lokasi ?? "-"}
+                      </Button>
+                      <Subline label="Customer" value={ticket.customer} />
+                    </td>
+                    <td className="cell-wrap px-2 py-2 font-semibold">
+                      {ticket.tiket_mantools || "-"}
+                      <Subline label="Noxis" value={ticket.tiket_noxis} />
+                    </td>
+                    <td className="cell-wrap px-2 py-2 font-semibold">
+                      {ticket.layanan || "-"}
+                      <span className="mt-1 block"><JenisBadge jenis={ticket.jenis_ticket} /></span>
+                      <Subline label="Teknisi" value={ticket.teknisi} />
+                    </td>
+                    <td className="cell-wrap px-2 py-2 font-semibold">
+                      {ticket.regional || "-"}
+                      <Subline label="Asal" value={ticket.asal_gangguan} />
+                      <Subline label="Tim SEM" value={ticket.team_sem} />
+                    </td>
+                    <td className="cell-wrap px-2 py-2">{ticket.indikasi_gangguan || "-"}</td>
+                    <td className="cell-wrap px-2 py-2">
+                      <p>{ticket.keterangan || "-"}</p>
+                      <p className="mt-1 text-muted-foreground">{ticket.last_update || "-"}</p>
+                      <Subline label="Open by" value={ticket.open_by} />
+                    </td>
+                    <td className="cell-wrap px-2 py-2 font-semibold">
+                      {ticket.durasi || "-"}
+                      <Subline label="Open" value={formatDateTime(ticket.tanggal_open)} />
+                      <Subline label="Close" value={formatDateTime(ticket.tanggal_close)} />
+                    </td>
+                    <td className="cell-center px-1.5 py-2">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="size-7 text-primary"
+                        onClick={() => {
+                          setEditing(ticket);
+                          setFormOpen(true);
+                        }}
+                        aria-label="Edit ticket"
+                      >
+                        <Pencil className="size-3.5" />
+                      </Button>
+                    </td>
                   </tr>
                 ))
               )}
