@@ -95,7 +95,7 @@ export function DailyActivityFormDialog({
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSubmit: (values: DailyActivityFormValues) => Promise<void>;
+  onSubmit: (values: DailyActivityFormValues) => Promise<boolean>;
 }) {
   const [values, setValues] = useState<DailyActivityFormValues>(emptyActivity);
   const [saving, setSaving] = useState(false);
@@ -110,8 +110,8 @@ export function DailyActivityFormDialog({
   const submit = async () => {
     setSaving(true);
     try {
-      await onSubmit(values);
-      onOpenChange(false);
+      const saved = await onSubmit(values);
+      if (saved) onOpenChange(false);
     } finally {
       setSaving(false);
     }

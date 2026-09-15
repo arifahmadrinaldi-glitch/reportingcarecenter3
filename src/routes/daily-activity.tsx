@@ -136,7 +136,8 @@ function DailyActivityPage() {
         .from("daily_activities")
         .select("*")
         .is("deleted_at", null)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: true })
+        .order("id", { ascending: true });
       if (error) throw error;
       return (data ?? []) as DailyActivityRow[];
     },
@@ -167,10 +168,11 @@ function DailyActivityPage() {
     });
     if (error) {
       toast.error("Gagal menambah activity", { description: error.message });
-      throw error;
+      return false;
     }
     toast.success("Activity baru ditambahkan");
     refresh();
+    return true;
   };
 
   const updateField = async (id: string, key: Field, value: string) => {
