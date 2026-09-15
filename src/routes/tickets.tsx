@@ -137,7 +137,7 @@ const summaryCards = [
     label: "Pending Transport",
     status: "Pending Transport",
     icon: Clock3,
-    tone: "orange",
+    tone: "warning",
     note: "menunggu transportasi",
   },
   {
@@ -150,14 +150,14 @@ const summaryCards = [
   {
     label: "Pending Customer",
     status: "Pending Customer",
-    icon: UserRound,
+    icon: PackageOpen,
     tone: "navy",
     note: "menunggu customer",
   },
   {
     label: "Pending",
     status: "Pending",
-    icon: HourGlass,
+    icon: PackageOpen,
     tone: "brown",
     note: "pending",
   },
