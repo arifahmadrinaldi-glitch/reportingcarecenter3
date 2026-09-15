@@ -148,11 +148,25 @@ const summaryCards = [
     note: "menunggu spare",
   },
   {
-    label: "Technical Close",
-    status: "Technical Close",
+    label: "Pending Customer",
+    status: "Pending Customer",
+    icon: PackageOpen,
+    tone: "navy",
+    note: "menunggu customer",
+  },
+  {
+    label: "Pending",
+    status: "Pending",
+    icon: PackageOpen,
+    tone: "brown",
+    note: "pending",
+  },
+  {
+    label: "Close",
+    status: "Close",
     icon: CheckCircle2,
     tone: "success",
-    note: "siap diclose",
+    note: "tiket close",
   },
 ] as const;
 
@@ -411,11 +425,7 @@ function TicketsPage() {
   };
 
   const permanentlyDelete = async (id: string) => {
-    const { error } = await supabase
-      .from("tickets")
-      .delete()
-      .eq("id", id)
-      .not("deleted_at", "is", null);
+    const { error } = await supabase.from("tickets").delete().eq("id", id).not("deleted_at", "is", null);
     if (error) {
       toast.error("Gagal menghapus ticket permanen", { description: error.message });
       return;
