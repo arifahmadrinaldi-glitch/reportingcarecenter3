@@ -582,23 +582,27 @@ function TicketsPage() {
               >
                 <Plus className="size-4" /> Tambah Ticket
               </Button>
-              <Button variant="outline" onClick={exportExcel}>
-                <FileSpreadsheet className="size-4" /> Excel
-              </Button>
-              <Button variant="outline" onClick={() => importInputRef.current?.click()}>
-                <Upload className="size-4" /> Import
-              </Button>
-              <input
-                ref={importInputRef}
-                type="file"
-                accept=".xlsx,.xls,.csv"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  e.target.value = "";
-                  if (file) void importFile(file);
-                }}
-              />
+              {isAdmin ? (
+                <>
+                  <Button variant="outline" onClick={exportExcel}>
+                    <FileSpreadsheet className="size-4" /> Excel
+                  </Button>
+                  <Button variant="outline" onClick={() => importInputRef.current?.click()}>
+                    <Upload className="size-4" /> Import
+                  </Button>
+                  <input
+                    ref={importInputRef}
+                    type="file"
+                    accept=".xlsx,.xls,.csv"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      e.target.value = "";
+                      if (file) void importFile(file);
+                    }}
+                  />
+                </>
+              ) : null}
               {isAdmin ? (
                 <Button variant="outline" onClick={() => setRollbackOpen(true)}>
                   <History className="size-4" /> Rollback
