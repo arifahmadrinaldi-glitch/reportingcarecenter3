@@ -758,7 +758,9 @@ function TicketsPage() {
                       <p className="mt-1 text-[10px] leading-4 text-muted-foreground">{ticket.last_update || "-"}</p>
                       <span className="mt-1 flex items-baseline gap-1 text-[10px] leading-4">
                         <span className="text-[8px] font-bold uppercase text-muted-foreground">Status:</span>
-                        <StatusBadge status={ticket.status} />
+                        <span className="italic">
+                          <StatusBadge status={ticket.status} />
+                        </span>
                       </span>
                       <Subline label="Open by" value={ticket.open_by} />
                     </td>
