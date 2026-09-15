@@ -531,7 +531,11 @@ function TicketsPage() {
                 ? "border-status-purple/35 bg-status-purple/5 text-status-purple"
                 : card.tone === "success"
                   ? "border-success/35 bg-success/5 text-success"
-                  : "border-ops-blue/35 bg-ops-blue/5 text-ops-blue";
+                  : card.tone === "brown"
+                    ? "border-amber-700/35 bg-amber-700/5 text-amber-700"
+                    : card.tone === "navy"
+                      ? "border-slate-800/35 bg-slate-800/5 text-slate-800"
+                      : "border-ops-blue/35 bg-ops-blue/5 text-ops-blue";
 
           return (
             <article
