@@ -534,7 +534,7 @@ function TicketsPage() {
                   : card.tone === "brown"
                     ? "border-amber-700/35 bg-amber-700/5 text-amber-700"
                     : card.tone === "telor-asin"
-                      ? "border-teal-500/35 bg-teal-500/5 text-teal-600"
+                      ? "border-teal-500/35 text-teal-600"
                       : "border-ops-blue/35 bg-ops-blue/5 text-ops-blue";
 
           return (
