@@ -15,6 +15,10 @@ import { toast } from "sonner";
 import { AppShell } from "@/components/AppShell";
 import { DailyActivityFilters } from "@/components/daily/DailyActivityFilters";
 import {
+  DailyActivityFormDialog,
+  type DailyActivityFormValues,
+} from "@/components/daily/DailyActivityFormDialog";
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -119,7 +123,9 @@ function DailyActivityPage() {
   const { isAdmin } = useAccess();
   const [selected, setSelected] = useState<string[]>([]);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
   const [rollbackOpen, setRollbackOpen] = useState(false);
+  const [permanentDeleteTarget, setPermanentDeleteTarget] = useState<DailyActivityRow | null>(null);
   const [filters, setFilters] = useState(emptyDailyFilters);
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -151,18 +157,19 @@ function DailyActivityPage() {
 
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["daily-activities"] });
 
-  const addRow = async () => {
-    const today = new Date();
-    const pad = (n: number) => String(n).padStart(2, "0");
+  const addRow = async (values: DailyActivityFormValues) => {
+    const payload = Object.fromEntries(
+      Object.entries(values).map(([key, value]) => [key, value.trim() || null]),
+    );
     const { error } = await supabase.from("daily_activities").insert({
-      tanggal: `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`,
-      status: "Open",
+      ...payload,
+      status: values.status || "Open",
     });
     if (error) {
       toast.error("Gagal menambah activity", { description: error.message });
-      return;
+      throw error;
     }
-    toast.success("Activity baru ditambahkan di baris terakhir");
+    toast.success("Activity baru ditambahkan");
     refresh();
   };
 
@@ -206,6 +213,21 @@ function DailyActivityPage() {
       return;
     }
     toast.success(`${ids.length} activity dikembalikan`);
+    refresh();
+  };
+
+  const permanentlyDelete = async (id: string) => {
+    const { error } = await supabase
+      .from("daily_activities")
+      .delete()
+      .eq("id", id)
+      .not("deleted_at", "is", null);
+    if (error) {
+      toast.error("Gagal menghapus activity permanen", { description: error.message });
+      return;
+    }
+    toast.success("Activity dihapus permanen");
+    setPermanentDeleteTarget(null);
     refresh();
   };
 
@@ -296,14 +318,14 @@ function DailyActivityPage() {
       title="Daily Activity"
       subtitle="Pencatatan aktivitas harian tim Reporting CC 3"
       actions={
-        <Button size="sm" onClick={addRow}>
+        <Button size="sm" onClick={() => setFormOpen(true)}>
           <Plus className="size-4" /> Tambah Activity
         </Button>
       }
     >
       <div className="panel p-4 md:p-5">
         <div className="flex flex-wrap items-center gap-3">
-          <Button size="sm" onClick={addRow}>
+          <Button size="sm" onClick={() => setFormOpen(true)}>
             <Plus className="size-4" /> Tambah Activity
           </Button>
           <Button variant="outline" size="sm" onClick={refresh}>
@@ -528,15 +550,50 @@ function DailyActivityPage() {
                       {row.customer ?? "-"} · {row.nama_lokasi ?? "-"}
                     </p>
                   </div>
-                  <Button size="sm" onClick={() => restore([row.id])}>
-                    <RotateCcw className="size-4" /> Kembalikan
-                  </Button>
+                  <div className="flex shrink-0 gap-2">
+                    <Button size="sm" onClick={() => restore([row.id])}>
+                      <RotateCcw className="size-4" /> Kembalikan
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={() => setPermanentDeleteTarget(row)}>
+                      <Trash2 className="size-4" /> Hapus
+                    </Button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </DialogContent>
       </Dialog>
+
+      <DailyActivityFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        onSubmit={addRow}
+      />
+
+      <AlertDialog
+        open={Boolean(permanentDeleteTarget)}
+        onOpenChange={(next) => !next && setPermanentDeleteTarget(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus activity secara permanen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Activity {permanentDeleteTarget?.nama_lokasi ?? permanentDeleteTarget?.customer ?? "ini"} akan dihapus selamanya dan tidak bisa dikembalikan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (permanentDeleteTarget) void permanentlyDelete(permanentDeleteTarget.id);
+              }}
+            >
+              Ya, hapus permanen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppShell>
   );
 }
