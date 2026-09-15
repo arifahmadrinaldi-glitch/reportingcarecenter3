@@ -526,7 +526,7 @@ function TicketsPage() {
           const Icon = card.icon;
           const toneClass =
             card.tone === "warning"
-              ? "border-warning/35 bg-warning/5 text-warning"
+              ? "border-warning/35 bg-transparent text-warning"
               : card.tone === "purple"
                 ? "border-status-purple/35 bg-status-purple/5 text-status-purple"
                 : card.tone === "success"
