@@ -140,7 +140,7 @@ const summaryCards = [
     label: "Pending Transport",
     status: "Pending Transport",
     icon: Clock3,
-    tone: "orange",
+    tone: "warning",
     note: "menunggu transportasi",
   },
   {
