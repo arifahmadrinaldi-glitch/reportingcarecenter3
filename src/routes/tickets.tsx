@@ -582,7 +582,6 @@ function TicketsPage() {
               >
                 <Plus className="size-4" /> Tambah Ticket
               </Button>
-              {isAdmin ? (
               <Button variant="outline" onClick={exportExcel}>
                 <FileSpreadsheet className="size-4" /> Excel
               </Button>
