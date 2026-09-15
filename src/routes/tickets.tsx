@@ -515,7 +515,7 @@ function TicketsPage() {
 
   return (
     <AppShell title="Daftar Ticket" subtitle="Data ticket gangguan realtime">
-      <section className="mb-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" aria-label="Ringkasan ticket">
+      <section className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" aria-label="Ringkasan ticket">
         {summaryCards.map((card) => {
           const value = card.status
             ? filtered.filter((ticket) => ticket.status === card.status).length
