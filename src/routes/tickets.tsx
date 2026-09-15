@@ -15,6 +15,7 @@ import {
   Tickets,
   Hourglass,
   UserRound,
+  Building2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -139,7 +140,7 @@ const summaryCards = [
     label: "Pending Transport",
     status: "Pending Transport",
     icon: Clock3,
-    tone: "warning",
+    tone: "orange",
     note: "menunggu transportasi",
   },
   {
@@ -152,7 +153,7 @@ const summaryCards = [
   {
     label: "Pending Customer",
     status: "Pending Customer",
-    icon: UserRound,
+    icon: Building2,
     tone: "navy",
     note: "menunggu customer",
   },
