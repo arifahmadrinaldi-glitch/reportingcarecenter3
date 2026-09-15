@@ -150,14 +150,14 @@ const summaryCards = [
   {
     label: "Pending Customer",
     status: "Pending Customer",
-    icon: UserRound,
+    icon: PackageOpen,
     tone: "navy",
     note: "menunggu customer",
   },
   {
     label: "Pending",
     status: "Pending",
-    icon: Hourglass,
+    icon: PackageOpen,
     tone: "brown",
     note: "pending",
   },
