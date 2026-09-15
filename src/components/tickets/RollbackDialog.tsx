@@ -1,6 +1,17 @@
-import { RotateCcw } from "lucide-react";
+import { RotateCcw, Trash2 } from "lucide-react";
+import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +28,7 @@ export function RollbackDialog({
   tickets,
   onRestore,
   onRestoreAll,
+  onDelete,
   loading,
 }: {
   open: boolean;
@@ -24,11 +36,15 @@ export function RollbackDialog({
   tickets: TicketRow[];
   onRestore: (id: string) => void;
   onRestoreAll: () => void;
+  onDelete: (id: string) => void;
   loading: boolean;
 }) {
+  const [deleteTarget, setDeleteTarget] = useState<TicketRow | null>(null);
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
+    <>
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Rollback Ticket Terhapus</DialogTitle>
           <DialogDescription>
@@ -68,14 +84,42 @@ export function RollbackDialog({
                     {ticket.nama_lokasi ?? "-"} · dihapus {formatDateTime(ticket.deleted_at)}
                   </p>
                 </div>
-                <Button size="sm" onClick={() => onRestore(ticket.id)}>
-                  <RotateCcw className="size-4" /> Kembalikan
-                </Button>
+                <div className="flex shrink-0 gap-2">
+                  <Button size="sm" onClick={() => onRestore(ticket.id)}>
+                    <RotateCcw className="size-4" /> Kembalikan
+                  </Button>
+                  <Button variant="destructive" size="sm" onClick={() => setDeleteTarget(ticket)}>
+                    <Trash2 className="size-4" /> Hapus
+                  </Button>
+                </div>
               </div>
             ))}
           </div>
         )}
-      </DialogContent>
-    </Dialog>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={Boolean(deleteTarget)} onOpenChange={(next) => !next && setDeleteTarget(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Hapus ticket secara permanen?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Ticket {deleteTarget?.nama_lokasi ?? deleteTarget?.customer ?? "ini"} akan dihapus selamanya dan tidak bisa dikembalikan.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteTarget) onDelete(deleteTarget.id);
+                setDeleteTarget(null);
+              }}
+            >
+              Ya, hapus permanen
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }

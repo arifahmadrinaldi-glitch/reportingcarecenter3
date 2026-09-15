@@ -410,6 +410,20 @@ function TicketsPage() {
     queryClient.invalidateQueries({ queryKey: ["tickets"] });
   };
 
+  const permanentlyDelete = async (id: string) => {
+    const { error } = await supabase
+      .from("tickets")
+      .delete()
+      .eq("id", id)
+      .not("deleted_at", "is", null);
+    if (error) {
+      toast.error("Gagal menghapus ticket permanen", { description: error.message });
+      return;
+    }
+    toast.success("Ticket dihapus permanen");
+    queryClient.invalidateQueries({ queryKey: ["tickets"] });
+  };
+
   const importFile = async (file: File) => {
     try {
       const parsed = await parseSheetFile(file);
@@ -807,6 +821,7 @@ function TicketsPage() {
         loading={deletedQuery.isPending}
         onRestore={(id) => restore([id])}
         onRestoreAll={() => restore(deleted.map((t) => t.id))}
+        onDelete={(id) => void permanentlyDelete(id)}
       />
 
       <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
