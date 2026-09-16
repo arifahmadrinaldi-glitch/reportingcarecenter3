@@ -559,7 +559,7 @@ function TicketsPage() {
                 <div>
                   <h2 className="text-[9px] font-bold tracking-wide uppercase">{card.label}</h2>
                   <p className="mt-1 font-display text-lg font-bold tabular-nums text-foreground">{value}</p>
-                  <p className="mt-0 text-[9px] text-muted-foreground">{card.note}</p>
+                  <p className="italic mt-0 text-[9px] text-muted-foreground">{card.note}</p>
                 </div>
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-current/10">
                   <Icon className="size-3.5" />
