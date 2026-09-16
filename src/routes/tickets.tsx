@@ -553,16 +553,16 @@ function TicketsPage() {
           return (
             <article
               key={card.label}
-              className={`group relative min-h-16 overflow-hidden rounded-lg border bg-surface p-3 shadow-panel transition-transform hover:-translate-y-0.5 ${toneClass}`}
+              className={`group relative min-h-16 overflow-hidden rounded-lg border bg-surface p-2 shadow-panel transition-transform hover:-translate-y-0.5 ${toneClass}`}
             >
-              <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start justify-between gap-2">
                 <div>
-                  <h2 className="text-[10px] font-bold tracking-wide uppercase">{card.label}</h2>
-                  <p className="mt-3 font-display text-xl font-bold tabular-nums text-foreground">{value}</p>
-                  <p className="mt-1 text-[10px] text-muted-foreground">{card.note}</p>
+                  <h2 className="text-[9px] font-bold tracking-wide uppercase">{card.label}</h2>
+                  <p className="mt-1 font-display text-lg font-bold tabular-nums text-foreground">{value}</p>
+                  <p className="mt-0 text-[9px] text-muted-foreground">{card.note}</p>
                 </div>
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-current/10">
-                  <Icon className="size-4" />
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-current/10">
+                  <Icon className="size-3.5" />
                 </span>
               </div>
               <span className="absolute inset-x-0 bottom-0 h-0.5 bg-current opacity-60" />
