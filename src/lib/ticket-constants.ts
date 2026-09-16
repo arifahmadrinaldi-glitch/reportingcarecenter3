@@ -7,8 +7,8 @@ export const STATUS_OPTIONS = [
   "Pending Transport",
   "Pending Spare",
   "Pending Customer",
-  "Monev",
   "Technical Close",
+  "Monev",
   "Close",
 ] as const;
 
@@ -51,6 +51,7 @@ export const TEAM_SEM_OPTIONS = [
   "Dony/Taqim",
   "Rowland/Yoga",
   "Deny/Ibnu",
+  "Tim Datakom",
 ] as const;
 
 export const BULAN_OPTIONS = [
