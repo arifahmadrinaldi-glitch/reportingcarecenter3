@@ -553,7 +553,7 @@ function TicketsPage() {
           return (
             <article
               key={card.label}
-              className={`group relative min-h-20 overflow-hidden rounded-lg border bg-surface p-3 shadow-panel transition-transform hover:-translate-y-0.5 ${toneClass}`}
+              className={`group relative min-h-16 overflow-hidden rounded-lg border bg-surface p-3 shadow-panel transition-transform hover:-translate-y-0.5 ${toneClass}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
