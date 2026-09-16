@@ -15,6 +15,7 @@ import {
   Tickets,
   Hourglass,
   UserRound,
+  Truck,
   Building2,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -164,6 +165,13 @@ const summaryCards = [
     icon: Hourglass,
     tone: "brown",
     note: "pending",
+  },
+  {
+    label: "On The Way",
+    status: "Dalam perjalanan",
+    icon: Truck,
+    tone: "brown",
+    note: "Dalam Perjalanan",
   },
   {
     label: "Close",
@@ -521,7 +529,7 @@ function TicketsPage() {
 
   return (
     <AppShell title="Daftar Ticket" subtitle="Data ticket gangguan realtime">
-      <section className="mb-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6" aria-label="Ringkasan ticket">
+      <section className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7" aria-label="Ringkasan ticket">
         {summaryCards.map((card) => {
           const value = card.status
             ? filtered.filter((ticket) => ticket.status === card.status).length
@@ -538,17 +546,19 @@ function TicketsPage() {
                     ? "border-amber-700/35 bg-amber-700/5 text-amber-700"
                     : card.tone === "telor-asin"
                       ? "border-teal-500/35 text-teal-600"
-                      : "border-ops-blue/35 bg-ops-blue/5 text-ops-blue";
+                      : card.tone === "blue"
+                        ? "border-blue-500/35 text-blue-600"
+                        : "border-ops-blue/35 bg-ops-blue/5 text-ops-blue";
 
           return (
             <article
               key={card.label}
-              className={`group relative min-h-28 overflow-hidden rounded-lg border bg-surface p-4 shadow-panel transition-transform hover:-translate-y-0.5 ${toneClass}`}
+              className={`group relative min-h-20 overflow-hidden rounded-lg border bg-surface p-3 shadow-panel transition-transform hover:-translate-y-0.5 ${toneClass}`}
             >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <h2 className="text-[10px] font-bold tracking-wide uppercase">{card.label}</h2>
-                  <p className="mt-3 font-display text-2xl font-bold tabular-nums text-foreground">{value}</p>
+                  <p className="mt-3 font-display text-xl font-bold tabular-nums text-foreground">{value}</p>
                   <p className="mt-1 text-[10px] text-muted-foreground">{card.note}</p>
                 </div>
                 <span className="flex size-8 shrink-0 items-center justify-center rounded-md bg-current/10">
