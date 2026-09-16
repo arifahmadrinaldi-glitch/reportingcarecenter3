@@ -20,46 +20,27 @@ export const OPEN_STATUSES = [
   "Monev",
 ] as const;
 
-export const OPEN_BY_OPTIONS = [
-  "Arif",
-  "Ari",
-  "Dicky",
-  "Hari",
-  "Nawin",
-  "Rangga",
-  "Raihan",
-] as const;
+export const OPEN_BY_OPTIONS = ["Arif", "Ari", "Dicky", "Hari", "Nawin", "Rangga", "Raihan"] as const;
 
 export const LAYANAN_OPTIONS = [
-  "AIS",
-  "VIS",
-  "SBS",
-  "Mangostar",
+  "Vsat Star",
+  "CGW",
   "Star Data",
   "Star Data Lite",
-  "VSAT Star",
-  "Gateway",
-  "Datakom",
+  "Star Prime",
+  "Mangostar",
+  "SBS",
+  "AIS",
+  "VIS",
   "SN",
   "BGAN",
   "FBB",
   "MSP",
 ] as const;
 
-export const JENIS_OPTIONS = [
-  "Corrective Maintenance",
-  "Preventive Maintenance",
-  "Instalasi",
-  "Relokasi",
-] as const;
+export const JENIS_OPTIONS = ["Corrective Maintenance", "Preventive Maintenance", "Instalasi", "Relokasi"] as const;
 
-export const REGIONAL_OPTIONS = [
-  "Regional 1",
-  "Regional 2",
-  "Regional 3",
-  "Regional 4",
-  "Regional 5",
-] as const;
+export const REGIONAL_OPTIONS = ["Regional 1", "Regional 2", "Regional 3", "Regional 4", "Regional 5"] as const;
 
 export const ASAL_GANGGUAN_OPTIONS = ["Telkomsat", "Non-Telkomsat"] as const;
 
@@ -131,10 +112,7 @@ export type TicketRow = {
   updated_at: string;
 };
 
-export type TicketFormValues = Omit<
-  TicketRow,
-  "id" | "deleted_at" | "created_at" | "updated_at" | "update_history"
->;
+export type TicketFormValues = Omit<TicketRow, "id" | "deleted_at" | "created_at" | "updated_at" | "update_history">;
 
 export const emptyTicket = (): TicketFormValues => ({
   status: "Diagnose",
@@ -157,15 +135,7 @@ export const emptyTicket = (): TicketFormValues => ({
   teknisi: "",
 });
 
-export type StatusTone =
-  | "success"
-  | "warning"
-  | "orange"
-  | "purple"
-  | "brown"
-  | "danger"
-  | "info"
-  | "muted";
+export type StatusTone = "success" | "warning" | "orange" | "purple" | "brown" | "danger" | "info" | "muted";
 
 export const statusTone = (status: string): StatusTone => {
   if (status === "Close" || status === "Technical Close") return "success";
