@@ -168,7 +168,7 @@ const summaryCards = [
   },
   {
     label: "On The Way",
-    status: "On The Way",
+    status: "Engineer On The Way",
     icon: Truck,
     tone: "blue",
     note: "Dalam Perjalanan",
