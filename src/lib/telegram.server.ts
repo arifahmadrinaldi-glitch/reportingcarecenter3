@@ -13,6 +13,20 @@ export type NewTicketPayload = {
   open_by: string;
   teknisi?: string;
   last_update?: string;
+  tanggal_open?: string | null;
+  tanggal_close?: string | null;
+};
+
+const formatDuration = (openedAt?: string | null, closedAt?: string | null) => {
+  if (!openedAt) return "-";
+  const start = new Date(openedAt).getTime();
+  const end = closedAt ? new Date(closedAt).getTime() : Date.now();
+  if (Number.isNaN(start) || Number.isNaN(end) || end < start) return "-";
+  const totalMinutes = Math.floor((end - start) / 60_000);
+  const days = Math.floor(totalMinutes / 1_440);
+  const hours = Math.floor((totalMinutes % 1_440) / 60);
+  const minutes = totalMinutes % 60;
+  return `${days} Hari ${hours} Jam ${minutes} Menit${closedAt ? "" : " (berjalan)"}`;
 };
 
 const escapeHtml = (value: string) =>
@@ -58,6 +72,8 @@ export function buildTicketMessage(ticket: NewTicketPayload) {
     `├ Tiket: ${escapeHtml(tiket || "-")}\n` +
     `├ Status: ${escapeHtml(ticket.status || "-")}\n` +
     `├ Jenis: ${escapeHtml(jenisLine || "-")}\n` +
+    `├ Indikasi: ${escapeHtml((ticket.indikasi_gangguan ?? "").trim() || "-")}\n` +
+    `├ Durasi: ${escapeHtml(formatDuration(ticket.tanggal_open, ticket.tanggal_close))}\n` +
     `├ Teknisi: ${escapeHtml((ticket.teknisi ?? "").trim() || "-")}\n` +
     `└ Update: ${escapeHtml((ticket.last_update ?? "").trim() || "-")}`
   );
