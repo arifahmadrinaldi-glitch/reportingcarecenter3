@@ -76,6 +76,8 @@ const asPayload = (row: Row): NewTicketPayload => ({
   open_by: row["open_by"] ?? "",
   teknisi: row["teknisi"] ?? "",
   last_update: row["last_update"] ?? "",
+  tanggal_open: row["tanggal_open"] ?? null,
+  tanggal_close: row["tanggal_close"] ?? null,
 });
 
 const fmtDate = (value: string | null | undefined) => {
@@ -123,25 +125,9 @@ async function buildOpenTicketSummary(): Promise<string> {
   const pmTotal = jenisCounts.get("Preventive Maintenance") ?? 0;
   const jenisLines = `• CM: ${cmTotal}\n• PM: ${pmTotal}`;
 
-  const cards = rows.slice(0, 15).map((row, index) => {
-    const payload = asPayload(row);
-    const jenis = escapeHtml(shortJenis(payload.jenis_ticket ?? ""));
-    const layanan = escapeHtml(payload.layanan ?? "-");
-    const regional = escapeHtml(shortRegional(payload.regional ?? ""));
-    const tiket = [payload.tiket_mantools, payload.tiket_noxis]
-      .map((part) => (part ?? "").trim())
-      .filter(Boolean)
-      .join(" / ");
-    return (
-      `${index + 1}. ${escapeHtml(payload.nama_lokasi || "-")}\n` +
-      `├ Customer: ${escapeHtml(payload.customer || "-")}\n` +
-      `├ Tiket: ${escapeHtml(tiket || "-")}\n` +
-      `├ Status: ${escapeHtml(payload.status || "-")}\n` +
-      `├ Jenis: ${jenis} | ${layanan} | ${regional}\n` +
-      `├ Teknisi: ${escapeHtml((payload.teknisi ?? "").trim() || "-")}\n` +
-      `└ Update: ${escapeHtml((payload.last_update ?? "").trim() || "-")}`
-    );
-  });
+  const cards = rows
+    .slice(0, 15)
+    .map((row, index) => `${index + 1}. ${buildTicketMessage(asPayload(row))}`);
   const more = rows.length > 15 ? `\n\n…dan ${rows.length - 15} tiket lainnya.` : "";
   return mono(
     `🎫 TIKET BELUM CLOSE (total ${rows.length})\n\n` +

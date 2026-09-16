@@ -6,6 +6,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/tickets/StatusBadge";
+import { LiveDuration } from "@/components/tickets/LiveDuration";
 import {
   formatDateTime,
   parseUpdateHistory,
@@ -27,7 +28,6 @@ const fields: { label: string; get: (t: TicketRow) => string }[] = [
   { label: "Open By", get: (t) => t.open_by ?? "-" },
   { label: "Tanggal Open", get: (t) => formatDateTime(t.tanggal_open) },
   { label: "Tanggal Close", get: (t) => formatDateTime(t.tanggal_close) },
-  { label: "Durasi", get: (t) => t.durasi ?? "-" },
   { label: "Teknisi", get: (t) => t.teknisi ?? "-" },
 ];
 
@@ -66,6 +66,18 @@ export function TicketDetailDialog({
                   </dd>
                 </div>
               ))}
+              <div className="rounded-lg border border-border p-3">
+                <dt className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
+                  Durasi
+                </dt>
+                <dd className="mt-1 text-sm break-words text-foreground">
+                  <LiveDuration
+                    openedAt={ticket.tanggal_open}
+                    closedAt={ticket.tanggal_close}
+                    fallback={ticket.durasi}
+                  />
+                </dd>
+              </div>
               <div className="rounded-lg border border-border p-3 sm:col-span-2">
                 <dt className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
                   Last Update (terakhir)

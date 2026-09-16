@@ -26,6 +26,7 @@ import { RollbackDialog } from "@/components/tickets/RollbackDialog";
 import { StatusBadge } from "@/components/tickets/StatusBadge";
 import { TicketDetailDialog } from "@/components/tickets/TicketDetailDialog";
 import { TicketFormDialog, type SaveMeta } from "@/components/tickets/TicketFormDialog";
+import { LiveDuration } from "@/components/tickets/LiveDuration";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -389,6 +390,8 @@ function TicketsPage() {
             open_by: values.open_by ?? "",
             teknisi: values.teknisi ?? "",
             last_update: values.last_update ?? "",
+            tanggal_open: values.tanggal_open,
+            tanggal_close: values.tanggal_close,
           },
         });
         if (result?.sent) toast.success("Notifikasi Telegram terkirim");
@@ -769,7 +772,11 @@ function TicketsPage() {
                       <Subline label="Open by" value={ticket.open_by} />
                     </td>
                     <td className="cell-wrap px-2 py-2 font-semibold">
-                      {ticket.durasi || "-"}
+                      <LiveDuration
+                        openedAt={ticket.tanggal_open}
+                        closedAt={ticket.tanggal_close}
+                        fallback={ticket.durasi}
+                      />
                       <Subline label="Open" value={formatDateTime(ticket.tanggal_open)} />
                       <Subline label="Close" value={formatDateTime(ticket.tanggal_close)} />
                     </td>
