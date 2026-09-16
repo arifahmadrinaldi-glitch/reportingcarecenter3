@@ -15,7 +15,7 @@ export function LiveDuration({
 
   useEffect(() => {
     if (closedAt || !openedAt) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => window.clearInterval(timer);
   }, [openedAt, closedAt]);
 
