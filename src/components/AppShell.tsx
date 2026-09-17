@@ -1,9 +1,13 @@
 import { Link } from "@tanstack/react-router";
-import { ClipboardList, LayoutGrid, Radio, Ticket } from "lucide-react";
+import { ClipboardList, LayoutGrid, LogOut, Radio, Ticket } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { AccessControls } from "@/components/AccessControls";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
+import { useQueryClient } from "@tanstack/react-query";
+import { useNavigate } from "@tanstack/react-router";
+import { useAuth } from "@/lib/auth";
 
 const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutGrid },
@@ -24,6 +28,16 @@ export function AppShell({
 }) {
   const [hovered, setHovered] = useState(false);
   const expanded = hovered;
+  const queryClient = useQueryClient();
+  const navigate = useNavigate();
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await queryClient.cancelQueries();
+    queryClient.clear();
+    await signOut();
+    await navigate({ to: "/", replace: true });
+  };
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -95,6 +109,9 @@ export function AppShell({
               ))}
             </nav>
             <AccessControls />
+            <Button variant="outline" size="icon" onClick={handleSignOut} aria-label="Keluar dari aplikasi" title="Keluar">
+              <LogOut className="size-4" />
+            </Button>
             <ThemeToggle />
           </div>
         </header>
