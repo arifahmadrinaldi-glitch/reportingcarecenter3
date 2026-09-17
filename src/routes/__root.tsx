@@ -13,7 +13,9 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { Toaster } from "@/components/ui/sonner";
 import { LockScreen } from "@/components/AccessControls";
+import { AuthGate } from "@/components/AuthGate";
 import { AccessProvider } from "@/lib/app-access";
+import { AuthProvider } from "@/lib/auth";
 
 function NotFoundComponent() {
   return (
@@ -134,11 +136,15 @@ function RootComponent() {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <AccessProvider>
-        {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
-        <Outlet />
-        <LockScreen />
-      </AccessProvider>
+      <AuthProvider>
+        <AuthGate>
+          <AccessProvider>
+            {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
+            <Outlet />
+            <LockScreen />
+          </AccessProvider>
+        </AuthGate>
+      </AuthProvider>
       <Toaster position="top-right" richColors />
     </QueryClientProvider>
   );
