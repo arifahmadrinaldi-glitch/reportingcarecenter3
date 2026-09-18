@@ -136,13 +136,23 @@ export const emptyTicket = (): TicketFormValues => ({
   teknisi: "",
 });
 
-export type StatusTone = "success" | "warning" | "orange" | "purple" | "brown" | "danger" | "info" | "muted";
+export type StatusTone =
+  | "success"
+  | "warning"
+  | "orange"
+  | "purple"
+  | "brown"
+  | "danger"
+  | "info"
+  | "muted"
+  | "telor-asin";
 
 export const statusTone = (status: string): StatusTone => {
   if (status === "Close" || status === "Technical Close") return "success";
   if (status === "Diagnose" || status === "Engineer Assignment") return "danger";
   if (status === "Pending Spare") return "purple";
   if (status === "Pending") return "brown";
+  if (status === "Pending Customer") return "telor-asin";
   if (status.startsWith("Pending")) return "warning";
   if ((OPEN_STATUSES as readonly string[]).includes(status)) return "info";
   return "muted";
