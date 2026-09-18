@@ -10,7 +10,7 @@ const toneClass = {
   danger: "text-status-red",
   info: "text-info",
   muted: "text-muted-foreground",
-  telor-asin: "text-teal-600",
+  "telor-asin": "text-teal-600",
 } as const;
 
 export function StatusBadge({ status }: { status: string }) {
