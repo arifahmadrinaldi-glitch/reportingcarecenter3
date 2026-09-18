@@ -100,6 +100,7 @@ export type TicketRow = {
   asal_gangguan: string | null;
   regional: string | null;
   indikasi_gangguan: string | null;
+  tiket_epicor?: string | null;
   last_update: string | null;
   team_sem: string | null;
   open_by: string | null;
