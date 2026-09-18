@@ -2,39 +2,28 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import type { ReactNode } from "react";
 
 export const ADMIN_PASSWORD = "784521";
-export const LOCK_PASSWORD = "CC32026";
-
 const ROLE_KEY = "app-role";
-const LOCK_KEY = "app-locked";
 
 type Role = "user" | "admin";
 
 type AccessContextValue = {
   role: Role;
   isAdmin: boolean;
-  locked: boolean;
-  ready: boolean;
   loginAdmin: (password: string) => boolean;
   logoutAdmin: () => void;
-  lockApp: () => void;
-  unlockApp: (password: string) => boolean;
 };
 
 const AccessContext = createContext<AccessContextValue | null>(null);
 
 export function AccessProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<Role>("user");
-  const [locked, setLocked] = useState(false);
-  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     try {
       if (localStorage.getItem(ROLE_KEY) === "admin") setRole("admin");
-      if (localStorage.getItem(LOCK_KEY) === "1") setLocked(true);
     } catch {
       // ignore unavailable storage
     }
-    setReady(true);
   }, []);
 
   const loginAdmin = useCallback((password: string) => {
@@ -57,38 +46,14 @@ export function AccessProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
-  const lockApp = useCallback(() => {
-    setLocked(true);
-    try {
-      localStorage.setItem(LOCK_KEY, "1");
-    } catch {
-      // ignore
-    }
-  }, []);
-
-  const unlockApp = useCallback((password: string) => {
-    if (password.trim() !== LOCK_PASSWORD) return false;
-    setLocked(false);
-    try {
-      localStorage.removeItem(LOCK_KEY);
-    } catch {
-      // ignore
-    }
-    return true;
-  }, []);
-
   const value = useMemo(
     () => ({
       role,
       isAdmin: role === "admin",
-      locked,
-      ready,
       loginAdmin,
       logoutAdmin,
-      lockApp,
-      unlockApp,
     }),
-    [role, locked, ready, loginAdmin, logoutAdmin, lockApp, unlockApp],
+    [role, loginAdmin, logoutAdmin],
   );
 
   return <AccessContext.Provider value={value}>{children}</AccessContext.Provider>;
