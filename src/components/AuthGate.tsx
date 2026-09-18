@@ -7,13 +7,10 @@ import { Input } from "@/components/ui/input";
 import { APPROVED_EMAIL, useAuth } from "@/lib/auth";
 
 export function AuthGate({ children }: { children: ReactNode }) {
-  const { user, loading, signIn, signUp, verifyOtp } = useAuth();
-  const [email, setEmail] = useState("");
+  const { user, loading, signIn, signUp } = useAuth();
   const [password, setPassword] = useState("");
-  const [otp, setOtp] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [firstAccess, setFirstAccess] = useState(false);
-  const [otpStep, setOtpStep] = useState(false);
 
   if (loading) {
     return (
@@ -27,38 +24,16 @@ export function AuthGate({ children }: { children: ReactNode }) {
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (email.trim().toLowerCase() !== APPROVED_EMAIL) {
-      toast.error("Email tidak memiliki akses");
-      return;
-    }
-    if (otpStep) {
-      if (!/^\d{6,8}$/.test(otp.trim())) {
-        toast.error("Masukkan kode OTP dari email");
-        return;
-      }
-      setSubmitting(true);
-      const result = await verifyOtp(email, otp);
-      setSubmitting(false);
-      if (!result) toast.success("Verifikasi berhasil");
-      else toast.error("Kode OTP salah atau sudah kedaluwarsa");
-      return;
-    }
     if (password.length < 6) {
       toast.error("Kata sandi minimal 6 karakter");
       return;
     }
     setSubmitting(true);
-    const result = firstAccess ? await signUp(email, password) : await signIn(email, password);
+    const result = firstAccess ? await signUp(password) : await signIn(password);
     setSubmitting(false);
 
     if (!result) {
       toast.success(firstAccess ? "Akun berhasil diaktifkan" : "Berhasil masuk");
-      return;
-    }
-    if (result === "otp-required") {
-      setOtpStep(true);
-      setPassword("");
-      toast.success("Kode OTP telah dikirim ke email");
       return;
     }
     if (result === "confirmation-required") {
@@ -88,66 +63,44 @@ export function AuthGate({ children }: { children: ReactNode }) {
             <LockKeyhole className="size-5" />
           </div>
           <h2 className="mt-4 text-base font-bold text-foreground">
-            {otpStep ? "Verifikasi OTP" : firstAccess ? "Aktifkan akses" : "Masuk ke aplikasi"}
+            {firstAccess ? "Aktifkan akses" : "Masuk ke aplikasi"}
           </h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            {otpStep
-              ? "Masukkan kode OTP yang dikirim ke email Anda."
-              : "Masukkan email dan kata sandi akun yang telah ditentukan."}
+            Aplikasi ini hanya dapat dibuka oleh akun yang telah ditentukan.
           </p>
 
           <form className="mt-5 space-y-4" onSubmit={submit}>
             <label className="block">
               <span className="text-[10px] font-bold uppercase text-muted-foreground">Email</span>
-              <Input
-                className="mt-1.5"
-                type="email"
-                value={email}
-                autoComplete="off"
-                readOnly={otpStep}
-                aria-label="Email"
-                placeholder="Masukkan email"
-                onChange={(event) => setEmail(event.target.value)}
-              />
+              <Input className="mt-1.5" value={APPROVED_EMAIL} readOnly aria-label="Email" />
             </label>
             <label className="block">
-              <span className="text-[10px] font-bold uppercase text-muted-foreground">
-                {otpStep ? "Kode OTP" : "Kata sandi"}
-              </span>
+              <span className="text-[10px] font-bold uppercase text-muted-foreground">Kata sandi</span>
               <Input
                 className="mt-1.5"
-                type={otpStep ? "text" : "password"}
-                inputMode={otpStep ? "numeric" : undefined}
-                value={otpStep ? otp : password}
-                autoComplete={otpStep ? "one-time-code" : firstAccess ? "new-password" : "current-password"}
-                onChange={(event) => otpStep ? setOtp(event.target.value.replace(/\D/g, "")) : setPassword(event.target.value)}
-                placeholder={otpStep ? "Masukkan kode OTP" : firstAccess ? "Buat kata sandi" : "Masukkan kata sandi"}
+                type="password"
+                value={password}
+                autoComplete={firstAccess ? "new-password" : "current-password"}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder={firstAccess ? "Buat kata sandi" : "Masukkan kata sandi"}
                 autoFocus
               />
             </label>
             <Button className="w-full" type="submit" disabled={submitting}>
-              {submitting ? "Memproses..." : otpStep ? "Verifikasi OTP" : firstAccess ? "Aktifkan Akun" : "Masuk"}
+              {submitting ? "Memproses..." : firstAccess ? "Aktifkan Akun" : "Masuk"}
             </Button>
           </form>
 
-          <Button
+          <button
             type="button"
-            variant="link"
-            className="mt-4 w-full text-center text-xs font-semibold"
+            className="mt-4 w-full text-center text-xs font-semibold text-primary hover:underline"
             onClick={() => {
-              if (otpStep) {
-                setOtpStep(false);
-                setOtp("");
-                setEmail("");
-                return;
-              }
               setFirstAccess((value) => !value);
-              setEmail("");
               setPassword("");
             }}
           >
-            {otpStep ? "Kembali ke login" : firstAccess ? "Sudah punya kata sandi? Masuk" : "Akses pertama kali? Aktifkan akun"}
-          </Button>
+            {firstAccess ? "Sudah punya kata sandi? Masuk" : "Akses pertama kali? Aktifkan akun"}
+          </button>
         </div>
       </section>
     </main>
