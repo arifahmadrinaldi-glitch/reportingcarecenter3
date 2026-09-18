@@ -756,7 +756,6 @@ function TicketsPage() {
                     <td className="cell-wrap px-2 py-2 font-semibold">
                       {ticket.tiket_mantools || "-"}
                       <Subline label="Noxis" value={ticket.tiket_noxis} />
-                      <Subline label="Epicor" value={ticket.tiket_epicor} />
                     </td>
                     <td className="cell-wrap px-2 py-2 font-semibold">
                       {ticket.layanan || "-"}

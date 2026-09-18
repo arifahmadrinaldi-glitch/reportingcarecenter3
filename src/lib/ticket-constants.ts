@@ -40,7 +40,7 @@ export const LAYANAN_OPTIONS = [
 
 export const JENIS_OPTIONS = ["Corrective Maintenance", "Preventive Maintenance", "Instalasi", "Relokasi"] as const;
 
-export const REGIONAL_OPTIONS = ["Regional 1", "Regional 2", "Regional 3", "Regional 4"] as const;
+export const REGIONAL_OPTIONS = ["Regional 1", "Regional 2", "Regional 3", "Regional 4", "Regional 5"] as const;
 
 export const ASAL_GANGGUAN_OPTIONS = ["Telkomsat", "Non-Telkomsat"] as const;
 
@@ -100,7 +100,6 @@ export type TicketRow = {
   asal_gangguan: string | null;
   regional: string | null;
   indikasi_gangguan: string | null;
-  tiket_epicor: string | null;
   last_update: string | null;
   team_sem: string | null;
   open_by: string | null;
