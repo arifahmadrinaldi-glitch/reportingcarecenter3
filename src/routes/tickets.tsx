@@ -156,7 +156,7 @@ const summaryCards = [
     label: "Pending Customer",
     status: "Pending Customer",
     icon: Building2,
-    tone: "telor-asin",
+    tone: "teal",
     note: "Menunggu Info Customer",
   },
   {
@@ -544,7 +544,7 @@ function TicketsPage() {
                   ? "border-success/35 bg-success/5 text-success"
                   : card.tone === "brown"
                     ? "border-amber-700/35 bg-amber-700/5 text-amber-700"
-                    : card.tone === "telor-asin"
+                    : card.tone === "teal"
                       ? "border-teal-500/35 text-teal-600"
                       : card.tone === "blue"
                         ? "border-blue-500/35 text-blue-600"
