@@ -1,11 +1,17 @@
-# Login dengan Email dan Kata Sandi
+# Login Email, Kata Sandi, dan OTP
 
 ## Perubahan
-- Kosongkan kolom email setiap kali halaman login dibuka, bukan menampilkan email akun secara otomatis.
-- Izinkan pengguna mengetik email dan kata sandi saat masuk atau mengaktifkan akun.
-- Tetap batasi akses hanya untuk `ahmadarifrinaldi@gmail.com`; email lain ditolak.
-- Hindari penyimpanan nilai email oleh formulir aplikasi dan kosongkan kedua kolom saat mode login berubah.
+- Kolom email selalu kosong ketika halaman login dibuka dan diisi manual oleh pengguna.
+- Login tetap dibatasi hanya untuk `ahmadarifrinaldi@gmail.com`; email lain ditolak.
+- Setelah email dan kata sandi benar, kirim kode OTP ke email tersebut.
+- Tampilkan tahap kedua untuk memasukkan kode OTP sebelum aplikasi dapat dibuka, termasuk opsi kirim ulang kode.
+- Pertahankan aktivasi akun pertama kali dengan email yang diketik pengguna.
+- Hapus tombol Kunci, layar kunci, serta penyimpanan status kunci dari aplikasi.
+- Perbaiki kesalahan pada tampilan status yang saat ini menghambat aplikasi berjalan.
 
 ## Validasi
-- Pastikan halaman login menampilkan kolom email kosong.
-- Pastikan email yang diizinkan dapat diproses dan email lain mendapat pesan penolakan.
+- Pastikan kolom email tidak terisi otomatis.
+- Pastikan email lain tidak dapat masuk.
+- Pastikan aplikasi baru terbuka setelah kata sandi dan OTP berhasil diverifikasi.
+- Pastikan tombol dan layar Kunci sudah tidak ada.
+- Pastikan halaman daftar tiket kembali dapat dibuka tanpa kesalahan.
