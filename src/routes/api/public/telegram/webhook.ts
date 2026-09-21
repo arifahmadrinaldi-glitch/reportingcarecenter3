@@ -245,6 +245,10 @@ async function buildCloseToday(args: string[] = []): Promise<string> {
   return mono(`✅ TIKET CLOSE ${label} (total ${rows.length})\n\n${cards.join("\n\n")}${more}`);
 }
 
+/** /caritiket <kode> — cari tiket berdasarkan kode mantools / noxis / lokasi. */
+async function buildCariTiket(query: string): Promise<string> {
+  if (!query) return "🔍 Format: <code>/caritiket KODE_TIKET</code>";
+
   const supabase = getSupabase();
   const like = `%${query}%`;
   const { data, error } = await supabase
