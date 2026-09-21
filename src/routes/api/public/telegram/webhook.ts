@@ -197,13 +197,13 @@ async function buildCloseToday(args: string[] = []): Promise<string> {
 
   const rawArg = args[0];
   if (rawArg) {
-    const m = rawArg.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
-    if (m) {
+        const m = rawArg.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    if (m && m[1] && m[2] && m[3]) {
       day = parseInt(m[1], 10);
       month = parseInt(m[2], 10);
       year = parseInt(m[3], 10);
     }
-  }
+
 
   // Jika tanpa argumen / format bebas, gunakan hari ini waktu WIB (UTC+7)
   if (!day || !month || !year) {
