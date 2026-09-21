@@ -189,11 +189,34 @@ async function buildRekap(args: string[]): Promise<string> {
   );
 }
 
-/** /tiketclose — tiket yang close hari ini (berdasarkan tanggal close aktual). */
-async function buildCloseToday(): Promise<string> {
-  const now = new Date();
-  const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const end = new Date(start.getTime() + 86400000);
+/** /tiketclose [dd/mm/yyyy] — tiket yang close pada tanggal tertentu (default: hari ini WIB). */
+async function buildCloseToday(args: string[] = []): Promise<string> {
+  let day: number | undefined;
+  let month: number | undefined;
+  let year: number | undefined;
+
+  const rawArg = args[0];
+  if (rawArg) {
+    const m = rawArg.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+    if (m) {
+      day = parseInt(m[1], 10);
+      month = parseInt(m[2], 10);
+      year = parseInt(m[3], 10);
+    }
+  }
+
+  // Jika tanpa argumen / format bebas, gunakan hari ini waktu WIB (UTC+7)
+  if (!day || !month || !year) {
+    const wibNow = new Date(Date.now() + 7 * 3600 * 1000);
+    day = wibNow.getUTCDate();
+    month = wibNow.getUTCMonth() + 1;
+    year = wibNow.getUTCFullYear();
+  }
+
+  const start = new Date(Date.UTC(year, month - 1, day, -7, 0, 0));
+  const end = new Date(Date.UTC(year, month - 1, day + 1, -7, 0, 0));
+  const pad = (n: number) => String(n).padStart(2, "0");
+  const label = `${pad(day)}/${pad(month)}/${year}`;
 
   const supabase = getSupabase();
   const { data, error } = await supabase
@@ -210,8 +233,7 @@ async function buildCloseToday(): Promise<string> {
   }
 
   const rows = (data ?? []) as Row[];
-  const label = fmtDate(start.toISOString()).slice(0, 10);
-  if (rows.length === 0) return mono(`✅ TIKET CLOSE ${label}\n\nBelum ada tiket yang close hari ini.`);
+  if (rows.length === 0) return mono(`✅ TIKET CLOSE ${label}\n\nTidak ada tiket yang close pada tanggal ini.`);
 
   const cards = rows
     .slice(0, 15)
@@ -222,10 +244,6 @@ async function buildCloseToday(): Promise<string> {
   const more = rows.length > 15 ? `\n\n…dan ${rows.length - 15} tiket lainnya.` : "";
   return mono(`✅ TIKET CLOSE ${label} (total ${rows.length})\n\n${cards.join("\n\n")}${more}`);
 }
-
-/** /caritiket <kode> — cari tiket berdasarkan kode mantools / noxis / lokasi. */
-async function buildCariTiket(query: string): Promise<string> {
-  if (!query) return "🔍 Format: <code>/caritiket KODE_TIKET</code>";
 
   const supabase = getSupabase();
   const like = `%${query}%`;
@@ -297,7 +315,7 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
         } else if (command === "/rekap") {
           await reply(chatId, await buildRekap(args));
         } else if (command === "/tiketclose") {
-          await reply(chatId, await buildCloseToday());
+          await reply(chatId, await buildCloseToday(args));
         } else if (command === "/caritiket") {
           await reply(chatId, await buildCariTiket(args.join(" ")));
         } else if (command === "/start" || command === "/help") {
