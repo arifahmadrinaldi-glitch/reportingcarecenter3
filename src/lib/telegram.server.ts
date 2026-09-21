@@ -29,8 +29,7 @@ const formatDuration = (openedAt?: string | null, closedAt?: string | null) => {
   return `${days} Hari ${hours} Jam ${minutes} Menit${closedAt ? "" : " (berjalan)"}`;
 };
 
-const escapeHtml = (value: string) =>
-  value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const escapeHtml = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 /** "Corrective Maintenance" -> "CM", "Preventive Maintenance" -> "PM". */
 export const shortJenis = (value: string) => {
@@ -52,11 +51,7 @@ export const mono = (body: string) => `<pre>${body}</pre>`;
  * Plain text (already HTML-escaped) so it can live inside a <pre> block.
  */
 export function buildTicketMessage(ticket: NewTicketPayload) {
-  const jenisLine = [
-    shortJenis(ticket.jenis_ticket ?? ""),
-    ticket.layanan ?? "",
-    shortRegional(ticket.regional ?? ""),
-  ]
+  const jenisLine = [shortJenis(ticket.jenis_ticket ?? ""), ticket.layanan ?? "", shortRegional(ticket.regional ?? "")]
     .map((part) => part.trim())
     .filter(Boolean)
     .join(" | ");
@@ -89,10 +84,7 @@ async function listChatIds(): Promise<number[]> {
   if (url && serviceKey) {
     const { createClient } = await import("@supabase/supabase-js");
     const supabase = createClient(url, serviceKey, { auth: { persistSession: false } });
-    const { data, error } = await supabase
-      .from("telegram_chats")
-      .select("chat_id")
-      .eq("is_active", true);
+    const { data, error } = await supabase.from("telegram_chats").select("chat_id").eq("is_active", true);
     if (error) console.error(`Gagal baca telegram_chats: ${error.message}`);
     for (const row of (data ?? []) as Array<{ chat_id: number }>) ids.add(Number(row.chat_id));
   }
@@ -100,15 +92,8 @@ async function listChatIds(): Promise<number[]> {
   return [...ids].filter((id) => Number.isFinite(id));
 }
 
-export async function sendTelegramTicket(
-  ticket: NewTicketPayload,
-): Promise<{ sent: boolean; reason?: string }> {
-  const lovableKey = process.env["LOVABLE_API_KEY"];
-  const telegramKey = process.env["TELEGRAM_API_KEY"];
-
-  if (!lovableKey || !telegramKey) {
-    return { sent: false, reason: "koneksi Telegram belum diaktifkan" };
-  }
+export async function sendTelegramTicket(ticket: NewTicketPayload): Promise<{ sent: boolean; reason?: string }> {
+  const BOT_TOKEN = "8988855506:AAHGK8Gtdi66tHvUiRQ2VYgC6_x64RRZDz4";
 
   const chatIds = await listChatIds();
   if (chatIds.length === 0) {
@@ -119,11 +104,9 @@ export async function sendTelegramTicket(
   let lastReason: string | undefined;
 
   for (const chatId of chatIds) {
-    const response = await fetch(`${GATEWAY_URL}/sendMessage`, {
+    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": telegramKey,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
@@ -135,7 +118,7 @@ export async function sendTelegramTicket(
 
     if (!response.ok) {
       const body = await response.text();
-      console.error(`Telegram gateway failed [${response.status}]: ${body}`);
+      console.error(`Telegram sendMessage failed [${response.status}]: ${body}`);
       lastReason = `gagal kirim (${response.status})`;
       continue;
     }

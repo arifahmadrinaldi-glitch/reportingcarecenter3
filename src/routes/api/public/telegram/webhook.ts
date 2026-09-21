@@ -36,17 +36,10 @@ function getSupabase() {
 }
 
 async function reply(chatId: number, text: string) {
-  const lovableKey = process.env["LOVABLE_API_KEY"];
-  const telegramKey = process.env["TELEGRAM_API_KEY"];
-  if (!lovableKey || !telegramKey) return;
-
-  const response = await fetch("https://connector-gateway.lovable.dev/telegram/sendMessage", {
+  const token = "8988855506:AAHGK8Gtdi66tHvUiRQ2VYgC6_x64RRZDz4";
+  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
-    headers: {
-      Authorization: `Bearer ${lovableKey}`,
-      "X-Connection-Api-Key": telegramKey,
-      "Content-Type": "application/json",
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
   });
 
@@ -263,9 +256,6 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const telegramKey = process.env["TELEGRAM_API_KEY"];
-        if (!telegramKey) return new Response("Not configured", { status: 503 });
-
         // const provided = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
         // if (!safeEqual(provided, deriveSecret(telegramKey))) {
         //   return new Response("Unauthorized", { status: 401 });
