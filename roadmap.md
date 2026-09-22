@@ -5,3 +5,4 @@
 - [x] Hapus fitur kunci dari halaman utama
 - [x] Perbaiki kesalahan sintaks StatusBadge yang menghambat aplikasi
 - [x] Verifikasi alur login dan tampilan aplikasi
+- [x] Tambah kolom Tiket Epicor di bawah Noxis (tabel, detail, form tambah tiket, import, pesan Telegram)
