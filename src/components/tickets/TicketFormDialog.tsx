@@ -13,13 +13,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
   ASAL_GANGGUAN_OPTIONS,
@@ -80,10 +74,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
   const set = <K extends keyof TicketFormValues>(key: K, value: TicketFormValues[K]) =>
     setValues((prev) => ({ ...prev, [key]: value }));
 
-  const durasiAuto = useMemo(
-    () => computeDurasi(toIso(openAt), toIso(closeAt)),
-    [openAt, closeAt],
-  );
+  const durasiAuto = useMemo(() => computeDurasi(toIso(openAt), toIso(closeAt)), [openAt, closeAt]);
 
   const submit = async () => {
     setSaving(true);
@@ -114,17 +105,10 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
     </Label>
   );
 
-  const selectField = (
-    label: string,
-    key: keyof TicketFormValues,
-    options: readonly string[],
-  ) => (
+  const selectField = (label: string, key: keyof TicketFormValues, options: readonly string[]) => (
     <div className="space-y-1.5">
       {fieldLabel(label)}
-      <Select
-        value={(values[key] as string) || ""}
-        onValueChange={(v) => set(key, v as never)}
-      >
+      <Select value={(values[key] as string) || ""} onValueChange={(v) => set(key, v as never)}>
         <SelectTrigger className="h-10 w-full bg-surface">
           <SelectValue placeholder={`Pilih ${label.toLowerCase()}`} />
         </SelectTrigger>
@@ -171,8 +155,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
             {ticket ? "Edit Ticket" : "Tambah Ticket"}
           </DialogTitle>
           <DialogDescription className="text-xs text-primary-foreground/85">
-            Lengkapi data gangguan. Durasi dihitung otomatis dari Tanggal Open dan Tanggal
-            Close.
+            Lengkapi data gangguan. Durasi dihitung otomatis dari Tanggal Open dan Tanggal Close.
           </DialogDescription>
         </DialogHeader>
 
@@ -184,6 +167,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
             {textField("Nama Lokasi", "nama_lokasi")}
             {textField("Tiket Mantools", "tiket_mantools")}
             {textField("Tiket Noxis", "tiket_noxis")}
+            {textField("Tiket Epicor", "tiket_epicor")}
             {selectField("Layanan", "layanan", LAYANAN_OPTIONS)}
             {selectField("Jenis Ticket", "jenis_ticket", JENIS_OPTIONS)}
             {selectField("Regional", "regional", REGIONAL_OPTIONS)}
@@ -192,10 +176,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
             {ticket ? (
               <>
                 <div className="space-y-1.5 sm:col-span-2">
-                  {fieldLabel(
-                    isAdmin ? "Update Terakhir Tersimpan (bisa diedit)" : "Update Terakhir Tersimpan",
-                    false,
-                  )}
+                  {fieldLabel(isAdmin ? "Update Terakhir Tersimpan (bisa diedit)" : "Update Terakhir Tersimpan", false)}
                   <Textarea
                     rows={2}
                     readOnly={!isAdmin}
@@ -244,11 +225,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               {fieldLabel("Durasi (Otomatis)", false)}
-              <Input
-                readOnly
-                value={durasiAuto || "-"}
-                className="h-10 bg-muted/60 text-muted-foreground"
-              />
+              <Input readOnly value={durasiAuto || "-"} className="h-10 bg-muted/60 text-muted-foreground" />
             </div>
           </div>
         </div>

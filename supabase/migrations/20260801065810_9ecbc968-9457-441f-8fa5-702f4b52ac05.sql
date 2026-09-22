@@ -6,6 +6,7 @@ CREATE TABLE public.tickets (
   nama_lokasi text,
   tiket_mantools text,
   tiket_noxis text,
+  tiket_epicor text,
   layanan text,
   jenis_ticket text,
   asal_gangguan text,

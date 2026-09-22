@@ -90,6 +90,7 @@ const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
   { key: "nama_lokasi", label: "Nama Lokasi", align: "wrap" },
   { key: "tiket_mantools", label: "Tiket Mantools", align: "center" },
   { key: "tiket_noxis", label: "Tiket Noxis", align: "center" },
+  { key: "tiket_epicor", label: "Tiket Epicor", align: "center" },
   { key: "layanan", label: "Layanan", align: "center" },
   { key: "jenis_ticket", label: "Jenis Ticket", align: "center" },
   { key: "asal_gangguan", label: "Asal Gangguan", align: "center" },
@@ -391,6 +392,7 @@ function TicketsPage() {
             nama_lokasi: values.nama_lokasi ?? "",
             tiket_mantools: values.tiket_mantools ?? "",
             tiket_noxis: values.tiket_noxis ?? "",
+            tiket_epicor: values.tiket_epicor ?? "",
             layanan: values.layanan ?? "",
             jenis_ticket: values.jenis_ticket ?? "",
             regional: values.regional ?? "",
@@ -459,6 +461,7 @@ function TicketsPage() {
           nama_lokasi: pick(row, "Nama Lokasi") || null,
           tiket_mantools: pick(row, "Tiket Mantools") || null,
           tiket_noxis: pick(row, "Tiket Noxis") || null,
+          tiket_epicor: pick(row, "Tiket Epicor") || null,
           layanan: pick(row, "Layanan") || null,
           jenis_ticket: pick(row, "Jenis Ticket", "Jenis") || null,
           asal_gangguan: pick(row, "Asal Gangguan") || null,
@@ -756,6 +759,7 @@ function TicketsPage() {
                     <td className="cell-wrap px-2 py-2 font-semibold">
                       {ticket.tiket_mantools || "-"}
                       <Subline label="Noxis" value={ticket.tiket_noxis} />
+                      <Subline label="Epicor" value={ticket.tiket_epicor} />
                     </td>
                     <td className="cell-wrap px-2 py-2 font-semibold">
                       {ticket.layanan || "-"}

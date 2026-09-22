@@ -6,6 +6,7 @@ export type NewTicketPayload = {
   nama_lokasi: string;
   tiket_mantools: string;
   tiket_noxis: string;
+  tiket_epicor?: string;
   layanan: string;
   jenis_ticket: string;
   regional: string;
@@ -56,7 +57,7 @@ export function buildTicketMessage(ticket: NewTicketPayload) {
     .filter(Boolean)
     .join(" | ");
 
-  const tiket = [ticket.tiket_mantools, ticket.tiket_noxis]
+  const tiket = [ticket.tiket_mantools, ticket.tiket_noxis, ticket.tiket_epicor]
     .map((part) => (part ?? "").trim())
     .filter(Boolean)
     .join(" / ");

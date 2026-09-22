@@ -53,7 +53,7 @@ const escapeHtml = (value: string) => value.replace(/&/g, "&amp;").replace(/</g,
 type Row = Record<string, string | null>;
 
 const TICKET_FIELDS =
-  "status, customer, nama_lokasi, tiket_mantools, tiket_noxis, layanan, jenis_ticket, regional, indikasi_gangguan, open_by, teknisi, last_update, tanggal_open, tanggal_close";
+  "status, customer, nama_lokasi, tiket_mantools, tiket_noxis, tiket_epicor, layanan, jenis_ticket, regional, indikasi_gangguan, open_by, teknisi, last_update, tanggal_open, tanggal_close";
 
 const asPayload = (row: Row): NewTicketPayload => ({
   status: row["status"] ?? "",
@@ -61,6 +61,7 @@ const asPayload = (row: Row): NewTicketPayload => ({
   nama_lokasi: row["nama_lokasi"] ?? "",
   tiket_mantools: row["tiket_mantools"] ?? "",
   tiket_noxis: row["tiket_noxis"] ?? "",
+  tiket_epicor: row["tiket_epicor"] ?? "",
   layanan: row["layanan"] ?? "",
   jenis_ticket: row["jenis_ticket"] ?? "",
   regional: row["regional"] ?? "",
@@ -255,7 +256,9 @@ async function buildCariTiket(query: string): Promise<string> {
     .from("tickets")
     .select(TICKET_FIELDS)
     .is("deleted_at", null)
-    .or(`tiket_mantools.ilike.${like},tiket_noxis.ilike.${like},nama_lokasi.ilike.${like},customer.ilike.${like}`)
+    .or(
+      `tiket_mantools.ilike.${like},tiket_noxis.ilike.${like},tiket_epicor.ilike.${like},nama_lokasi.ilike.${like},customer.ilike.${like}`,
+    )
     .order("created_at", { ascending: false })
     .limit(10);
 

@@ -1,17 +1,7 @@
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { StatusBadge } from "@/components/tickets/StatusBadge";
 import { LiveDuration } from "@/components/tickets/LiveDuration";
-import {
-  formatDateTime,
-  parseUpdateHistory,
-  type TicketRow,
-} from "@/lib/ticket-constants";
+import { formatDateTime, parseUpdateHistory, type TicketRow } from "@/lib/ticket-constants";
 
 const fields: { label: string; get: (t: TicketRow) => string }[] = [
   { label: "Keterangan", get: (t) => t.keterangan ?? "-" },
@@ -19,6 +9,7 @@ const fields: { label: string; get: (t: TicketRow) => string }[] = [
   { label: "Nama Lokasi", get: (t) => t.nama_lokasi ?? "-" },
   { label: "Tiket Mantools", get: (t) => t.tiket_mantools ?? "-" },
   { label: "Tiket Noxis", get: (t) => t.tiket_noxis ?? "-" },
+  { label: "Tiket Epicor", get: (t) => t.tiket_epicor ?? "-" },
   { label: "Layanan", get: (t) => t.layanan ?? "-" },
   { label: "Jenis Ticket", get: (t) => t.jenis_ticket ?? "-" },
   { label: "Asal Gangguan", get: (t) => t.asal_gangguan ?? "-" },
@@ -51,9 +42,7 @@ export function TicketDetailDialog({
                 Detail Ticket
                 <StatusBadge status={ticket.status} />
               </DialogTitle>
-              <DialogDescription>
-                {ticket.tiket_mantools ?? "Tanpa nomor mantools"}
-              </DialogDescription>
+              <DialogDescription>{ticket.tiket_mantools ?? "Tanpa nomor mantools"}</DialogDescription>
             </DialogHeader>
             <dl className="grid gap-3 sm:grid-cols-2">
               {fields.map((field) => (
@@ -61,15 +50,11 @@ export function TicketDetailDialog({
                   <dt className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
                     {field.label}
                   </dt>
-                  <dd className="mt-1 text-sm break-words text-foreground">
-                    {field.get(ticket)}
-                  </dd>
+                  <dd className="mt-1 text-sm break-words text-foreground">{field.get(ticket)}</dd>
                 </div>
               ))}
               <div className="rounded-lg border border-border p-3">
-                <dt className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
-                  Durasi
-                </dt>
+                <dt className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">Durasi</dt>
                 <dd className="mt-1 text-sm break-words text-foreground">
                   <LiveDuration
                     openedAt={ticket.tanggal_open}
@@ -82,9 +67,7 @@ export function TicketDetailDialog({
                 <dt className="text-[11px] font-semibold tracking-wide uppercase text-muted-foreground">
                   Last Update (terakhir)
                 </dt>
-                <dd className="mt-1 text-sm break-words text-foreground">
-                  {ticket.last_update ?? "-"}
-                </dd>
+                <dd className="mt-1 text-sm break-words text-foreground">{ticket.last_update ?? "-"}</dd>
               </div>
             </dl>
 
@@ -93,25 +76,16 @@ export function TicketDetailDialog({
                 Riwayat Update ({ordered.length})
               </p>
               {ordered.length === 0 ? (
-                <p className="mt-2 text-xs text-muted-foreground">
-                  Belum ada riwayat update.
-                </p>
+                <p className="mt-2 text-xs text-muted-foreground">Belum ada riwayat update.</p>
               ) : (
                 <ol className="mt-2 space-y-2">
                   {ordered.map((entry, index) => (
-                    <li
-                      key={`${entry.at}-${index}`}
-                      className="rounded-md bg-muted/50 p-2.5 text-xs"
-                    >
+                    <li key={`${entry.at}-${index}`} className="rounded-md bg-muted/50 p-2.5 text-xs">
                       <div className="flex flex-wrap items-center gap-2 font-semibold text-foreground">
                         <span>{formatDateTime(entry.at)}</span>
-                        {entry.status ? (
-                          <span className="text-muted-foreground">· {entry.status}</span>
-                        ) : null}
+                        {entry.status ? <span className="text-muted-foreground">· {entry.status}</span> : null}
                       </div>
-                      <p className="mt-1 break-words whitespace-pre-wrap text-muted-foreground">
-                        {entry.text || "-"}
-                      </p>
+                      <p className="mt-1 break-words whitespace-pre-wrap text-muted-foreground">{entry.text || "-"}</p>
                     </li>
                   ))}
                 </ol>

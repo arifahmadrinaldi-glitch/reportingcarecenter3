@@ -95,6 +95,7 @@ export type TicketRow = {
   nama_lokasi: string | null;
   tiket_mantools: string | null;
   tiket_noxis: string | null;
+  tiket_epicor: string | null;
   layanan: string | null;
   jenis_ticket: string | null;
   asal_gangguan: string | null;
@@ -122,6 +123,7 @@ export const emptyTicket = (): TicketFormValues => ({
   nama_lokasi: "",
   tiket_mantools: "",
   tiket_noxis: "",
+  tiket_epicor: "",
   layanan: "",
   jenis_ticket: "",
   asal_gangguan: "",
@@ -136,16 +138,7 @@ export const emptyTicket = (): TicketFormValues => ({
   teknisi: "",
 });
 
-export type StatusTone =
-  | "success"
-  | "warning"
-  | "orange"
-  | "purple"
-  | "brown"
-  | "danger"
-  | "info"
-  | "muted"
-  | "teal";
+export type StatusTone = "success" | "warning" | "orange" | "purple" | "brown" | "danger" | "info" | "muted" | "teal";
 
 export const statusTone = (status: string): StatusTone => {
   if (status === "Close" || status === "Technical Close") return "success";
