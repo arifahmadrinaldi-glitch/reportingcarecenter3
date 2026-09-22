@@ -88,9 +88,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const generateAndSendOtp = async (email: string) => {
     const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
 
-    await supabase.from("telegram_otp").delete().eq("email", email);
+    await (supabase as any).from("telegram_otp").delete().eq("email", email);
 
-    const { error: insertError } = await supabase.from("telegram_otp").insert({
+    const { error: insertError } = await (supabase as any).from("telegram_otp").insert({
       email,
       otp: randomOtp,
       expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
@@ -143,7 +143,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail !== APPROVED_EMAIL) return "email-not-approved";
 
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from("telegram_otp")
       .select("otp, expires_at")
       .eq("email", normalizedEmail)
@@ -163,7 +163,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return "Kode OTP salah";
     }
 
-    await supabase.from("telegram_otp").delete().eq("email", normalizedEmail);
+    await (supabase as any).from("telegram_otp").delete().eq("email", normalizedEmail);
 
     sessionStorage.setItem("otp_verified", "true");
     suppressSession.current = false;
