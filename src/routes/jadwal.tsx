@@ -88,15 +88,124 @@ function JadwalPage() {
   const { isAdmin } = useAccess();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const now = new Date();
+    const now = new Date();
   const [selectedPeriod, setSelectedPeriod] = useState<string>(
-    `${now.getFullYear()}-${String(now.getMonth(
-      ) {
-            currentGroup = "Reguler";
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+  );
+  const [isEditing, setIsEditing] = useState(false);
+  const [localSchedule, setLocalSchedule] = useState<ScheduleData | null>(null);
+
+  // Ambil daftar periode jadwal dari database Supabase
+  const { data: scheduleList = [] } = useQuery({
+    queryKey: ["schedules-list"],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("schedules")
+        .select("period, title, updated_at")
+        .order("period", { ascending: false });
+      if (error) throw error;
+      return data || [];
+    },
+  });
+
+  // Ambil detail jadwal periode terpilih
+  const { data: currentSchedule, isLoading, refetch } = useQuery({
+    queryKey: ["schedule", selectedPeriod],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any)
+        .from("schedules")
+        .select("*")
+        .eq("period", selectedPeriod)
+        .maybeSingle();
+      if (error) throw error;
+      if (!data) return null;
+      return {
+        period: data.period,
+        title: data.title,
+        ...(data.data || {}),
+      } as ScheduleData;
+    },
+  });
+
+  // Sinkronkan state lokal saat ganti periode atau data baru masuk
+  const schedule: ScheduleData = useMemo(() => {
+    if (localSchedule && localSchedule.period === selectedPeriod) {
+      return localSchedule;
+    }
+    if (currentSchedule) {
+      return currentSchedule;
+    }
+    const [y, m] = selectedPeriod.split("-").map(Number);
+    const days = getDaysInMonth(y, m);
+    return {
+      period: selectedPeriod,
+      title: `SCHEDULE ${MONTH_NAMES[m - 1].toUpperCase()} ${y}`,
+      year: y,
+      month: m,
+      daysInMonth: days,
+      personel: [],
+      holidays: [],
+    };
+  }, [localSchedule, currentSchedule, selectedPeriod]);
+
+  // Handle parsing Excel
+  const handleExcelUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: "binary" });
+        const sheetName = wb.SheetNames[0];
+        const sheet = wb.Sheets[sheetName];
+        const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
+
+        if (rows.length < 3) {
+          toast.error("Format Excel terlalu pendek atau kosong.");
+          return;
+        }
+
+        const [y, m] = selectedPeriod.split("-").map(Number);
+        const days = getDaysInMonth(y, m);
+
+        // Cari baris header tanggal (angka 1 s/d 28-31)
+        let headerRowIdx = -1;
+                let dayColStart = -1;
+
+        for (let r = 0; r < Math.min(10, rows.length); r++) {
+          for (let c = 0; c < rows[r].length; c++) {
+            if (Number(rows[r][c]) === 1 && Number(rows[r][c + 1]) === 2) {
+              headerRowIdx = r;
+              dayColStart = c;
+              break;
+            }
+          }
+          if (headerRowIdx !== -1) break;
+        }
+
+        const parsedPersonel: PersonelShift[] = [];
+        let currentGroup: "Reguler" | "Business" | "Other" = "Reguler";
+
+        const startRow = headerRowIdx !== -1 ? headerRowIdx + 1 : 3;
+        const colStart = dayColStart !== -1 ? dayColStart : 3;
+
+        for (let r = startRow; r < rows.length; r++) {
+          const row = rows[r];
+          if (!row || row.length === 0) continue;
+
+          const firstCell = String(row[0] || "").trim().toUpperCase();
+          const secondCell = String(row[1] || "").trim().toUpperCase();
+
+          // Deteksi grup/bagian
+          if (firstCell.includes("BUSINESS") || secondCell.includes("BUSINESS")) {
+            currentGroup = "Business";
             continue;
           }
-          if (firstCell.includes("ON DUTY") || secondCell.includes("ON DUTY")) {
-            break; // Selesai data personel
+          if (firstCell.includes("REGULER") || secondCell.includes("REGULER")) {
+            currentGroup = "Reguler";
+            continue;
           }
 
           // Cari kolom nama (biasanya kolom 1 atau 2)
