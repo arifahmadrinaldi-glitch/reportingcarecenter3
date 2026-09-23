@@ -505,7 +505,7 @@ function JadwalPage() {
                     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
                     return (
                       <th
-                                                className={`p-1.5 border-r border-border text-center min-w-[32px] ${
+                        className={`p-1.5 border-r border-border text-center min-w-[32px] ${
                           isWeekend ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold" : ""
                         }`}
 
