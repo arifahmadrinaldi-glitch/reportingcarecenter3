@@ -20,13 +20,7 @@ import * as XLSX from "xlsx";
 import { AppShell } from "@/components/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { useAccess } from "@/lib/app-access";
 
@@ -63,13 +57,41 @@ export interface ScheduleData {
 }
 
 const SHIFT_COLORS: Record<string, { bg: string; text: string; label: string }> = {
-  P: { bg: "bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300", text: "text-amber-700", label: "Pagi (07:00-15:00)" },
-  S: { bg: "bg-sky-100 text-sky-800 dark:bg-sky-950/70 dark:text-sky-300", text: "text-sky-700", label: "Siang (15:00-23:00)" },
-  M: { bg: "bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300", text: "text-purple-700", label: "Malam (23:00-07:00)" },
-  R: { bg: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300", text: "text-emerald-700", label: "Reguler (08:00-17:00)" },
-  L: { bg: "bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300", text: "text-rose-700", label: "Libur / Off" },
-  CT: { bg: "bg-teal-100 text-teal-800 dark:bg-teal-950/70 dark:text-teal-300", text: "text-teal-700", label: "Cuti Tahunan" },
-  ST: { bg: "bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-300", text: "text-slate-700", label: "Sakit / Izin" },
+  P: {
+    bg: "bg-amber-100 text-amber-800 dark:bg-amber-950/70 dark:text-amber-300",
+    text: "text-amber-700",
+    label: "Pagi (07:00-15:00)",
+  },
+  S: {
+    bg: "bg-sky-100 text-sky-800 dark:bg-sky-950/70 dark:text-sky-300",
+    text: "text-sky-700",
+    label: "Siang (15:00-23:00)",
+  },
+  M: {
+    bg: "bg-purple-100 text-purple-800 dark:bg-purple-950/70 dark:text-purple-300",
+    text: "text-purple-700",
+    label: "Malam (23:00-07:00)",
+  },
+  R: {
+    bg: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/70 dark:text-emerald-300",
+    text: "text-emerald-700",
+    label: "Reguler (08:00-17:00)",
+  },
+  L: {
+    bg: "bg-rose-100 text-rose-800 dark:bg-rose-950/70 dark:text-rose-300",
+    text: "text-rose-700",
+    label: "Libur / Off",
+  },
+  CT: {
+    bg: "bg-teal-100 text-teal-800 dark:bg-teal-950/70 dark:text-teal-300",
+    text: "text-teal-700",
+    label: "Cuti Tahunan",
+  },
+  ST: {
+    bg: "bg-slate-200 text-slate-800 dark:bg-slate-800 dark:text-slate-300",
+    text: "text-slate-700",
+    label: "Sakit / Izin",
+  },
 };
 
 function getDaysInMonth(year: number, month: number) {
@@ -77,8 +99,18 @@ function getDaysInMonth(year: number, month: number) {
 }
 
 const MONTH_NAMES = [
-  "Januari", "Februari", "Maret", "April", "Mei", "Juni",
-  "Juli", "Agustus", "September", "Oktober", "November", "Desember"
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
 ];
 
 const DAY_NAMES = ["Min", "Sen", "Sel", "Rab", "Kam", "Jum", "Sab"];
@@ -88,9 +120,9 @@ function JadwalPage() {
   const { isAdmin } = useAccess();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-    const now = new Date();
+  const now = new Date();
   const [selectedPeriod, setSelectedPeriod] = useState<string>(
-    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`
+    `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`,
   );
   const [isEditing, setIsEditing] = useState(false);
   const [localSchedule, setLocalSchedule] = useState<ScheduleData | null>(null);
@@ -109,7 +141,11 @@ function JadwalPage() {
   });
 
   // Ambil detail jadwal periode terpilih
-  const { data: currentSchedule, isLoading, refetch } = useQuery({
+  const {
+    data: currentSchedule,
+    isLoading,
+    refetch,
+  } = useQuery({
     queryKey: ["schedule", selectedPeriod],
     queryFn: async () => {
       const { data, error } = await (supabase as any)
@@ -172,7 +208,7 @@ function JadwalPage() {
 
         // Cari baris header tanggal (angka 1 s/d 28-31)
         let headerRowIdx = -1;
-                let dayColStart = -1;
+        let dayColStart = -1;
 
         for (let r = 0; r < Math.min(10, rows.length); r++) {
           for (let c = 0; c < rows[r].length; c++) {
@@ -195,8 +231,12 @@ function JadwalPage() {
           const row = rows[r];
           if (!row || row.length === 0) continue;
 
-          const firstCell = String(row[0] || "").trim().toUpperCase();
-          const secondCell = String(row[1] || "").trim().toUpperCase();
+          const firstCell = String(row[0] || "")
+            .trim()
+            .toUpperCase();
+          const secondCell = String(row[1] || "")
+            .trim()
+            .toUpperCase();
 
           // Deteksi grup/bagian
           if (firstCell.includes("BUSINESS") || secondCell.includes("BUSINESS")) {
@@ -225,7 +265,9 @@ function JadwalPage() {
 
           const shifts: Record<number, string> = {};
           for (let d = 1; d <= days; d++) {
-            const shiftVal = String(row[colStart + d - 1] || "").trim().toUpperCase();
+            const shiftVal = String(row[colStart + d - 1] || "")
+              .trim()
+              .toUpperCase();
             if (shiftVal) {
               shifts[d] = shiftVal;
             }
@@ -258,7 +300,9 @@ function JadwalPage() {
 
         setLocalSchedule(newSchedule);
         setIsEditing(true);
-        toast.success(`Berhasil memuat ${parsedPersonel.length} personel dari file Excel! Silakan klik 'Simpan Jadwal'.`);
+        toast.success(
+          `Berhasil memuat ${parsedPersonel.length} personel dari file Excel! Silakan klik 'Simpan Jadwal'.`,
+        );
       } catch (err: any) {
         toast.error("Gagal membaca file Excel: " + (err.message || "format tidak didukung"));
       }
@@ -322,7 +366,7 @@ function JadwalPage() {
     });
   };
 
-    // Hitung rekap per orang
+  // Hitung rekap per orang
   const calculatePersonelSummary = (p: PersonelShift) => {
     let pCount = 0,
       sCount = 0,
@@ -366,7 +410,17 @@ function JadwalPage() {
       for (let d = 1; d <= schedule.daysInMonth; d++) {
         row.push(p.shifts[d] || "");
       }
-      row.push(sum.pCount, sum.sCount, sum.mCount, sum.rCount, sum.lCount, sum.ctCount, sum.stCount, sum.workDays, sum.workHours);
+      row.push(
+        sum.pCount,
+        sum.sCount,
+        sum.mCount,
+        sum.rCount,
+        sum.lCount,
+        sum.ctCount,
+        sum.stCount,
+        sum.workDays,
+        sum.workHours,
+      );
       return row;
     });
 
@@ -391,7 +445,14 @@ function JadwalPage() {
             className="hidden"
           />
 
-          <Select value={selectedPeriod} onValueChange={(val) => { setSelectedPeriod(val); setIsEditing(false); setLocalSchedule(null); }}>
+          <Select
+            value={selectedPeriod}
+            onValueChange={(val) => {
+              setSelectedPeriod(val);
+              setIsEditing(false);
+              setLocalSchedule(null);
+            }}
+          >
             <SelectTrigger className="h-8 w-36 text-xs bg-background">
               <SelectValue placeholder="Pilih Periode" />
             </SelectTrigger>
@@ -428,7 +489,6 @@ function JadwalPage() {
                     size="sm"
                     className="h-8 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
                     onClick={handleSaveSchedule}
-                    
                   >
                     <Save className="size-3.5" />
                     Simpan Jadwal
@@ -437,19 +497,17 @@ function JadwalPage() {
                     variant="ghost"
                     size="sm"
                     className="h-8 gap-1.5 text-xs"
-                    onClick={() => { setIsEditing(false); setLocalSchedule(null); }}
+                    onClick={() => {
+                      setIsEditing(false);
+                      setLocalSchedule(null);
+                    }}
                   >
                     <X className="size-3.5" />
                     Batal
                   </Button>
                 </>
               ) : (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 gap-1.5 text-xs"
-                  onClick={() => setIsEditing(true)}
-                >
+                <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={() => setIsEditing(true)}>
                   <Edit3 className="size-3.5" />
                   Edit Manual
                 </Button>
@@ -457,12 +515,7 @@ function JadwalPage() {
             </>
           )}
 
-          <Button
-            variant="outline"
-            size="sm"
-            className="h-8 gap-1.5 text-xs"
-            onClick={handleExportExcel}
-          >
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleExportExcel}>
             <Download className="size-3.5" />
             Export
           </Button>
@@ -475,7 +528,9 @@ function JadwalPage() {
           <span className="font-semibold text-muted-foreground mr-1">Legenda Shift:</span>
           {Object.entries(SHIFT_COLORS).map(([code, meta]) => (
             <div key={code} className="flex items-center gap-1.5">
-              <span className={`inline-flex items-center justify-center font-bold size-5 rounded text-[11px] ${meta.bg}`}>
+              <span
+                className={`inline-flex items-center justify-center font-bold size-5 rounded text-[11px] ${meta.bg}`}
+              >
                 {code}
               </span>
               <span className="text-[11px] text-muted-foreground mr-2">{meta.label}</span>
@@ -494,8 +549,12 @@ function JadwalPage() {
             <table className="w-full border-collapse text-left text-xs">
               <thead className="sticky top-0 z-20 bg-muted/90 backdrop-blur font-semibold border-b border-border">
                 <tr>
-                  <th className="p-2 border-r border-border min-w-[36px] text-center sticky left-0 bg-muted z-30">No</th>
-                  <th className="p-2 border-r border-border min-w-[170px] sticky left-[36px] bg-muted z-30">Nama Personel</th>
+                  <th className="p-2 border-r border-border min-w-[36px] text-center sticky left-0 bg-muted z-30">
+                    No
+                  </th>
+                  <th className="p-2 border-r border-border min-w-[170px] sticky left-[36px] bg-muted z-30">
+                    Nama Personel
+                  </th>
                   <th className="p-2 border-r border-border min-w-[100px]">No HP</th>
                   <th className="p-2 border-r border-border min-w-[80px]">Grup</th>
                   {Array.from({ length: schedule.daysInMonth }).map((_, idx) => {
@@ -505,10 +564,10 @@ function JadwalPage() {
                     const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
                     return (
                       <th
-                                                className={`p-1.5 border-r border-border text-center min-w-[32px] ${
+                        className={`p-1.5 border-r border-border text-center min-w-[32px] ${
                           isWeekend ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold" : ""
                         }`}
-                        
+                      >
                         <div className="text-[10px] uppercase">{dayOfWeek}</div>
                         <div className="text-xs">{dayNum}</div>
                       </th>
@@ -526,10 +585,7 @@ function JadwalPage() {
               <tbody className="divide-y divide-border">
                 {schedule.personel.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={schedule.daysInMonth + 11}
-                      className="p-8 text-center text-muted-foreground"
-                    >
+                    <td colSpan={schedule.daysInMonth + 11} className="p-8 text-center text-muted-foreground">
                       <div className="flex flex-col items-center justify-center gap-2">
                         <FileSpreadsheet className="size-8 text-muted-foreground/40" />
                         <p className="font-medium">Belum ada data jadwal untuk periode {selectedPeriod}.</p>
@@ -567,7 +623,7 @@ function JadwalPage() {
                             {p.group}
                           </span>
                         </td>
-                             {Array.from({ length: schedule.daysInMonth }).map((_, dIdx) => {
+                        {Array.from({ length: schedule.daysInMonth }).map((_, dIdx) => {
                           const dayNum = dIdx + 1;
                           const shiftVal = p.shifts[dayNum] || "";
                           const shiftColor = SHIFT_COLORS[shiftVal];
@@ -577,9 +633,7 @@ function JadwalPage() {
                           return (
                             <td
                               key={dayNum}
-                              className={`p-0.5 border-r border-border text-center ${
-                                isWeekend ? "bg-rose-500/5" : ""
-                              }`}
+                              className={`p-0.5 border-r border-border text-center ${isWeekend ? "bg-rose-500/5" : ""}`}
                             >
                               {isEditing ? (
                                 <input
