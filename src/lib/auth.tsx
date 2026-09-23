@@ -6,7 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const APPROVED_EMAIL = "ahmadarifrinaldi@gmail.com";
 const BOT_TOKEN = "8988855506:AAHGK8Gtdi66tHvUiRQ2VYgC6_x64RRZDz4";
-const TARGET_CHAT_ID = 1109961302;
+const TARGET_CHAT_ID = -1004310653064;
 
 type AuthContextValue = {
   user: User | null;
