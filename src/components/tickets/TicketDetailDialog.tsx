@@ -1,7 +1,16 @@
+import { useEffect, useMemo, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { Check, Loader2, Pencil, X } from "lucide-react";
+import { toast } from "sonner";
+
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/tickets/StatusBadge";
 import { LiveDuration } from "@/components/tickets/LiveDuration";
-import { formatDateTime, parseUpdateHistory, type TicketRow } from "@/lib/ticket-constants";
+import { supabase } from "@/integrations/supabase/client";
+import { useAccess } from "@/lib/app-access";
+import { formatDateTime, parseUpdateHistory, type TicketRow, type UpdateEntry } from "@/lib/ticket-constants";
 
 const fields: { label: string; get: (t: TicketRow) => string }[] = [
   { label: "Keterangan", get: (t) => t.keterangan ?? "-" },
@@ -29,8 +38,61 @@ export function TicketDetailDialog({
   ticket: TicketRow | null;
   onOpenChange: (open: boolean) => void;
 }) {
-  const history = ticket ? parseUpdateHistory(ticket.update_history) : [];
-  const ordered = [...history].sort((a, b) => (a.at < b.at ? 1 : -1));
+  const { isAdmin } = useAccess();
+  const queryClient = useQueryClient();
+
+  const [history, setHistory] = useState<UpdateEntry[]>([]);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editText, setEditText] = useState("");
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setHistory(ticket ? parseUpdateHistory(ticket.update_history) : []);
+    setEditingIndex(null);
+    setEditText("");
+  }, [ticket]);
+
+  const ordered = useMemo(() => {
+    return history.map((entry, originalIndex) => ({ ...entry, originalIndex })).sort((a, b) => (a.at < b.at ? 1 : -1));
+  }, [history]);
+
+  const startEdit = (originalIndex: number, currentText: string) => {
+    setEditingIndex(originalIndex);
+    setEditText(currentText);
+  };
+
+  const cancelEdit = () => {
+    setEditingIndex(null);
+    setEditText("");
+  };
+
+  const saveEdit = async (originalIndex: number) => {
+    if (!ticket) return;
+    setSaving(true);
+    try {
+      const nextHistory = history.map((item, idx) =>
+        idx === originalIndex ? { ...item, text: editText.trim() } : item,
+      );
+
+      const { error } = await (supabase as any)
+        .from("tickets")
+        .update({ update_history: nextHistory })
+        .eq("id", ticket.id);
+
+      if (error) throw error;
+
+      setHistory(nextHistory);
+      ticket.update_history = nextHistory;
+      queryClient.invalidateQueries({ queryKey: ["tickets"] });
+      toast.success("Keterangan riwayat berhasil disimpan");
+      setEditingIndex(null);
+      setEditText("");
+    } catch (err: any) {
+      toast.error("Gagal menyimpan riwayat", { description: err?.message });
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Dialog open={!!ticket} onOpenChange={onOpenChange}>
@@ -79,15 +141,76 @@ export function TicketDetailDialog({
                 <p className="mt-2 text-xs text-muted-foreground">Belum ada riwayat update.</p>
               ) : (
                 <ol className="mt-2 space-y-2">
-                  {ordered.map((entry, index) => (
-                    <li key={`${entry.at}-${index}`} className="rounded-md bg-muted/50 p-2.5 text-xs">
-                      <div className="flex flex-wrap items-center gap-2 font-semibold text-foreground">
-                        <span>{formatDateTime(entry.at)}</span>
-                        {entry.status ? <span className="text-muted-foreground">· {entry.status}</span> : null}
-                      </div>
-                      <p className="mt-1 break-words whitespace-pre-wrap text-muted-foreground">{entry.text || "-"}</p>
-                    </li>
-                  ))}
+                  {ordered.map((entry) => {
+                    const isEditing = editingIndex === entry.originalIndex;
+
+                    return (
+                      <li key={`${entry.at}-${entry.originalIndex}`} className="rounded-md bg-muted/50 p-2.5 text-xs">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex flex-wrap items-center gap-2 font-semibold text-foreground">
+                            <span>{formatDateTime(entry.at)}</span>
+                            {entry.status ? <span className="text-muted-foreground">· {entry.status}</span> : null}
+                          </div>
+                          {isAdmin && !isEditing ? (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
+                              onClick={() => startEdit(entry.originalIndex, entry.text)}
+                            >
+                              <Pencil className="mr-1 h-3 w-3" />
+                              Edit
+                            </Button>
+                          ) : null}
+                        </div>
+
+                        {isEditing ? (
+                          <div className="mt-2 space-y-2">
+                            <Textarea
+                              value={editText}
+                              onChange={(e) => setEditText(e.target.value)}
+                              rows={3}
+                              className="text-xs bg-background"
+                              placeholder="Masukkan keterangan update..."
+                              autoFocus
+                            />
+                            <div className="flex items-center justify-end gap-2">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={cancelEdit}
+                                disabled={saving}
+                              >
+                                <X className="mr-1 h-3 w-3" />
+                                Batal
+                              </Button>
+                              <Button
+                                type="button"
+                                size="sm"
+                                className="h-7 text-xs"
+                                onClick={() => saveEdit(entry.originalIndex)}
+                                disabled={saving}
+                              >
+                                {saving ? (
+                                  <Loader2 className="mr-1 h-3 w-3 animate-spin" />
+                                ) : (
+                                  <Check className="mr-1 h-3 w-3" />
+                                )}
+                                Simpan
+                              </Button>
+                            </div>
+                          </div>
+                        ) : (
+                          <p className="mt-1 break-words whitespace-pre-wrap text-muted-foreground">
+                            {entry.text || "-"}
+                          </p>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ol>
               )}
             </div>
