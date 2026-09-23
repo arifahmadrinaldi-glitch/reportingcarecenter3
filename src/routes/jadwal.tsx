@@ -508,6 +508,7 @@ function JadwalPage() {
                                                 className={`p-1.5 border-r border-border text-center min-w-[32px] ${
                           isWeekend ? "bg-rose-500/10 text-rose-600 dark:text-rose-400 font-bold" : ""
                         }`}
+                        
                         <div className="text-[10px] uppercase">{dayOfWeek}</div>
                         <div className="text-xs">{dayNum}</div>
                       </th>
