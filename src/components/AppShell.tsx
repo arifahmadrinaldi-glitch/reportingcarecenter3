@@ -9,12 +9,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/lib/auth";
 
-const navItems = [
+const navItems: any[] = [
   { to: "/", label: "Dashboard", icon: LayoutGrid },
   { to: "/tickets", label: "Daftar Ticket", icon: Ticket },
   { to: "/daily-activity", label: "Daily Activity", icon: ClipboardList },
   { to: "/jadwal", label: "Jadwal", icon: CalendarDays },
-] as const;
+];
 
 export function AppShell({
   title,
