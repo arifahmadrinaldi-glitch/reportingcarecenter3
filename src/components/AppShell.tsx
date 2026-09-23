@@ -78,7 +78,7 @@ export function AppShell({
         </nav>
         <div className={`mt-auto py-4 ${expanded ? "px-4" : "px-2"}`}>
           {expanded ? (
-            <p c lassName="px-3 text-[11px] leading-snug text-sidebar-foreground/50">
+            <p className="px-3 text-[11px] leading-snug text-sidebar-foreground/50">
               Realtime aktif · data tersinkron otomatis
             </p>
           ) : null}
