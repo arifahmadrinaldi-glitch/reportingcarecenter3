@@ -24,7 +24,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { supabase } from "@/integrations/supabase/client";
 import { useAccess } from "@/lib/app-access";
 
-export const Route = createFileRoute("/jadwal" as any)({
+export const Route = createFileRoute("/jadwal")({
   head: () => ({
     meta: [
       { title: "Jadwal Kerja Tim — Reporting CC 3" },
