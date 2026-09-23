@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { ClipboardList, LayoutGrid, LogOut, Radio, Ticket } from "lucide-react";
+import { CalendarDays, ClipboardList, LayoutGrid, LogOut, Radio, Ticket } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { AccessControls } from "@/components/AccessControls";
@@ -13,6 +13,7 @@ const navItems = [
   { to: "/", label: "Dashboard", icon: LayoutGrid },
   { to: "/tickets", label: "Daftar Ticket", icon: Ticket },
   { to: "/daily-activity", label: "Daily Activity", icon: ClipboardList },
+  { to: "/jadwal", label: "Jadwal", icon: CalendarDays },
 ] as const;
 
 export function AppShell({
@@ -54,12 +55,8 @@ export function AppShell({
           </span>
           {expanded ? (
             <span className="min-w-0 leading-tight">
-              <span className="block truncate text-sm font-bold text-sidebar-accent-foreground">
-                Reporting CC 3
-              </span>
-              <span className="block truncate text-[11px] text-sidebar-foreground/70">
-                Operations Dashboard
-              </span>
+              <span className="block truncate text-sm font-bold text-sidebar-accent-foreground">Reporting CC 3</span>
+              <span className="block truncate text-[11px] text-sidebar-foreground/70">Operations Dashboard</span>
             </span>
           ) : null}
         </div>
@@ -81,7 +78,7 @@ export function AppShell({
         </nav>
         <div className={`mt-auto py-4 ${expanded ? "px-4" : "px-2"}`}>
           {expanded ? (
-            <p className="px-3 text-[11px] leading-snug text-sidebar-foreground/50">
+            <p c lassName="px-3 text-[11px] leading-snug text-sidebar-foreground/50">
               Realtime aktif · data tersinkron otomatis
             </p>
           ) : null}
@@ -109,7 +106,13 @@ export function AppShell({
               ))}
             </nav>
             <AccessControls />
-            <Button variant="outline" size="icon" onClick={handleSignOut} aria-label="Keluar dari aplikasi" title="Keluar">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={handleSignOut}
+              aria-label="Keluar dari aplikasi"
+              title="Keluar"
+            >
               <LogOut className="size-4" />
             </Button>
             <ThemeToggle />
