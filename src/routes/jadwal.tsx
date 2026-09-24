@@ -197,6 +197,10 @@ function JadwalPage() {
         const bstr = evt.target?.result;
         const wb = XLSX.read(bstr, { type: "binary" });
         const sheetName = wb.SheetNames[0];
+        if (!sheetName || !wb.Sheets[sheetName]) {
+          toast.error("File Excel kosong atau tidak terbaca.");
+          return;
+        }
         const sheet = wb.Sheets[sheetName];
         const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
 
@@ -205,7 +209,9 @@ function JadwalPage() {
           return;
         }
 
-        const [y, m] = selectedPeriod.split("-").map(Number);
+        const parts = selectedPeriod.split("-");
+        const y = Number(parts[0]) || new Date().getFullYear();
+        const m = Number(parts[1]) || new Date().getMonth() + 1;
         const days = getDaysInMonth(y, m);
 
         // Cari baris header tanggal (angka 1 s/d 28-31)
@@ -213,8 +219,10 @@ function JadwalPage() {
         let dayColStart = -1;
 
         for (let r = 0; r < Math.min(10, rows.length); r++) {
-          for (let c = 0; c < rows[r].length; c++) {
-            if (Number(rows[r][c]) === 1 && Number(rows[r][c + 1]) === 2) {
+          const row = rows[r];
+          if (!row) continue;
+          for (let c = 0; c < row.length; c++) {
+            if (Number(row[c]) === 1 && Number(row[c + 1]) === 2) {
               headerRowIdx = r;
               dayColStart = c;
               break;
@@ -292,7 +300,7 @@ function JadwalPage() {
 
         const newSchedule: ScheduleData = {
           period: selectedPeriod,
-          title: `SCHEDULE ${MONTH_NAMES[m - 1].toUpperCase()} ${y}`,
+          title: `SCHEDULE ${(MONTH_NAMES[m - 1] || "").toUpperCase()} ${y}`,
           year: y,
           month: m,
           daysInMonth: days,
