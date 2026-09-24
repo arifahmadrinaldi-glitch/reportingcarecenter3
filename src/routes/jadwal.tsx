@@ -1,9 +1,3 @@
-Lovable:
-Berikut versi ramping utuh src/routes/jadwal.tsx.
-
-Format, rumus Excel (Hari Kerja × 8 jam, Rekap Shift R/P/S/M/L/CT/ST, Libur Nasional), upload Excel, serta fitur Edit Manual tetap lengkap:
-
-
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { Clock, Download, Edit3, Save, Upload, X } from "lucide-react";
@@ -25,17 +19,39 @@ export const Route = createFileRoute("/jadwal")({
 });
 
 export interface PersonelShift {
-  id: string; nik: string; name: string; phone: string;
-  group: "Real" | "Business"; shifts: Record<number, string>;
+  id: string;
+  nik: string;
+  name: string;
+  phone: string;
+  group: "Real" | "Business";
+  shifts: Record<number, string>;
 }
 export interface ScheduleData {
-  period: string; title: string; year: number; month: number;
-  daysInMonth: number; regulerDays: number;
-  personel: PersonelShift[]; holidays: { date: number; note: string }[];
+  period: string;
+  title: string;
+  year: number;
+  month: number;
+  daysInMonth: number;
+  regulerDays: number;
+  personel: PersonelShift[];
+  holidays: { date: number; note: string }[];
 }
 
 const DAYS_EN = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-const MONTHS_ID = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+const MONTHS_ID = [
+  "Januari",
+  "Februari",
+  "Maret",
+  "April",
+  "Mei",
+  "Juni",
+  "Juli",
+  "Agustus",
+  "September",
+  "Oktober",
+  "November",
+  "Desember",
+];
 const DEFAULTS: PersonelShift[] = [
   { id: "1", nik: "9017019", name: "Nawin Gunawan", phone: "082248662528", group: "Real", shifts: {} },
   { id: "2", nik: "8717028", name: "Hari Saputra", phone: "089516674619", group: "Real", shifts: {} },
@@ -57,8 +73,7 @@ function getBadge(val: string) {
   if (s === "M") return "bg-purple-100 text-purple-900 font-semibold";
   if (s === "R") return "bg-emerald-100 text-emerald-900 font-semibold";
 
-Lovable:
- return "bg-blue-100 text-blue-900 font-semibold";
+  return "bg-blue-100 text-blue-900 font-semibold";
 }
 
 function JadwalPage() {
@@ -81,7 +96,10 @@ function JadwalPage() {
   const { data: scheduleList = [] } = useQuery({
     queryKey: ["schedules-list"],
     queryFn: async () => {
-      const { data } = await (supabase as any).from("schedules").select("period, title").order("period", { ascending: false });
+      const { data } = await (supabase as any)
+        .from("schedules")
+        .select("period, title")
+        .order("period", { ascending: false });
       return (data || []) as { period: string; title: string }[];
     },
   });
@@ -110,7 +128,10 @@ function JadwalPage() {
     return {
       period,
       title: `SCHEDULE ${(MONTHS_ID[m - 1] || "").toUpperCase()} ${y}`,
-      year: y, month: m, daysInMonth: days, regulerDays: regDays,
+      year: y,
+      month: m,
+      daysInMonth: days,
+      regulerDays: regDays,
       personel: DEFAULTS.map((p) => ({ ...p, shifts: {} })),
       holidays: [{ date: 5, note: "Libur Nasional Maulid" }],
     };
@@ -126,7 +147,8 @@ function JadwalPage() {
         personel: b.personel.map((p) => {
           if (p.id !== pId) return p;
           const s = { ...p.shifts };
-          if (clean) s[day] = clean; else delete s[day];
+          if (clean) s[day] = clean;
+          else delete s[day];
           return { ...p, shifts: s };
         }),
       };
@@ -136,10 +158,15 @@ function JadwalPage() {
   const handleSave = async () => {
     try {
       const payload = {
-        period: schedule.period, title: schedule.title,
+        period: schedule.period,
+        title: schedule.title,
         data: {
-          year: schedule.year, month: schedule.month, daysInMonth: schedule.daysInMonth,
-          regulerDays: schedule.regulerDays, personel: schedule.personel, holidays: schedule.holidays,
+          year: schedule.year,
+          month: schedule.month,
+          daysInMonth: schedule.daysInMonth,
+          regulerDays: schedule.regulerDays,
+          personel: schedule.personel,
+          holidays: schedule.holidays,
         },
         updated_at: new Date().toISOString(),
       };
@@ -161,7 +188,6 @@ function JadwalPage() {
     if (!file) return;
     const reader = new FileReader();
 
-Lovable:
     reader.onload = (evt) => {
       try {
         const wb = XLSX.read(evt.target?.result, { type: "binary" });
@@ -179,10 +205,19 @@ Lovable:
           if (name.includes("Care Center") || name.length < 2) continue;
           const shifts: Record<number, string> = {};
           for (let d = 1; d <= schedule.daysInMonth; d++) {
-            const v = String(row[2 + d] || "").trim().toUpperCase();
+            const v = String(row[2 + d] || "")
+              .trim()
+              .toUpperCase();
             if (v) shifts[d] = v;
           }
-          list.push({ id: crypto.randomUUID(), nik: String(row[0] || ""), name, phone: String(row[2] || ""), group: grp, shifts });
+          list.push({
+            id: crypto.randomUUID(),
+            nik: String(row[0] || ""),
+            name,
+            phone: String(row[2] || ""),
+            group: grp,
+            shifts,
+          });
         }
         if (list.length === 0) return toast.error("Data kosong atau template salah");
         setLocalData({ ...schedule, personel: list });
@@ -197,9 +232,18 @@ Lovable:
   };
 
   const handleExport = () => {
-    const rows: any[][] = [[schedule.title], [], ["NIK", "Nama", "No Handphone", ...Array.from({ length: schedule.daysInMonth }, (_, i) => String(i + 1))]];
+    const rows: any[][] = [
+      [schedule.title],
+      [],
+      ["NIK", "Nama", "No Handphone", ...Array.from({ length: schedule.daysInMonth }, (_, i) => String(i + 1))],
+    ];
     schedule.personel.forEach((p) => {
-      rows.push([p.nik, p.name, p.phone, ...Array.from({ length: schedule.daysInMonth }, (_, i) => p.shifts[i + 1] || "")]);
+      rows.push([
+        p.nik,
+        p.name,
+        p.phone,
+        ...Array.from({ length: schedule.daysInMonth }, (_, i) => p.shifts[i + 1] || ""),
+      ]);
     });
     const ws = XLSX.utils.aoa_to_sheet(rows);
     const wb = XLSX.utils.book_new();
@@ -209,7 +253,13 @@ Lovable:
   };
 
   const stats = (p: PersonelShift) => {
-    let r = 0, pt = 0, s = 0, m = 0, l = 0, ct = 0, st = 0;
+    let r = 0,
+      pt = 0,
+      s = 0,
+      m = 0,
+      l = 0,
+      ct = 0,
+      st = 0;
     Object.values(p.shifts).forEach((v) => {
       const u = v.toUpperCase();
       if (!u || u === "L" || u === "OFF") l++;
@@ -233,29 +283,63 @@ Lovable:
       actions={
         <div className="flex flex-wrap items-center gap-2">
           <input type="file" ref={fileRef} className="hidden" accept=".xlsx,.xls" onChange={handleUpload} />
-          <Select value={period} onValueChange={(v) => { setPeriod(v); setIsEditing(false); setLocalData(null); }}>
-            <SelectTrigger className="h-8 w-[130px] text-xs"><SelectValue placeholder="Periode" /></SelectTrigger>
+          <Select
+            value={period}
+            onValueChange={(v) => {
+              setPeriod(v);
+              setIsEditing(false);
+              setLocalData(null);
+            }}
+          >
+            <SelectTrigger className="h-8 w-[130px] text-xs">
+              <SelectValue placeholder="Periode" />
+            </SelectTrigger>
             <SelectContent>
-              {scheduleList.map((s) => (<SelectItem key={s.period} value={s.period}>{s.period}</SelectItem>))}
-              {!scheduleList.some((s) => s.period === period) && (<SelectItem value={period}>{period}</SelectItem>)}
+              {scheduleList.map((s) => (
+                <SelectItem key={s.period} value={s.period}>
+                  {s.period}
+                </SelectItem>
+              ))}
+              {!scheduleList.some((s) => s.period === period) && <SelectItem value={period}>{period}</SelectItem>}
             </SelectContent>
           </Select>
           {isAdmin && (
             <>
-
-Lovable:
-              <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => fileRef.current?.click()}><Upload className="size-3.5 mr-1" />Upload Excel</Button>
+              <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => fileRef.current?.click()}>
+                <Upload className="size-3.5 mr-1" />
+                Upload Excel
+              </Button>
               {isEditing ? (
                 <>
-                  <Button size="sm" className="h-8 text-xs bg-emerald-600 text-white" onClick={handleSave}><Save className="size-3.5 mr-1" />Simpan</Button>
-                  <Button variant="ghost" size="sm" className="h-8 text-xs" onClick={() => { setIsEditing(false); setLocalData(null); }}><X className="size-3.5 mr-1" />Batal</Button>
+                  <Button size="sm" className="h-8 text-xs bg-emerald-600 text-white" onClick={handleSave}>
+                    <Save className="size-3.5 mr-1" />
+                    Simpan
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 text-xs"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setLocalData(null);
+                    }}
+                  >
+                    <X className="size-3.5 mr-1" />
+                    Batal
+                  </Button>
                 </>
               ) : (
-                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setIsEditing(true)}><Edit3 className="size-3.5 mr-1" />Edit Manual</Button>
+                <Button variant="outline" size="sm" className="h-8 text-xs" onClick={() => setIsEditing(true)}>
+                  <Edit3 className="size-3.5 mr-1" />
+                  Edit Manual
+                </Button>
               )}
             </>
           )}
-          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleExport}><Download className="size-3.5 mr-1" />Export Excel</Button>
+          <Button variant="outline" size="sm" className="h-8 text-xs" onClick={handleExport}>
+            <Download className="size-3.5 mr-1" />
+            Export Excel
+          </Button>
         </div>
       }
     >
@@ -263,9 +347,15 @@ Lovable:
         <div className="flex items-center justify-between border-b pb-2">
           <div>
             <h2 className="text-lg font-black uppercase tracking-tight">{schedule.title}</h2>
-            <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="size-3" />Waktu Server: {clock}</p>
+            <p className="text-xs text-muted-foreground flex items-center gap-1">
+              <Clock className="size-3" />
+              Waktu Server: {clock}
+            </p>
           </div>
-          <Badge variant="outline" className={isEditing ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}>
+          <Badge
+            variant="outline"
+            className={isEditing ? "bg-amber-100 text-amber-800" : "bg-emerald-100 text-emerald-800"}
+          >
             {isEditing ? "Mode Edit Aktif" : "Tersimpan di Cloud"}
           </Badge>
         </div>
@@ -289,7 +379,10 @@ Lovable:
                       const dt = new Date(schedule.year, schedule.month - 1, d);
                       const isEnd = dt.getDay() === 0 || dt.getDay() === 6;
                       return (
-                        <th key={d} className={`p-1 border-r text-center min-w-[28px] ${isEnd ? "bg-rose-500 text-white font-bold" : ""}`}>
+                        <th
+                          key={d}
+                          className={`p-1 border-r text-center min-w-[28px] ${isEnd ? "bg-rose-500 text-white font-bold" : ""}`}
+                        >
                           <div className="text-[9px] uppercase">{DAYS_EN[dt.getDay()]}</div>
                           <div>{d}</div>
                         </th>
@@ -300,10 +393,13 @@ Lovable:
                 <tbody>
                   {schedule.personel.map((p) => (
                     <tr key={p.id} className="border-b hover:bg-muted/40">
-                      <td className="p-1 border-r text-center font-mono
+                      <td
+                        className="p-1 border-r text-center font-mono
 
-Lovable:
-text-[11px]">{p.nik || "-"}</td>
+text-[11px]"
+                      >
+                        {p.nik || "-"}
+                      </td>
                       <td className="p-1 border-r font-medium pl-2 whitespace-nowrap">{p.name}</td>
                       <td className="p-1 border-r text-center text-muted-foreground">{p.group}</td>
                       {Array.from({ length: schedule.daysInMonth }).map((_, i) => {
@@ -318,7 +414,9 @@ text-[11px]">{p.nik || "-"}</td>
                                 onChange={(e) => setShift(p.id, d, e.target.value)}
                               />
                             ) : (
-                              <span className={`inline-block w-full py-0.5 rounded text-[10px] ${getBadge(v)}`}>{v || "—"}</span>
+                              <span className={`inline-block w-full py-0.5 rounded text-[10px] ${getBadge(v)}`}>
+                                {v || "—"}
+                              </span>
                             )}
                           </td>
                         );
@@ -354,17 +452,21 @@ text-[11px]">{p.nik || "-"}</td>
                   </thead>
                   <tbody>
                     <tr className="bg-slate-50 border-b font-semibold text-center">
-                      <td colSpan={3} className="p-1.5 border-r">Reguler</td>
+                      <td colSpan={3} className="p-1.5 border-r">
+                        Reguler
+                      </td>
                       <td className="p-1.5 border-r">{schedule.regulerDays}</td>
-                      <td colSpan={6} className="p-1.5 border-r">-</td>
+                      <td colSpan={6} className="p-1.5 border-r">
+                        -
+                      </td>
                       <td className="p-1.5 border-r bg-sky-50">{schedule.regulerDays}</td>
                       <td className="p-1.5 border-r bg-sky-50">{schedule.regulerDays * 8}</td>
-                      <td colSpan={2} className="p-1.5">-</td>
+                      <td colSpan={2} className="p-1.5">
+                        -
+                      </td>
                     </tr>
                     {schedule.personel.map((p) => {
-
-Lovable:
-            const st = stats(p);
+                      const st = stats(p);
                       return (
                         <tr key={p.id} className="border-b text-center hover:bg-muted/40">
                           <td className="p-1.5 border-r font-mono text-[11px]">{p.nik || "-"}</td>
@@ -389,7 +491,9 @@ Lovable:
               </div>
               <div className="space-y-4">
                 <Card className="border">
-                  <CardHeader className="p-2.5 pb-1"><CardTitle className="text-xs uppercase font-bold text-center">Libur Nasional</CardTitle></CardHeader>
+                  <CardHeader className="p-2.5 pb-1">
+                    <CardTitle className="text-xs uppercase font-bold text-center">Libur Nasional</CardTitle>
+                  </CardHeader>
                   <CardContent className="p-2.5 pt-1 text-xs space-y-1">
                     {schedule.holidays.map((h, idx) => (
                       <div key={idx} className="p-1.5 rounded bg-rose-50 text-rose-800 text-center font-medium">
@@ -399,12 +503,34 @@ Lovable:
                   </CardContent>
                 </Card>
                 <Card className="border">
-                  <CardHeader className="p-2.5 pb-1"><CardTitle className="text-xs uppercase font-bold text-muted-foreground">Legenda Shift</CardTitle></CardHeader>
+                  <CardHeader className="p-2.5 pb-1">
+                    <CardTitle className="text-xs uppercase font-bold text-muted-foreground">Legenda Shift</CardTitle>
+                  </CardHeader>
                   <CardContent className="p-2.5 pt-1 text-xs grid grid-cols-2 gap-1.5">
-                    <div><b>R</b>: Reguler</div><div><b>P</b>: Pagi</div>
-                    <div><b>S</b>: Siang</div><div><b>M</b>: Malam</div>
-                    <div><b>L</b>: Libur</div><div><b>CT</b>: Cuti</div>
-                    <div><b>ST</b>: Sakit</div><div><b>B</b>: Backup</div>
+                    <div>
+                      <b>R</b>: Reguler
+                    </div>
+                    <div>
+                      <b>P</b>: Pagi
+                    </div>
+                    <div>
+                      <b>S</b>: Siang
+                    </div>
+                    <div>
+                      <b>M</b>: Malam
+                    </div>
+                    <div>
+                      <b>L</b>: Libur
+                    </div>
+                    <div>
+                      <b>CT</b>: Cuti
+                    </div>
+                    <div>
+                      <b>ST</b>: Sakit
+                    </div>
+                    <div>
+                      <b>B</b>: Backup
+                    </div>
                   </CardContent>
                 </Card>
               </div>
