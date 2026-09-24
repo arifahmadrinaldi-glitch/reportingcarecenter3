@@ -504,12 +504,117 @@ function JadwalPage() {
   }, [schedule]);
 
   const realPersonel = schedule.personel.filter((p) => p.group === "Real");
+    const realPersonel = schedule.personel.filter((p) => p.group === "Real");
   const bizPersonel = schedule.personel.filter((p) => p.group === "Business");
 
   return (
     <AppShell
-      title=
-      ">
+      title="Jadwal Kerja Tim"
+      actions={
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            type="file"
+            ref={fileInputRef}
+            className="hidden"
+            accept=".xlsx, .xls"
+            onChange={handleFileUpload}
+          />
+
+          <Select
+            value={selectedPeriod}
+            onValueChange={(val) => {
+              setSelectedPeriod(val);
+              setIsEditing(false);
+              setLocalSchedule(null);
+            }}
+          >
+            <SelectTrigger className="h-8 w-[140px] text-xs">
+              <SelectValue placeholder="Pilih Periode" />
+            </SelectTrigger>
+            <SelectContent>
+              {scheduleList.map((s) => (
+                <SelectItem key={s.period} value={s.period}>
+                  {s.period}
+                </SelectItem>
+              ))}
+              {!scheduleList.some((s) => s.period === selectedPeriod) && (
+                <SelectItem value={selectedPeriod}>{selectedPeriod}</SelectItem>
+              )}
+            </SelectContent>
+          </Select>
+
+          {isAdmin && (
+            <>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="size-3.5" />
+                Upload Excel
+              </Button>
+
+              {isEditing ? (
+                <>
+                  <Button
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
+                    onClick={handleSave}
+                  >
+                    <Save className="size-3.5" />
+                    Simpan Jadwal
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs"
+                    onClick={() => {
+                      setIsEditing(false);
+                      setLocalSchedule(null);
+                    }}
+                  >
+                    <X className="size-3.5" /
+                    >
+                    Batal
+                  </Button>
+                </>
+              ) : (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 gap-1.5 text-xs"
+                  onClick={() => setIsEditing(true)}
+                >
+                  <Edit3 className="size-3.5" />
+                  Edit Manual
+                </Button>
+              )}
+            </>
+          )}
+
+          <Button variant="outline" size="sm" className="h-8 gap-1.5 text-xs" onClick={handleExport}>
+            <Download className="size-3.5" />
+            Export Excel
+          </Button>
+        </div>
+      }
+    >
+      <div className="space-y-6">
+        {/* Header Judul Sesuai Excel */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 border-b border-border pb-3">
+          <div>
+            <h2 className="text-xl font-black tracking-tight uppercase text-foreground">
+              {schedule.title}
+            </h2>
+            <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+              <Clock className="size-3.5" />
+              {currentTime || "Thu, 24 Sep 26 at 08:44:00"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {isEditing ? (
+              <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-300 text-xs">
                 Mode Edit Manual Aktif
               </Badge>
             ) : (
@@ -518,6 +623,8 @@ function JadwalPage() {
               </Badge>
             )}
           </div>
+        </div>
+
         </div>
 
         <Tabs defaultValue="matrix" className="w-full">
