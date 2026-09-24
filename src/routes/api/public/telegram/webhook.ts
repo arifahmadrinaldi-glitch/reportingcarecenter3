@@ -36,7 +36,7 @@ function getSupabase() {
 }
 
 async function reply(chatId: number, text: string) {
-  const token = "8988855506:AAHGK8Gtdi66tHvUiRQ2VYgC6_x64RRZDz4";
+  const token = "8774951056:AAG-K2ykvKIK10d7jxkCehbjWqhChZbEKVs";
   const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

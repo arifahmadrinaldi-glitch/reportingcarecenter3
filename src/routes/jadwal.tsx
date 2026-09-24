@@ -171,11 +171,13 @@ function JadwalPage() {
     if (currentSchedule) {
       return currentSchedule;
     }
-    const [y, m] = selectedPeriod.split("-").map(Number);
+    const parts = selectedPeriod.split("-");
+    const y = Number(parts[0]) || new Date().getFullYear();
+    const m = Number(parts[1]) || new Date().getMonth() + 1;
     const days = getDaysInMonth(y, m);
     return {
       period: selectedPeriod,
-      title: `SCHEDULE ${MONTH_NAMES[m - 1].toUpperCase()} ${y}`,
+      title: `SCHEDULE ${(MONTH_NAMES[m - 1] || "").toUpperCase()} ${y}`,
       year: y,
       month: m,
       daysInMonth: days,

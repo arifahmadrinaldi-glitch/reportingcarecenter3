@@ -94,7 +94,7 @@ async function listChatIds(): Promise<number[]> {
 }
 
 export async function sendTelegramTicket(ticket: NewTicketPayload): Promise<{ sent: boolean; reason?: string }> {
-  const BOT_TOKEN = "8988855506:AAHGK8Gtdi66tHvUiRQ2VYgC6_x64RRZDz4";
+  const BOT_TOKEN = "8774951056:AAG-K2ykvKIK10d7jxkCehbjWqhChZbEKVs";
 
   const chatIds = await listChatIds();
   if (chatIds.length === 0) {
