@@ -276,7 +276,88 @@ async function buildCariTiket(query: string): Promise<string> {
   );
   return mono(`🔍 HASIL PENCARIAN "${escapeHtml(query)}" (${rows.length})\n\n${cards.join("\n\n")}`);
 }
+function formatDuration(ms: number): string {
+  if (ms <= 0 || Number.isNaN(ms)) return "0 menit";
+  const totalMinutes = Math.floor(ms / (1000 * 60));
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
 
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days} hari`);
+  if (hours > 0) parts.push(`${hours} jam`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes} menit`);
+  return parts.join(" ");
+}
+
+/** /tiketterlama [bulan] [tahun] — 5 tiket CM close dengan durasi terlama dalam 1 bulan */
+async function buildTiketTerlama(args: string[]): Promise<string> {
+  const now = new Date();
+  let monthIndex = now.getMonth();
+  let year = now.getFullYear();
+
+  for (const arg of args) {
+    const numeric = Number(arg);
+    if (Number.isFinite(numeric) && numeric >= 1000) {
+      year = numeric;
+    } else if (Number.isFinite(numeric) && numeric >= 1 && numeric <= 12) {
+      monthIndex = numeric - 1;
+    } else {
+      const found = BULAN.findIndex((b) => b.toLowerCase().startsWith(arg.toLowerCase()));
+      if (found >= 0) monthIndex = found;
+    }
+  }
+
+  const start = new Date(year, monthIndex, 1);
+  const end = new Date(year, monthIndex + 1, 1);
+  const label = `${BULAN[monthIndex]} ${year}`;
+
+  const supabase = getSupabase();
+  const { data, error } = await supabase
+    .from("tickets")
+    .select(TICKET_FIELDS)
+    .is("deleted_at", null)
+    .in("status", ["Close", "Technical Close"])
+    .eq("jenis_ticket", "Corrective Maintenance")
+    .not("tanggal_open", "is", null)
+    .not("tanggal_close", "is", null)
+    .gte("tanggal_close", start.toISOString())
+    .lt("tanggal_close", end.toISOString());
+
+  if (error) {
+    console.error(`Gagal ambil tiket terlama: ${error.message}`);
+    return "⚠️ Gagal mengambil data tiket terlama.";
+  }
+
+  const rows = (data ?? []) as Row[];
+  if (rows.length === 0) {
+    return mono(`⏱️ TOP 5 TIKET CM TERLAMA (${escapeHtml(label).toUpperCase()})\n\nTidak ada tiket CM yang close pada bulan ini.`);
+  }
+
+  const withDuration = rows
+    .map((row) => {
+      const openTime = new Date(row["tanggal_open"]!).getTime();
+      const closeTime = new Date(row["tanggal_close"]!).getTime();
+      return { row, durationMs: closeTime - openTime };
+    })
+    .filter((item) => item.durationMs > 0)
+    .sort((a, b) => b.durationMs - a.durationMs)
+    .slice(0, 5);
+
+  if (withDuration.length === 0) {
+    return mono(`⏱️ TOP 5 TIKET CM TERLAMA (${escapeHtml(label).toUpperCase()})\n\nData durasi tiket tidak valid.`);
+  }
+
+  const cards = withDuration.map(({ row, durationMs }, index) => {
+    return (
+      `${index + 1}. ⏱️ <b>Durasi: ${formatDuration(durationMs)}</b>\n` +
+      `   ${buildTicketMessage(asPayload(row))}\n` +
+      `   Open : ${escapeHtml(fmtDate(row["tanggal_open"]))}\n` +
+      `   Close: ${escapeHtml(fmtDate(row["tanggal_close"]))}`
+    );
+  });
+
+  return mono(
 export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
@@ -323,6 +404,8 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           await reply(chatId, await buildRekap(args));
         } else if (command === "/tiketclose") {
           await reply(chatId, await buildCloseToday(args));
+        } else if (command === "/tiketterlama") {
+          await reply(chatId, await buildTiketTerlama(args));
         } else if (command === "/caritiket") {
           await reply(chatId, await buildCariTiket(args.join(" ")));
         } else if (command === "/start" || command === "/help") {
