@@ -331,7 +331,9 @@ async function buildTiketTerlama(args: string[]): Promise<string> {
 
   const rows = (data ?? []) as Row[];
   if (rows.length === 0) {
-    return mono(`⏱️ TOP 5 TIKET CM TERLAMA (${escapeHtml(label).toUpperCase()})\n\nTidak ada tiket CM yang close pada bulan ini.`);
+    return mono(
+      `⏱️ TOP 5 TIKET CM TERLAMA (${escapeHtml(label).toUpperCase()})\n\nTidak ada tiket CM yang close pada bulan ini.`,
+    );
   }
 
   const withDuration = rows
@@ -358,6 +360,10 @@ async function buildTiketTerlama(args: string[]): Promise<string> {
   });
 
   return mono(
+    `⏱️ TOP 5 TIKET CM CLOSE TERLAMA\n` + `Periode: ${escapeHtml(label).toUpperCase()}\n\n` + cards.join("\n\n"),
+  );
+}
+
 export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
