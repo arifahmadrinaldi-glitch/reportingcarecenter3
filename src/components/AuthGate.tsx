@@ -70,7 +70,20 @@ export function AuthGate({ children }: { children: ReactNode }) {
       setPassword("");
       return;
     }
-    toast.error(result === "email-not-approved" ? "Email tidak memiliki akses" : firstAccess ? "Gagal mengaktifkan akun" : "Email atau kata sandi salah");
+    const accountExists = /already registered|already exists|user already/i.test(result);
+    if (accountExists) {
+      setFirstAccess(false);
+      setPassword("");
+      toast.error("Akun sudah aktif. Silakan masuk dengan kata sandi Anda.");
+      return;
+    }
+    toast.error(
+      result === "email-not-approved"
+        ? "Email tidak memiliki akses"
+        : firstAccess
+          ? `Gagal mengaktifkan akun: ${result}`
+          : `Gagal masuk: ${result}`,
+    );
   };
 
   return (
