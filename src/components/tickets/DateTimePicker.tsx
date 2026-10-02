@@ -70,7 +70,7 @@ export function DateTimePicker({ value, onChange, placeholder = "Pilih tanggal &
             if (!date) return;
             onChange(build(date, hour, minute));
           }}
-          className="rounded-t-md bg-muted/40"
+          className="pointer-events-auto rounded-t-md bg-muted/40"
         />
         <div className="flex flex-wrap items-center gap-2 border-t border-border px-3 py-3">
           <span className="text-xs text-muted-foreground">Jam (24h)</span>

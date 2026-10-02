@@ -5,12 +5,21 @@ import { toast } from "sonner";
 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { DateTimePicker } from "@/components/tickets/DateTimePicker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { StatusBadge } from "@/components/tickets/StatusBadge";
 import { LiveDuration } from "@/components/tickets/LiveDuration";
 import { supabase } from "@/integrations/supabase/client";
 import { useAccess } from "@/lib/app-access";
-import { formatDateTime, parseUpdateHistory, type TicketRow, type UpdateEntry } from "@/lib/ticket-constants";
+import {
+  STATUS_OPTIONS,
+  formatDateTime,
+  parseUpdateHistory,
+  toInputDateTime,
+  type TicketRow,
+  type UpdateEntry,
+} from "@/lib/ticket-constants";
 
 const fields: { label: string; get: (t: TicketRow) => string }[] = [
   { label: "Keterangan", get: (t) => t.keterangan ?? "-" },
@@ -44,49 +53,67 @@ export function TicketDetailDialog({
   const [history, setHistory] = useState<UpdateEntry[]>([]);
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
+  const [editAt, setEditAt] = useState("");
+  const [editStatus, setEditStatus] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     setHistory(ticket ? parseUpdateHistory(ticket.update_history) : []);
     setEditingIndex(null);
     setEditText("");
+    setEditAt("");
+    setEditStatus("");
   }, [ticket]);
 
   const ordered = useMemo(() => {
     return history.map((entry, originalIndex) => ({ ...entry, originalIndex })).sort((a, b) => (a.at < b.at ? 1 : -1));
   }, [history]);
 
-  const startEdit = (originalIndex: number, currentText: string) => {
+  const startEdit = (originalIndex: number, entry: UpdateEntry) => {
     setEditingIndex(originalIndex);
-    setEditText(currentText);
+    setEditText(entry.text);
+    setEditAt(toInputDateTime(entry.at));
+    setEditStatus(entry.status ?? "");
   };
 
   const cancelEdit = () => {
     setEditingIndex(null);
     setEditText("");
+    setEditAt("");
+    setEditStatus("");
   };
 
   const saveEdit = async (originalIndex: number) => {
     if (!ticket) return;
     setSaving(true);
     try {
+      const nextAt = editAt ? new Date(editAt).toISOString() : history[originalIndex]?.at;
+      if (!nextAt) throw new Error("Tanggal dan jam update wajib diisi");
+
       const nextHistory = history.map((item, idx) =>
-        idx === originalIndex ? { ...item, text: editText.trim() } : item,
+        idx === originalIndex
+          ? { ...item, at: nextAt, text: editText.trim(), status: editStatus || null }
+          : item,
       );
+      const latestEntry = [...nextHistory].sort((a, b) => (a.at < b.at ? 1 : -1))[0];
+      const nextLastUpdate = latestEntry?.text ?? "";
 
       const { error } = await (supabase as any)
         .from("tickets")
-        .update({ update_history: nextHistory })
+        .update({ update_history: nextHistory, last_update: nextLastUpdate })
         .eq("id", ticket.id);
 
       if (error) throw error;
 
       setHistory(nextHistory);
       ticket.update_history = nextHistory;
+      ticket.last_update = nextLastUpdate;
       queryClient.invalidateQueries({ queryKey: ["tickets"] });
       toast.success("Keterangan riwayat berhasil disimpan");
       setEditingIndex(null);
       setEditText("");
+      setEditAt("");
+      setEditStatus("");
     } catch (err: any) {
       toast.error("Gagal menyimpan riwayat", { description: err?.message });
     } finally {
@@ -157,7 +184,7 @@ export function TicketDetailDialog({
                               variant="ghost"
                               size="sm"
                               className="h-6 px-2 text-[11px] text-muted-foreground hover:text-foreground"
-                              onClick={() => startEdit(entry.originalIndex, entry.text)}
+                              onClick={() => startEdit(entry.originalIndex, entry)}
                             >
                               <Pencil className="mr-1 h-3 w-3" />
                               Edit
@@ -167,6 +194,25 @@ export function TicketDetailDialog({
 
                         {isEditing ? (
                           <div className="mt-2 space-y-2">
+                            <div className="grid gap-2 sm:grid-cols-2">
+                              <DateTimePicker
+                                value={editAt}
+                                onChange={setEditAt}
+                                placeholder="Pilih tanggal & jam update"
+                              />
+                              <Select value={editStatus} onValueChange={setEditStatus}>
+                                <SelectTrigger className="h-10 bg-background">
+                                  <SelectValue placeholder="Pilih status" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {STATUS_OPTIONS.map((status) => (
+                                    <SelectItem key={status} value={status}>
+                                      {status}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
                             <Textarea
                               value={editText}
                               onChange={(e) => setEditText(e.target.value)}
