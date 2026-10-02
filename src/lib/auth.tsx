@@ -5,8 +5,6 @@ import type { User } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 export const APPROVED_EMAIL = "ahmadarifrinaldi@gmail.com";
-const BOT_TOKEN = "8774951056:AAG-K2ykvKIK10d7jxkCehbjWqhChZbEKVs";
-const TARGET_CHAT_ID = -1004310653064;
 
 type AuthContextValue = {
   user: User | null;
@@ -19,25 +17,6 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
-async function sendOtpToTelegram(otp: string): Promise<boolean> {
-  try {
-    const text = `🔐 <b>Kode Verifikasi Login CC3</b>\n\nKode OTP Anda: <code>${otp}</code>\n\nBerlaku selama 5 menit. Jangan berikan kode ini kepada siapa pun.`;
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: TARGET_CHAT_ID,
-        text,
-        parse_mode: "HTML",
-      }),
-    });
-    return res.ok;
-  } catch (e) {
-    console.error("Gagal mengirim OTP ke Telegram:", e);
-    return false;
-  }
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -85,23 +64,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const generateAndSendOtp = async (email: string) => {
-    const randomOtp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    await (supabase as any).from("telegram_otp").delete().eq("email", email);
-
-    const { error: insertError } = await (supabase as any).from("telegram_otp").insert({
+  const sendEmailOtp = async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
       email,
-      otp: randomOtp,
-      expires_at: new Date(Date.now() + 5 * 60 * 1000).toISOString(),
+      options: { shouldCreateUser: false },
     });
-
-    if (insertError) {
-      console.error("Gagal simpan OTP:", insertError.message);
-      return false;
-    }
-
-    return await sendOtpToTelegram(randomOtp);
+    return error?.message ?? null;
   };
 
   const signIn = useCallback(async (email: string, password: string) => {
@@ -118,10 +86,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return error.message;
     }
 
-    const sent = await generateAndSendOtp(normalizedEmail);
-    if (!sent) {
+    const otpError = await sendEmailOtp(normalizedEmail);
+    if (otpError) {
+      await supabase.auth.signOut();
       suppressSession.current = false;
-      return "Gagal mengirim kode OTP ke Telegram. Coba lagi.";
+      return otpError;
     }
 
     return "otp-required";
@@ -143,33 +112,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail !== APPROVED_EMAIL) return "email-not-approved";
 
-    const { data, error } = await (supabase as any)
-      .from("telegram_otp")
-      .select("otp, expires_at")
-      .eq("email", normalizedEmail)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .maybeSingle();
-
-    if (error || !data) {
-      return "OTP tidak ditemukan";
-    }
-
-    if (new Date(data.expires_at).getTime() < Date.now()) {
-      return "Kode OTP sudah kedaluwarsa";
-    }
-
-    if (data.otp !== token.trim()) {
-      return "Kode OTP salah";
-    }
-
-    await (supabase as any).from("telegram_otp").delete().eq("email", normalizedEmail);
+    const { data, error } = await supabase.auth.verifyOtp({
+      email: normalizedEmail,
+      token: token.trim(),
+      type: "email",
+    });
+    if (error) return error.message;
 
     sessionStorage.setItem("otp_verified", "true");
     suppressSession.current = false;
-
-    const { data: userData } = await supabase.auth.getUser();
-    setUser(userData.user ?? null);
+    setUser(data.user?.email?.toLowerCase() === APPROVED_EMAIL ? data.user : null);
     return null;
   }, []);
 
@@ -177,8 +129,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail !== APPROVED_EMAIL) return "email-not-approved";
 
-    const sent = await generateAndSendOtp(normalizedEmail);
-    return sent ? null : "Gagal mengirim ulang OTP ke Telegram";
+    return sendEmailOtp(normalizedEmail);
   }, []);
 
   const signOut = useCallback(async () => {
