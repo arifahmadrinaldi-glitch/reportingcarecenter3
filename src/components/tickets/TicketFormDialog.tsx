@@ -176,22 +176,6 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
             {ticket ? (
               <>
                 <div className="space-y-1.5 sm:col-span-2">
-                  {fieldLabel(isAdmin ? "Update Terakhir Tersimpan (bisa diedit)" : "Update Terakhir Tersimpan", false)}
-                  <Textarea
-                    rows={2}
-                    readOnly={!isAdmin}
-                    value={values.last_update ?? ""}
-                    onChange={(e) => set("last_update", e.target.value)}
-                    className={isAdmin ? "bg-surface" : "bg-muted/60 text-muted-foreground"}
-                  />
-                </div>
-                {isAdmin ? (
-                  <div className="space-y-1.5 sm:col-span-2">
-                    {fieldLabel("Tanggal & Jam Update Terakhir", false)}
-                    <DateTimePicker value={lastUpdateAt} onChange={setLastUpdateAt} />
-                  </div>
-                ) : null}
-                <div className="space-y-1.5 sm:col-span-2">
                   {fieldLabel("Tambah Update Terbaru", false)}
                   <Textarea
                     rows={3}
