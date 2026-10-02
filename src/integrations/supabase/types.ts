@@ -80,6 +80,33 @@ export type Database = {
         }
         Relationships: []
       }
+      schedules: {
+        Row: {
+          created_at: string
+          data: Json
+          id: string
+          period: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data?: Json
+          id?: string
+          period: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data?: Json
+          id?: string
+          period?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       telegram_chats: {
         Row: {
           chat_id: number
@@ -104,6 +131,30 @@ export type Database = {
           is_active?: boolean
           title?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      telegram_otp: {
+        Row: {
+          created_at: string | null
+          email: string
+          expires_at: string | null
+          id: string
+          otp: string
+        }
+        Insert: {
+          created_at?: string | null
+          email: string
+          expires_at?: string | null
+          id?: string
+          otp: string
+        }
+        Update: {
+          created_at?: string | null
+          email?: string
+          expires_at?: string | null
+          id?: string
+          otp?: string
         }
         Relationships: []
       }
