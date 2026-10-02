@@ -191,7 +191,6 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
                     <DateTimePicker value={lastUpdateAt} onChange={setLastUpdateAt} />
                   </div>
                 ) : null}
-
                 <div className="space-y-1.5 sm:col-span-2">
                   {fieldLabel("Tambah Update Terbaru", false)}
                   <Textarea
