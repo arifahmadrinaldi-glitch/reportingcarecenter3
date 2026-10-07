@@ -92,17 +92,19 @@ export function DailyActivityFormDialog({
   open,
   onOpenChange,
   onSubmit,
+  initialValues,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: DailyActivityFormValues) => Promise<boolean>;
+  initialValues?: DailyActivityFormValues;
 }) {
   const [values, setValues] = useState<DailyActivityFormValues>(emptyActivity);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    if (open) setValues(emptyActivity());
-  }, [open]);
+    if (open) setValues(initialValues ?? emptyActivity());
+  }, [open, initialValues]);
 
   const set = (key: keyof DailyActivityFormValues, value: string) =>
     setValues((current) => ({ ...current, [key]: value }));
@@ -121,8 +123,8 @@ export function DailyActivityFormDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
-          <DialogTitle>Tambah Daily Activity</DialogTitle>
-          <DialogDescription>Lengkapi informasi activity baru sesuai urutan kolom tabel.</DialogDescription>
+          <DialogTitle>{initialValues ? "Edit Daily Activity" : "Tambah Daily Activity"}</DialogTitle>
+          <DialogDescription>{values.nama_lokasi || "Daily Activity"}</DialogDescription>
         </DialogHeader>
 
         <div className="grid gap-4 py-2 sm:grid-cols-2">

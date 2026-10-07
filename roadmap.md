@@ -1,5 +1,8 @@
 # Roadmap
 
+- [ ] Ringkas tabel Daily Activity menjadi lima kolom dan dialog detail lengkap
+- [ ] Pertahankan seleksi, filter, export lengkap, import, edit, hapus dan rollback; verifikasi tampilan
+
 - [x] Ubah login agar email diisi manual dan tidak ditampilkan otomatis
 - [x] Tambahkan verifikasi OTP melalui email setelah email dan kata sandi benar
 - [x] Hapus fitur kunci dari halaman utama

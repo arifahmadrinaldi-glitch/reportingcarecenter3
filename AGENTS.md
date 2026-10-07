@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+
+- Keep Daily Activity's compact table separate from its full-detail dialog and reuse the activity form for editing, so presentation changes do not remove fields or editing access.
