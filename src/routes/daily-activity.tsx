@@ -196,6 +196,16 @@ function DailyActivityPage() {
     setPermanentDeleteTarget(null);
     refresh();
   };
+  const permanentlyDeleteAll = async () => {
+    if (deleted.length === 0) return;
+    const { error } = await supabase.from("daily_activities").delete().not("deleted_at", "is", null);
+    if (error) {
+      toast.error("Gagal menghapus semua activity permanen", { description: error.message });
+      return;
+    }
+    toast.success(`${deleted.length} activity dihapus permanen`);
+    refresh();
+  };
 
   const tahunOptions = useMemo(() => tahunOptionsFrom(rows), [rows]);
   const filtered = useMemo(() => filterDailyRows(rows, filters), [rows, filters]);
@@ -544,7 +554,18 @@ function DailyActivityPage() {
             <p className="py-8 text-center text-sm text-muted-foreground">Belum ada activity yang dihapus.</p>
           ) : (
             <div className="space-y-2">
-              <div className="flex justify-end">
+              <div className="flex justify-end gap-2">
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => {
+                    if (window.confirm("Yakin ingin menghapus permanen SEMUA activity yang ada di rollback ini?")) {
+                      permanentlyDeleteAll();
+                    }
+                  }}
+                >
+                  <Trash2 className="size-4" /> Hapus semua
+                </Button>
                 <Button variant="outline" size="sm" onClick={() => restore(deleted.map((row) => row.id))}>
                   <RotateCcw className="size-4" /> Kembalikan semua
                 </Button>
