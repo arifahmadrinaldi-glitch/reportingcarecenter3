@@ -1,24 +1,13 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import {
-  FileSpreadsheet,
-  History,
-  Plus,
-  RefreshCw,
-  RotateCcw,
-  Trash2,
-  Upload,
-} from "lucide-react";
+import { FileSpreadsheet, History, Plus, RefreshCw, RotateCcw, Trash2, Upload } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
 import { DailyActivityDetailDialog, DailyActivityStatus } from "@/components/daily/DailyActivityDetailDialog";
 import { DailyActivityFilters } from "@/components/daily/DailyActivityFilters";
-import {
-  DailyActivityFormDialog,
-  type DailyActivityFormValues,
-} from "@/components/daily/DailyActivityFormDialog";
+import { DailyActivityFormDialog, type DailyActivityFormValues } from "@/components/daily/DailyActivityFormDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -31,13 +20,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useAccess } from "@/lib/app-access";
 import { parseSheetFile, pick } from "@/lib/import-sheet";
@@ -99,8 +82,17 @@ function DailyActivityPage() {
   const [formOpen, setFormOpen] = useState(false);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [editingRow, setEditingRow] = useState<DailyActivityRow | null>(null);
-  const editValues = useMemo(() => editingRow ? Object.fromEntries(headers.map(({ key }) => [key, editingRow[key] ?? ""])) as DailyActivityFormValues : undefined, [editingRow]);
-  const openAddForm = () => { setEditingRow(null); setFormOpen(true); };
+  const editValues = useMemo(
+    () =>
+      editingRow
+        ? (Object.fromEntries(headers.map(({ key }) => [key, editingRow[key] ?? ""])) as DailyActivityFormValues)
+        : undefined,
+    [editingRow],
+  );
+  const openAddForm = () => {
+    setEditingRow(null);
+    setFormOpen(true);
+  };
   const [rollbackOpen, setRollbackOpen] = useState(false);
   const [permanentDeleteTarget, setPermanentDeleteTarget] = useState<DailyActivityRow | null>(null);
   const [filters, setFilters] = useState(emptyDailyFilters);
@@ -136,9 +128,7 @@ function DailyActivityPage() {
   const refresh = () => queryClient.invalidateQueries({ queryKey: ["daily-activities"] });
 
   const addRow = async (values: DailyActivityFormValues) => {
-    const payload = Object.fromEntries(
-      Object.entries(values).map(([key, value]) => [key, value.trim() || null]),
-    );
+    const payload = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value.trim() || null]));
     const { error } = await supabase.from("daily_activities").insert({
       ...payload,
       status: values.status || "Open",
@@ -155,7 +145,10 @@ function DailyActivityPage() {
   const saveEdit = async (values: DailyActivityFormValues) => {
     if (!editingRow) return false;
     const payload = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value.trim() || null]));
-    const { error } = await supabase.from("daily_activities").update({ ...payload, status: values.status || "Open" }).eq("id", editingRow.id);
+    const { error } = await supabase
+      .from("daily_activities")
+      .update({ ...payload, status: values.status || "Open" })
+      .eq("id", editingRow.id);
     if (error) {
       toast.error("Gagal menyimpan perubahan", { description: error.message });
       return false;
@@ -183,10 +176,7 @@ function DailyActivityPage() {
   };
 
   const restore = async (ids: string[]) => {
-    const { error } = await supabase
-      .from("daily_activities")
-      .update({ deleted_at: null })
-      .in("id", ids);
+    const { error } = await supabase.from("daily_activities").update({ deleted_at: null }).in("id", ids);
     if (error) {
       toast.error("Gagal mengembalikan activity", { description: error.message });
       return;
@@ -196,11 +186,7 @@ function DailyActivityPage() {
   };
 
   const permanentlyDelete = async (id: string) => {
-    const { error } = await supabase
-      .from("daily_activities")
-      .delete()
-      .eq("id", id)
-      .not("deleted_at", "is", null);
+    const { error } = await supabase.from("daily_activities").delete().eq("id", id).not("deleted_at", "is", null);
     if (error) {
       toast.error("Gagal menghapus activity permanen", { description: error.message });
       return;
@@ -212,6 +198,13 @@ function DailyActivityPage() {
 
   const tahunOptions = useMemo(() => tahunOptionsFrom(rows), [rows]);
   const filtered = useMemo(() => filterDailyRows(rows, filters), [rows, filters]);
+  const [perPage, setPerPage] = useState(50);
+  const [currentPage, setCurrentPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
+  const pageRows = useMemo(() => {
+    const start = (currentPage - 1) * perPage;
+    return filtered.slice(start, start + perPage);
+  }, [filtered, currentPage, perPage]);
 
   const allSelected = filtered.length > 0 && filtered.every((r) => selected.includes(r.id));
 
@@ -270,13 +263,10 @@ function DailyActivityPage() {
     const body = filtered.map((row, index) => [
       String(index + 1),
       ...headers.map((h) =>
-        h.key === "tanggal"
-          ? formatTanggal(row.tanggal)
-          : ((row[h.key] as string | null) ?? "-"),
+        h.key === "tanggal" ? formatTanggal(row.tanggal) : ((row[h.key] as string | null) ?? "-"),
       ),
     ]);
-    const escape = (value: string) =>
-      value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
     const html = `<html><head><meta charset="utf-8" /></head><body><table border="1"><thead><tr>${head
       .map((h) => `<th>${escape(h)}</th>`)
       .join("")}</tr></thead><tbody>${body
@@ -346,65 +336,157 @@ function DailyActivityPage() {
             </span>
           ) : null}
           {isAdmin && selected.length > 0 ? (
-            <Button
-              variant="destructive"
-              size="sm"
-              className="h-7"
-              onClick={() => setConfirmDelete(true)}
-            >
+            <Button variant="destructive" size="sm" className="h-7" onClick={() => setConfirmDelete(true)}>
               <Trash2 className="size-3.5" /> Hapus terpilih ({selected.length})
             </Button>
           ) : null}
         </div>
 
         <div className="mt-4">
-          <DailyActivityFilters
-            filters={filters}
-            onChange={setFilters}
-            tahunOptions={tahunOptions}
-          />
+          <DailyActivityFilters filters={filters} onChange={setFilters} tahunOptions={tahunOptions} />
         </div>
 
         <div className="mt-4 overflow-x-auto rounded-lg border border-border">
-          <table aria-label="Daily Activity" className="w-full min-w-[640px] table-fixed border-collapse text-[11px] leading-snug">
+          <table
+            aria-label="Daily Activity"
+            className="w-full min-w-[640px] table-fixed border-collapse text-[11px] leading-snug"
+          >
             <thead>
               <tr className="border-b border-border bg-muted/60 text-left text-[10px] font-bold uppercase text-muted-foreground">
-                {isAdmin && <th scope="col" className="w-10 px-3 py-3">
-                  <Checkbox checked={allSelected} onCheckedChange={(checked) => setSelected(checked ? filtered.map((r) => r.id) : [])} aria-label="Pilih semua activity" />
-                </th>}
-                <th scope="col" className="w-[18%] px-3 py-3">Tanggal &amp; Shift</th>
-                <th scope="col" className="w-[12%] px-3 py-3">On Duty</th>
-                <th scope="col" className="w-[30%] px-3 py-3">Nama Lokasi / Customer</th>
-                <th scope="col" className="w-[26%] px-3 py-3">To Do / Product</th>
-                <th scope="col" className="w-[14%] px-3 py-3 text-center">Status</th>
+                {isAdmin && (
+                  <th scope="col" className="w-10 px-3 py-3">
+                    <Checkbox
+                      checked={allSelected}
+                      onCheckedChange={(checked) => setSelected(checked ? filtered.map((r) => r.id) : [])}
+                      aria-label="Pilih semua activity"
+                    />
+                  </th>
+                )}
+                <th scope="col" className="w-[18%] px-3 py-3">
+                  Tanggal &amp; Shift
+                </th>
+                <th scope="col" className="w-[12%] px-3 py-3">
+                  On Duty
+                </th>
+                <th scope="col" className="w-[30%] px-3 py-3">
+                  Nama Lokasi / Customer
+                </th>
+                <th scope="col" className="w-[26%] px-3 py-3">
+                  To Do / Product
+                </th>
+                <th scope="col" className="w-[14%] px-3 py-3 text-center">
+                  Status
+                </th>
               </tr>
             </thead>
             <tbody>
               {isPending || filtered.length === 0 ? (
-                <tr><td colSpan={isAdmin ? 6 : 5} className="px-3 py-10 text-center text-muted-foreground">{isPending ? "Memuat data…" : "Belum ada activity."}</td></tr>
-              ) : filtered.map((row, index) => (
-                <tr key={row.id} onClick={() => setDetailId(row.id)} className="cursor-pointer border-b border-border align-middle transition-colors last:border-0 even:bg-muted/20 hover:bg-accent/50">
-                  {isAdmin && <td className="px-3 py-3" onClick={(event) => event.stopPropagation()} onKeyDown={(event) => event.stopPropagation()}>
-                    <Checkbox checked={selected.includes(row.id)} onCheckedChange={(checked) => setSelected((prev) => checked ? [...new Set([...prev, row.id])] : prev.filter((id) => id !== row.id))} aria-label={`Pilih activity ${index + 1}`} />
-                  </td>}
-                  <td className="px-3 py-3">
-                    <span className="block font-medium tabular-nums">{formatTanggal(row.tanggal) || "—"}</span>
-                    <span className="mt-0.5 block text-[10px] text-muted-foreground">{row.shift || "—"}</span>
+                <tr>
+                  <td colSpan={isAdmin ? 6 : 5} className="px-3 py-10 text-center text-muted-foreground">
+                    {isPending ? "Memuat data…" : "Belum ada activity."}
                   </td>
-                  <td className="break-words px-3 py-3 font-medium">{row.on_duty || "—"}</td>
-                  <td className="break-words px-3 py-3">
-                    <Button variant="link" className="h-auto max-w-full justify-start whitespace-normal p-0 text-left text-[11px] font-semibold" aria-label={`Detail activity ${index + 1}: ${row.nama_lokasi || row.customer || "Daily Activity"}`} onClick={(event) => { event.stopPropagation(); setDetailId(row.id); }}>{row.nama_lokasi || "—"}</Button>
-                    <span className="mt-0.5 block text-[10px] text-muted-foreground">{row.customer || "—"}</span>
-                  </td>
-                  <td className="break-words px-3 py-3">
-                    <span className="block font-medium">{row.to_do || "—"}</span>
-                    <span className="mt-0.5 block text-[10px] text-muted-foreground">{row.product || "—"}</span>
-                  </td>
-                  <td className="px-3 py-3 text-center"><DailyActivityStatus status={row.status} /></td>
                 </tr>
-              ))}
+              ) : (
+                pageRows.map((row, index) => (
+                  <tr
+                    key={row.id}
+                    onClick={() => setDetailId(row.id)}
+                    className="cursor-pointer border-b border-border align-middle transition-colors last:border-0 even:bg-muted/20 hover:bg-accent/50"
+                  >
+                    {isAdmin && (
+                      <td
+                        className="px-3 py-3"
+                        onClick={(event) => event.stopPropagation()}
+                        onKeyDown={(event) => event.stopPropagation()}
+                      >
+                        <Checkbox
+                          checked={selected.includes(row.id)}
+                          onCheckedChange={(checked) =>
+                            setSelected((prev) =>
+                              checked ? [...new Set([...prev, row.id])] : prev.filter((id) => id !== row.id),
+                            )
+                          }
+                          aria-label={`Pilih activity ${index + 1}`}
+                        />
+                      </td>
+                    )}
+                    <td className="px-3 py-3">
+                      <span className="block font-medium tabular-nums">{formatTanggal(row.tanggal) || "—"}</span>
+                      <span className="mt-0.5 block text-[10px] text-muted-foreground">{row.shift || "—"}</span>
+                    </td>
+                    <td className="break-words px-3 py-3 font-medium">{row.on_duty || "—"}</td>
+                    <td className="break-words px-3 py-3">
+                      <Button
+                        variant="link"
+                        className="h-auto max-w-full justify-start whitespace-normal p-0 text-left text-[11px] font-semibold"
+                        aria-label={`Detail activity ${index + 1}: ${row.nama_lokasi || row.customer || "Daily Activity"}`}
+                        onClick={(event) => {
+                          event.stopPropagation();
+                          setDetailId(row.id);
+                        }}
+                      >
+                        {row.nama_lokasi || "—"}
+                      </Button>
+                      <span className="mt-0.5 block text-[10px] text-muted-foreground">{row.customer || "—"}</span>
+                    </td>
+                    <td className="break-words px-3 py-3">
+                      <span className="block font-medium">{row.to_do || "—"}</span>
+                      <span className="mt-0.5 block text-[10px] text-muted-foreground">{row.product || "—"}</span>
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      <DailyActivityStatus status={row.status} />
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
+        </div>
+
+        {/* Bar Pagination */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-muted/20 p-4">
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+            <span>Baris per halaman</span>
+            <Select
+              value={String(perPage)}
+              onValueChange={(v) => {
+                setPerPage(Number(v));
+                setCurrentPage(1);
+              }}
+            >
+              <SelectTrigger className="h-8 w-20">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 25, 50, 100].map((n) => (
+                  <SelectItem key={n} value={String(n)}>
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2 text-xs">
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage <= 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+            >
+              Sebelumnya
+            </Button>
+            <span className="text-muted-foreground">
+              Halaman {currentPage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={currentPage >= totalPages}
+              onClick={() => setCurrentPage((p) => p + 1)}
+            >
+              Berikutnya
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -413,8 +495,7 @@ function DailyActivityPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus {selected.length} activity?</AlertDialogTitle>
             <AlertDialogDescription>
-              Data activity yang dipilih akan dipindahkan ke Rollback dan bisa dikembalikan
-              kapan saja.
+              Data activity yang dipilih akan dipindahkan ke Rollback dan bisa dikembalikan kapan saja.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -435,17 +516,11 @@ function DailyActivityPage() {
           {deletedPending ? (
             <p className="py-8 text-center text-sm text-muted-foreground">Memuat data…</p>
           ) : deleted.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">
-              Belum ada activity yang dihapus.
-            </p>
+            <p className="py-8 text-center text-sm text-muted-foreground">Belum ada activity yang dihapus.</p>
           ) : (
             <div className="space-y-2">
               <div className="flex justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => restore(deleted.map((row) => row.id))}
-                >
+                <Button variant="outline" size="sm" onClick={() => restore(deleted.map((row) => row.id))}>
                   <RotateCcw className="size-4" /> Kembalikan semua
                 </Button>
               </div>
@@ -482,7 +557,11 @@ function DailyActivityPage() {
       <DailyActivityDetailDialog
         row={rows.find((row) => row.id === detailId) ?? null}
         onClose={() => setDetailId(null)}
-        onEdit={(row) => { setDetailId(null); setEditingRow(row); setFormOpen(true); }}
+        onEdit={(row) => {
+          setDetailId(null);
+          setEditingRow(row);
+          setFormOpen(true);
+        }}
       />
 
       <DailyActivityFormDialog
@@ -500,7 +579,8 @@ function DailyActivityPage() {
           <AlertDialogHeader>
             <AlertDialogTitle>Hapus activity secara permanen?</AlertDialogTitle>
             <AlertDialogDescription>
-              Activity {permanentDeleteTarget?.nama_lokasi ?? permanentDeleteTarget?.customer ?? "ini"} akan dihapus selamanya dan tidak bisa dikembalikan.
+              Activity {permanentDeleteTarget?.nama_lokasi ?? permanentDeleteTarget?.customer ?? "ini"} akan dihapus
+              selamanya dan tidak bisa dikembalikan.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
