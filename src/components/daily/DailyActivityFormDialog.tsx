@@ -97,7 +97,7 @@ export function DailyActivityFormDialog({
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSubmit: (values: DailyActivityFormValues) => Promise<boolean>;
-  initialValues?: DailyActivityFormValues;
+  initialValues?: DailyActivityFormValues | undefined;
 }) {
   const [values, setValues] = useState<DailyActivityFormValues>(emptyActivity);
   const [saving, setSaving] = useState(false);
