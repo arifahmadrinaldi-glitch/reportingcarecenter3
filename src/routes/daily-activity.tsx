@@ -212,15 +212,19 @@ function DailyActivityPage() {
   const parseImportDate = (value: string) => {
     if (!value) return null;
     const str = String(value).trim();
-    const pad = (n: number | string) => String(n).padStart(2, "0");
+    const pad = (n?: number | string | null) => String(n ?? "0").padStart(2, "0");
 
     // Tangani format YYYY-MM-DD atau YYYY/MM/DD
     const ymd = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
-    if (ymd) return `${ymd[1]}-${pad(ymd[2])}-${pad(ymd[3])}`;
+    if (ymd?.[1] && ymd[2] && ymd[3]) {
+      return `${ymd[1]}-${pad(ymd[2])}-${pad(ymd[3])}`;
+    }
 
     // Tangani format DD/MM/YYYY atau DD-MM-YYYY
     const dmy = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
-    if (dmy) return `${dmy[3]}-${pad(dmy[2])}-${pad(dmy[1])}`;
+    if (dmy?.[1] && dmy[2] && dmy[3]) {
+      return `${dmy[3]}-${pad(dmy[2])}-${pad(dmy[1])}`;
+    }
 
     const parsed = new Date(str);
     if (Number.isNaN(parsed.getTime())) return null;
