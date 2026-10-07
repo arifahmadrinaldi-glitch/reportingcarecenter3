@@ -600,11 +600,11 @@ function TicketsPage() {
               </Button>
               {isAdmin ? (
                 <>
-                  <Button variant="outline" onClick={exportExcel}>
-                    <FileSpreadsheet className="size-4" /> Excel
+                  <Button variant="outline" onClick={exportExcel} title="Export">
+                    <FileSpreadsheet className="size-4" /> Export
                   </Button>
-                  <Button variant="outline" onClick={() => importInputRef.current?.click()}>
-                    <Upload className="size-4" /> Import
+                  <Button variant="outline" size="icon" onClick={() => importInputRef.current?.click()} title="Import">
+                    <Upload className="size-4" />
                   </Button>
                   <input
                     ref={importInputRef}
@@ -620,10 +620,16 @@ function TicketsPage() {
                 </>
               ) : null}
               {isAdmin ? (
-                <Button variant="outline" onClick={() => setRollbackOpen(true)}>
-                  <History className="size-4" /> Rollback
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="relative"
+                  onClick={() => setRollbackOpen(true)}
+                  title="Rollback"
+                >
+                  <History className="size-4" />
                   {deleted.length > 0 ? (
-                    <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
+                    <span className="absolute -top-1 -right-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
                       {deleted.length}
                     </span>
                   ) : null}
@@ -631,12 +637,14 @@ function TicketsPage() {
               ) : null}
               <Button
                 variant="outline"
+                size="icon"
                 onClick={() => {
                   queryClient.invalidateQueries({ queryKey: ["tickets"] });
                   toast.success("Data disegarkan");
                 }}
+                title="Refresh"
               >
-                <RefreshCw className="size-4" /> Refresh
+                <RefreshCw className="size-4" />
               </Button>
             </div>
           </div>
