@@ -366,8 +366,8 @@ function DailyActivityPage() {
                 <th scope="col" className="w-[18%] px-3 py-3">
                   Tanggal &amp; Shift
                 </th>
-                <th scope="col" className="w-[12%] px-3 py-3">
-                  On Duty
+                <th scope="col" className="w-[14%] px-3 py-3">
+                  On Duty / Source
                 </th>
                 <th scope="col" className="w-[30%] px-3 py-3">
                   Nama Lokasi / Customer
@@ -415,7 +415,12 @@ function DailyActivityPage() {
                       <span className="block font-medium tabular-nums">{formatTanggal(row.tanggal) || "—"}</span>
                       <span className="mt-0.5 block text-[10px] text-muted-foreground">{row.shift || "—"}</span>
                     </td>
-                    <td className="break-words px-3 py-3 font-medium">{row.on_duty || "—"}</td>
+                    <td className="break-words px-3 py-3">
+                      <span className="block font-medium">{row.on_duty || "—"}</span>
+                      <span className="mt-0.5 block text-[10px] text-muted-foreground">
+                        {row.source_information || "—"}
+                      </span>
+                    </td>
                     <td className="break-words px-3 py-3">
                       <Button
                         variant="link"
