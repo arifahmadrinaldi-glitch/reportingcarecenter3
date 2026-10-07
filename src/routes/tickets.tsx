@@ -600,8 +600,8 @@ function TicketsPage() {
               </Button>
               {isAdmin ? (
                 <>
-                  <Button variant="outline" onClick={exportExcel} title="Export">
-                    <FileSpreadsheet className="size-4" /> Export
+                  <Button variant="outline" size="icon" onClick={exportExcel} title="Export">
+                    <FileSpreadsheet className="size-4" />
                   </Button>
                   <Button variant="outline" size="icon" onClick={() => importInputRef.current?.click()} title="Import">
                     <Upload className="size-4" />
