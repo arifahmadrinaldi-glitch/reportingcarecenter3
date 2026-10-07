@@ -106,8 +106,8 @@ function DailyActivityPage() {
         .from("daily_activities")
         .select("*")
         .is("deleted_at", null)
-        .order("created_at", { ascending: true })
-        .order("id", { ascending: true });
+        .order("tanggal", { ascending: true })
+        .order("created_at", { ascending: true });
       if (error) throw error;
       return (data ?? []) as DailyActivityRow[];
     },
@@ -363,6 +363,9 @@ function DailyActivityPage() {
                     />
                   </th>
                 )}
+                <th scope="col" className="w-10 px-2 py-3 text-center">
+                  No
+                </th>
                 <th scope="col" className="w-[18%] px-3 py-3">
                   Tanggal &amp; Shift
                 </th>
@@ -383,7 +386,7 @@ function DailyActivityPage() {
             <tbody>
               {isPending || filtered.length === 0 ? (
                 <tr>
-                  <td colSpan={isAdmin ? 6 : 5} className="px-3 py-10 text-center text-muted-foreground">
+                  <td colSpan={isAdmin ? 7 : 5} className="px-3 py-10 text-center text-muted-foreground">
                     {isPending ? "Memuat data…" : "Belum ada activity."}
                   </td>
                 </tr>
@@ -411,6 +414,9 @@ function DailyActivityPage() {
                         />
                       </td>
                     )}
+                    <td className="px-2 py-3 text-center font-medium text-muted-foreground tabular-nums">
+                      {(currentPage - 1) * perPage + index + 1}
+                    </td>
                     <td className="px-3 py-3">
                       <span className="block font-medium tabular-nums">{formatTanggal(row.tanggal) || "—"}</span>
                       <span className="mt-0.5 block text-[10px] text-muted-foreground">{row.shift || "—"}</span>
