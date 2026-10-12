@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileSpreadsheet, RotateCcw, Save } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { BULAN_LIST } from "@/lib/daily-activity-constants";
+import { CODES, WORK, initializeSchedule, rosterCode, type Cell, type ScheduleData } from "@/lib/schedule";
+import { regularCode, isNationalHoliday } from "@/lib/indonesia-holidays";
 
 export const Route = createFileRoute("/jadwal")({
   head: () => ({
@@ -27,27 +29,12 @@ export const Route = createFileRoute("/jadwal")({
   component: JadwalPage,
 });
 
-const CYCLE = ["P", "P", "M", "M", "S", "S", "L", "L"] as const;
-const CODES = ["P", "S", "M", "L", "CT"] as const;
-const WORK = new Set(["P", "S", "M"]);
-const ANCHOR = Date.UTC(2026, 0, 1);
-const DEFAULT_MEMBERS = ["Anggota 1", "Anggota 2", "Anggota 3", "Anggota 4"];
-
-type Cell = { code: string; backupFor?: string | undefined };
-type ScheduleData = { members: string[]; cells: Record<string, Record<string, Cell>> };
-
 const codeTone: Record<string, string> = {
-  P: "bg-emerald-600 text-white font-bold",
-  S: "bg-amber-400 text-slate-900 font-bold",
-  M: "bg-sky-400 text-slate-950 font-bold",
-  L: "bg-slate-900 text-white font-bold",
-  CT: "bg-rose-500 text-white font-bold",
-};
-
-const rosterCode = (memberIdx: number, year: number, month: number, day: number) => {
-  const diff = Math.floor((Date.UTC(year, month, day) - ANCHOR) / 86400000);
-  const pos = (((diff + memberIdx * 2) % 8) + 8) % 8;
-  return CYCLE[pos] as string;
+  P: "bg-shift-morning text-shift-light font-bold hover:bg-shift-morning/90",
+  S: "bg-shift-day text-shift-ink font-bold hover:bg-shift-day/90",
+  M: "bg-shift-night text-shift-ink font-bold hover:bg-shift-night/90",
+  L: "bg-shift-off text-shift-light font-bold hover:bg-shift-off/90",
+  CT: "bg-destructive text-destructive-foreground font-bold hover:bg-destructive/90",
 };
 
 function JadwalPage() {
@@ -61,33 +48,47 @@ function JadwalPage() {
   const query = useQuery({
     queryKey: ["schedule", period],
     queryFn: async () => {
-      const { data, error } = await supabase.from("schedules").select("*").eq("period", period).maybeSingle();
-      if (error) throw error;
-      return data;
+      const [current, prior] = await Promise.all([
+        supabase.from("schedules").select("*").eq("period", period).maybeSingle(),
+        supabase.from("schedules").select("period,data").lt("period", period).order("period", { ascending: false }).limit(1).maybeSingle(),
+      ]);
+      if (current.error) throw current.error;
+      if (prior.error) throw prior.error;
+      return { current: current.data, previous: prior.data };
     },
   });
 
-  const [data, setData] = useState<ScheduleData>({ members: DEFAULT_MEMBERS, cells: {} });
+  const [data, setData] = useState<ScheduleData>(() => initializeSchedule());
+  const carry = useRef<{ period: string; data: ScheduleData } | undefined>(undefined);
   const [dirty, setDirty] = useState(false);
   const [editing, setEditing] = useState<{ m: number; d: number } | null>(null);
   const [pendingCode, setPendingCode] = useState("P");
   const [backup, setBackup] = useState("none");
 
   useEffect(() => {
-    const saved = query.data?.data as ScheduleData | undefined;
-    setData({
-      members: saved?.members?.length === 4 ? saved.members : DEFAULT_MEMBERS,
-      cells: saved?.cells ?? {},
-    });
+    if (!query.data) return;
+    const saved = query.data.current?.data as ScheduleData | undefined;
+    const previous = query.data.previous as { period: string; data: ScheduleData } | null;
+    const draft = carry.current;
+    const source = draft && draft.period < period && (!previous || draft.period >= previous.period) ? draft : previous ?? undefined;
+    setData(initializeSchedule(saved, source));
     setDirty(false);
+    setEditing(null);
   }, [query.data, period]);
 
+  const changePeriod = (nextMonth: number, nextYear: number) => {
+    carry.current = { period, data: structuredClone(data) };
+    setEditing(null);
+    setMonth(nextMonth);
+    setYear(nextYear);
+  };
+
   const getCell = (m: number, d: number): Cell =>
-    data.cells[m]?.[d] ?? { code: rosterCode(m, year, month, d) };
+    data.cells[m]?.[d] ?? { code: m === -1 ? regularCode(year, month, d) : rosterCode(m, year, month, d, data) };
 
   const update = (fn: (draft: ScheduleData) => void) => {
     setData((prev) => {
-      const next: ScheduleData = { members: [...prev.members], cells: JSON.parse(JSON.stringify(prev.cells)) };
+      const next = structuredClone(prev);
       fn(next);
       return next;
     });
@@ -110,11 +111,17 @@ function JadwalPage() {
     const { m, d } = editing;
     const original = getCell(m, d).code;
     update((draft) => {
-      setCell(draft, m, d, { code: pendingCode });
+      const normal = draft.normalCells?.[m]?.[d]?.code ?? getCell(m, d).originalCode ?? (original !== "CT" && !getCell(m, d).backupFor ? original : rosterCode(m, year, month, d, data));
+      setCell(draft, m, d, { code: pendingCode, ...(pendingCode === "CT" ? { originalCode: normal } : {}) });
+      if (pendingCode !== "CT") {
+        draft.normalCells ??= {};
+        draft.normalCells[m] ??= {};
+        draft.normalCells[m][d] = { code: pendingCode };
+      }
       if (pendingCode === "CT" && backup !== "none") {
         const b = Number(backup);
-        const shift = WORK.has(original) ? original : rosterCode(m, year, month, d);
-        setCell(draft, b, d, { code: WORK.has(shift) ? shift : "P", backupFor: draft.members[m] });
+        const shift = WORK.has(original) ? original : rosterCode(m, year, month, d, data);
+        setCell(draft, b, d, { code: WORK.has(shift) ? shift : "P", backupFor: m === -1 ? draft.regular?.name ?? "Reguler" : draft.members[m] ?? "Anggota", originalCode: getCell(b, d).originalCode ?? getCell(b, d).code });
       }
     });
     setEditing(null);
@@ -125,7 +132,7 @@ function JadwalPage() {
       data.members.map((_, m) => {
         let work = 0, ct = 0, bk = 0;
         for (let d = 1; d <= days; d++) {
-          const c = data.cells[m]?.[d] ?? { code: rosterCode(m, year, month, d) };
+          const c = data.cells[m]?.[d] ?? { code: rosterCode(m, year, month, d, data) };
           if (WORK.has(c.code)) work++;
           if (c.code === "CT") ct++;
           if (c.backupFor) bk++;
@@ -137,41 +144,41 @@ function JadwalPage() {
 
   const save = async () => {
     const payload = { period, title: `Jadwal ${BULAN_LIST[month]} ${year}`, data: data as never };
-    const res = query.data
-      ? await supabase.from("schedules").update(payload).eq("id", query.data.id)
+    const res = query.data?.current
+      ? await supabase.from("schedules").update(payload).eq("id", query.data.current.id)
       : await supabase.from("schedules").insert(payload);
     if (res.error) { toast.error("Gagal menyimpan", { description: res.error.message }); return; }
     toast.success("Jadwal tersimpan");
     await qc.invalidateQueries({ queryKey: ["schedule", period] });
   };
 
-  const resetRoster = () => update((draft) => { draft.cells = {}; });
+  const resetRoster = () => update((draft) => { draft.cells = {}; draft.normalCells = {}; });
 
   const exportExcel = () => {
     const dayHeads = Array.from({ length: days }, (_, i) => String(i + 1));
-    const rows: (string | number)[][] = [
+    const rows: unknown[][] = [
       [`Jadwal Shift ${BULAN_LIST[month]} ${year}`],
-      ["No", "Nama", ...dayHeads, "Hari Kerja", "Cuti", "Backup"],
+      ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup"],
     ];
-    data.members.forEach((name, m) => {
+    [-1, 0, 1, 2, 3].forEach((m) => {
+      const name = m === -1 ? data.regular?.name ?? "Reguler" : data.members[m];
+      const nik = m === -1 ? data.regular?.nik ?? "" : data.niks?.[m] ?? "";
+      const phone = m === -1 ? data.regular?.phone ?? "" : data.phones?.[m] ?? "";
       const cells = dayHeads.map((_, i) => {
         const c = getCell(m, i + 1);
         return c.backupFor ? `${c.code} (BK ${c.backupFor})` : c.code;
       });
-      const r = 3 + m;
-      rows.push([m + 1, name, ...cells]);
-      const first = XLSX.utils.encode_col(2);
-      const last = XLSX.utils.encode_col(1 + days);
-      const range = `${first}${r}:${last}${r}`;
-      (rows[rows.length - 1] as unknown[]).push(
-        { f: `COUNTIF(${range},"P*")+COUNTIF(${range},"S*")+COUNTIF(${range},"M*")` } as never,
-        { f: `COUNTIF(${range},"CT")` } as never,
-        { f: `COUNTIF(${range},"*BK*")` } as never,
-      );
+      const r = rows.length + 1;
+      const range = `${XLSX.utils.encode_col(3)}${r}:${XLSX.utils.encode_col(2 + days)}${r}`;
+      rows.push([nik, name, phone, ...cells,
+        { t: "n", v: cells.filter((c) => WORK.has(c.split(" ")[0] ?? "")).length, f: `COUNTIF(${range},"P*")+COUNTIF(${range},"S*")+COUNTIF(${range},"M*")` },
+        { t: "n", v: cells.filter((c) => c === "CT").length, f: `COUNTIF(${range},"CT")` },
+        { t: "n", v: cells.filter((c) => c.includes("BK")).length, f: `COUNTIF(${range},"*BK*")` },
+      ]);
     });
     rows.push([], ["Keterangan: P = Pagi, S = Siang, M = Malam, L = Libur, CT = Cuti, BK = Backup"]);
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"] = [{ wch: 4 }, { wch: 16 }, ...dayHeads.map(() => ({ wch: 5 })), { wch: 10 }, { wch: 6 }, { wch: 8 }];
+    ws["!cols"] = [{ wch: 16 }, { wch: 20 }, { wch: 18 }, ...dayHeads.map(() => ({ wch: 5 })), { wch: 12 }, { wch: 6 }, { wch: 8 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Jadwal");
     XLSX.writeFile(wb, `Jadwal_${period}.xlsx`);
@@ -189,29 +196,33 @@ function JadwalPage() {
             <p className="text-[11px] text-muted-foreground">Siklus 8 hari: P P M M S S L L · klik sel untuk mengubah</p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            <Select value={String(month)} onValueChange={(v) => setMonth(Number(v))}>
+            <Select value={String(month)} onValueChange={(v) => changePeriod(Number(v), year)}>
               <SelectTrigger className="h-8 w-32 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>{BULAN_LIST.map((b, i) => <SelectItem key={b} value={String(i)}>{b}</SelectItem>)}</SelectContent>
             </Select>
-            <Select value={String(year)} onValueChange={(v) => setYear(Number(v))}>
+            <Select value={String(year)} onValueChange={(v) => changePeriod(month, Number(v))}>
               <SelectTrigger className="h-8 w-24 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
             </Select>
             <Button variant="outline" size="sm" onClick={resetRoster}><RotateCcw className="size-3.5" />Reset roster</Button>
             <Button variant="outline" size="sm" onClick={exportExcel}><FileSpreadsheet className="size-3.5" />Export Excel</Button>
-            <Button size="sm" onClick={save} disabled={!dirty}><Save className="size-3.5" />Simpan</Button>
+            <Button size="sm" onClick={save} disabled={query.isFetching || !dirty}><Save className="size-3.5" />Simpan</Button>
           </div>
         </div>
 
-        <div className="overflow-x-auto rounded-lg border bg-card">
-          <table className="w-full border-collapse text-[10px]">
+        {query.error && <p role="alert" className="text-xs text-destructive">Jadwal gagal dimuat. Silakan coba lagi.</p>}
+        <div className="overflow-x-auto rounded-lg border bg-card" aria-busy={query.isFetching}>
+          {query.isFetching ? <p className="p-4 text-xs text-muted-foreground">Memuat jadwal…</p> : <>
+          <table className="w-full min-w-[1420px] border-collapse text-[10px]">
             <thead>
               <tr className="bg-ops-navy text-primary-foreground">
-                <th className="sticky left-0 z-10 min-w-[130px] bg-ops-navy px-2 py-1.5 text-left">Nama</th>
+                <th className="min-w-[100px] px-2 py-1.5 text-left">NIK</th>
+                <th className="min-w-[140px] px-2 py-1.5 text-left">Nama</th>
+                <th className="min-w-[110px] px-2 py-1.5 text-left">No. Tlp</th>
                 {Array.from({ length: days }, (_, i) => {
                   const dow = new Date(year, month, i + 1).getDay();
                   return (
-                    <th key={i} className={`min-w-[26px] px-0.5 py-1 text-center ${dow === 0 ? "text-destructive-foreground/70" : ""}`}>
+                    <th key={i} className={`min-w-[26px] px-0.5 py-1 text-center ${dow === 0 || dow === 6 || isNationalHoliday(year, month, i + 1) ? "text-destructive-foreground/70" : ""}`}>
                       <div>{i + 1}</div>
                       <div className="text-[8px] font-normal opacity-70">{["Mg", "Sn", "Sl", "Rb", "Km", "Jm", "Sb"][dow]}</div>
                     </th>
@@ -224,31 +235,33 @@ function JadwalPage() {
             </thead>
             <tbody>
               <tr className="border-t bg-muted/20 font-medium">
-                <td className="sticky left-0 z-10 bg-card px-2 py-1 text-xs font-semibold text-foreground">
-                  Reguler
-                </td>
+                {(["nik", "name", "phone"] as const).map((field) => (
+                  <td key={field} className="bg-card px-1 py-1">
+                    <Input aria-label={`Reguler ${field === "nik" ? "NIK" : field === "name" ? "Nama" : "No. Tlp"}`}
+                      value={data.regular?.[field] ?? (field === "name" ? "Reguler" : "")}
+                      onChange={(e) => update((draft) => { draft.regular ??= { nik: "", name: "Reguler", phone: "" }; draft.regular[field] = e.target.value; })}
+                      className="h-7 text-[11px]" />
+                  </td>
+                ))}
                 {Array.from({ length: days }, (_, i) => {
-                  const dow = new Date(year, month, i + 1).getDay();
-                  const isWeekend = dow === 0 || dow === 6; // 0 = Minggu, 6 = Sabtu
-                  const customCode = data.cells[-1]?.[i + 1]?.code;
-                  const code = customCode ?? (isWeekend ? "L" : "P");
+                  const code = getCell(-1, i + 1).code;
                   return (
                     <td key={i} className="p-0.5 text-center">
-                      <button
+                      <Button variant="ghost"
                         type="button"
                         onClick={() => openEdit(-1, i + 1)}
-                        className={`relative h-6 w-full rounded text-[10px] ${codeTone[code] ?? ""}`}
-                        title="Klik untuk ubah (misal: jika tanggal merah)"
+                        className={`relative h-6 w-full rounded p-0 text-[10px] ${codeTone[code] ?? ""}`}
+                        aria-label={`Reguler tanggal ${i + 1}: ${code}`}
+                         title="Ubah jadwal Reguler"
                       >
                         {code}
-                      </button>
+                      </Button>
                     </td>
                   );
                 })}
                 <td className="text-center text-xs font-bold text-primary">
                   {Array.from({ length: days }).filter((_, i) => {
-                    const dow = new Date(year, month, i + 1).getDay();
-                    const code = data.cells[-1]?.[i + 1]?.code ?? (dow === 0 || dow === 6 ? "L" : "P");
+                    const code = getCell(-1, i + 1).code;
                     return code === "P" || code === "S" || code === "M";
                   }).length}
                 </td>
@@ -259,25 +272,22 @@ function JadwalPage() {
               </tr>
               {data.members.map((name, m) => (
                 <tr key={m} className="border-t">
-                  <td className="sticky left-0 z-10 bg-card px-1 py-1">
-                    <Input
-                      value={name}
-                      onChange={(e) => update((draft) => { draft.members[m] = e.target.value; })}
-                      className="h-7 text-[11px]"
-                    />
-                  </td>
+                  <td className="px-1 py-1"><Input aria-label={`NIK anggota ${m + 1}`} value={data.niks?.[m] ?? ""} onChange={(e) => update((draft) => { draft.niks ??= ["", "", "", ""]; draft.niks[m] = e.target.value; })} className="h-7 text-[11px]" /></td>
+                  <td className="px-1 py-1"><Input aria-label={`Nama anggota ${m + 1}`} value={name} onChange={(e) => update((draft) => { draft.members[m] = e.target.value; })} className="h-7 text-[11px]" /></td>
+                  <td className="px-1 py-1"><Input aria-label={`No. Tlp anggota ${m + 1}`} value={data.phones?.[m] ?? ""} onChange={(e) => update((draft) => { draft.phones ??= ["", "", "", ""]; draft.phones[m] = e.target.value; })} className="h-7 text-[11px]" /></td>
                   {Array.from({ length: days }, (_, i) => {
                     const c = getCell(m, i + 1);
                     return (
                       <td key={i} className="p-0.5 text-center">
-                        <button
+                        <Button variant="ghost"
                           type="button"
-                          title={c.backupFor ? `Backup untuk ${c.backupFor}` : undefined}
+                          aria-label={`${name} tanggal ${i + 1}: ${c.code}`}
+                           title={c.backupFor ? `Backup untuk ${c.backupFor}` : undefined}
                           onClick={() => openEdit(m, i + 1)}
-                          className={`relative h-6 w-full rounded font-semibold ${codeTone[c.code] ?? ""} ${c.backupFor ? "ring-2 ring-success" : ""}`}
+                          className={`relative h-6 w-full rounded p-0 text-[10px] font-semibold ${codeTone[c.code] ?? ""} ${c.backupFor ? "ring-2 ring-success" : ""}`}
                         >
                           {c.code}
-                        </button>
+                        </Button>
                       </td>
                     );
                   })}
@@ -288,7 +298,9 @@ function JadwalPage() {
               ))}
             </tbody>
           </table>
+          </>}
         </div>
+        {![2026, 2027].includes(year) && <p className="text-[10px] text-muted-foreground">Tanggal merah keagamaan tahun {year} belum tersedia; sesuaikan sel Reguler secara manual.</p>}
         <p className="text-[10px] text-muted-foreground">
           P = Pagi · S = Siang · M = Malam · L = Libur · CT = Cuti (mengurangi hari kerja) · bingkai hijau = Backup (menambah hari kerja)
         </p>
@@ -299,7 +311,7 @@ function JadwalPage() {
           <DialogHeader>
             <DialogTitle>Ubah Jadwal</DialogTitle>
             <DialogDescription>
-              {editing && `${data.members[editing.m]} · ${editing.d} ${BULAN_LIST[month]} ${year}`}
+              {editing && `${editing.m === -1 ? data.regular?.name ?? "Reguler" : data.members[editing.m]} · ${editing.d} ${BULAN_LIST[month]} ${year}`}
               {editCell?.backupFor && ` · backup untuk ${editCell.backupFor}`}
             </DialogDescription>
           </DialogHeader>
