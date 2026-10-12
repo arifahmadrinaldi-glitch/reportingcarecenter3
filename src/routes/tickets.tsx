@@ -537,6 +537,13 @@ function TicketsPage() {
           const value = card.status
             ? filtered.filter((ticket) => ticket.status === card.status).length
             : filtered.length;
+            const cmCount = filtered.filter(
+    (t) => t.jenis_ticket?.toLowerCase().includes("corrective") || t.jenis_ticket === "CM",
+  ).length;
+
+  const pmCount = filtered.filter(
+    (t) => t.jenis_ticket?.toLowerCase().includes("preventive") || t.jenis_ticket === "PM",
+  ).length;
           const Icon = card.icon;
           const toneClass =
             card.tone === "warning"
@@ -561,7 +568,14 @@ function TicketsPage() {
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h2 className="text-[9px] font-bold tracking-wide uppercase">{card.label}</h2>
-                  <p className="mt-1 font-display text-lg font-bold tabular-nums text-foreground">{value}</p>
+                  <div className="mt-1 flex items-baseline gap-2">
+  <span className="font-display text-lg font-bold tabular-nums text-foreground">{value}</span>
+  {card.label === "Total Ticket" && (
+    <span className="text-[11px] font-semibold text-muted-foreground">
+      (CM: {cmCount} · PM: {pmCount})
+    </span>
+  )}
+</div>
                   <p className="italic mt-0 text-[9px] text-muted-foreground">{card.note}</p>
                 </div>
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-current/10">
