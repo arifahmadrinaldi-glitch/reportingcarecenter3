@@ -13,6 +13,7 @@ const navItems: any[] = [
   { to: "/", label: "Dashboard", icon: LayoutGrid },
   { to: "/tickets", label: "Daftar Ticket", icon: Ticket },
   { to: "/daily-activity", label: "Daily Activity", icon: ClipboardList },
+  { to: "/jadwal", label: "Jadwal", icon: CalendarDays },
 ];
 
 export function AppShell({
