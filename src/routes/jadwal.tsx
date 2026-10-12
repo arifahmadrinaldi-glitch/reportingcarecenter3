@@ -30,13 +30,15 @@ export const Route = createFileRoute("/jadwal")({
 });
 
 const codeTone: Record<string, string> = {
-const toneFor = (code: string) => codeTone[code] ?? "bg-success text-success-foreground font-bold hover:bg-success/90";
   P: "bg-shift-morning text-shift-light font-bold hover:bg-shift-morning/90",
   S: "bg-shift-day text-shift-ink font-bold hover:bg-shift-day/90",
   M: "bg-shift-night text-shift-ink font-bold hover:bg-shift-night/90",
   L: "bg-shift-off text-shift-light font-bold hover:bg-shift-off/90",
   CT: "bg-destructive text-destructive-foreground font-bold hover:bg-destructive/90",
 };
+
+const toneFor = (code: string) =>
+  codeTone[code] ?? "bg-success text-success-foreground font-bold hover:bg-success/90";
 
 function JadwalPage() {
   const now = new Date();
@@ -291,7 +293,7 @@ function JadwalPage() {
                           aria-label={`${name} tanggal ${i + 1}: ${c.code}`}
                            title={c.backupFor ? `Backup untuk ${c.backupFor}` : undefined}
                           onClick={() => openEdit(m, i + 1)}
-                          className={`relative h-6 w-full rounded p-0 text-[10px] font-semibold ${toneFor(c.code)` ?? ""} ${c.backupFor ? "ring-2 ring-success" : ""}`}
+                          className={`relative h-6 w-full rounded p-0 text-[10px] font-semibold ${toneFor(c.code) ?? ""} ${c.backupFor ? "ring-2 ring-success" : ""}`}
                         >
                           {c.code}
                         </Button>
