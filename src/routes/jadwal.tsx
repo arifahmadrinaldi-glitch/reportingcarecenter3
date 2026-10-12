@@ -201,8 +201,8 @@ function JadwalPage() {
       <div className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h1 className="font-display text-lg font-semibold">Jadwal Shift</h1>
-            <p className="text-[11px] text-muted-foreground">Siklus 8 hari: P P M M S S L L · klik sel untuk mengubah</p>
+            <h1 className="font-display text-lg font-semibold">Jadwal Shift Care Center 3</h1>
+            <p className="text-[11px] text-muted-foreground"></p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <Select value={String(month)} onValueChange={(v) => changePeriod(Number(v), year)}>
