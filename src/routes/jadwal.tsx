@@ -33,7 +33,7 @@ const WORK = new Set(["P", "S", "M"]);
 const ANCHOR = Date.UTC(2026, 0, 1);
 const DEFAULT_MEMBERS = ["Anggota 1", "Anggota 2", "Anggota 3", "Anggota 4"];
 
-type Cell = { code: string; backupFor?: string };
+type Cell = { code: string; backupFor?: string | undefined };
 type ScheduleData = { members: string[]; cells: Record<string, Record<string, Cell>> };
 
 const codeTone: Record<string, string> = {
@@ -140,7 +140,7 @@ function JadwalPage() {
     const res = query.data
       ? await supabase.from("schedules").update(payload).eq("id", query.data.id)
       : await supabase.from("schedules").insert(payload);
-    if (res.error) return toast.error("Gagal menyimpan", { description: res.error.message });
+    if (res.error) { toast.error("Gagal menyimpan", { description: res.error.message }); return; }
     toast.success("Jadwal tersimpan");
     await qc.invalidateQueries({ queryKey: ["schedule", period] });
   };
@@ -181,7 +181,7 @@ function JadwalPage() {
   const editCell = editing ? getCell(editing.m, editing.d) : null;
 
   return (
-    <AppShell>
+    <AppShell title="Jadwal Shift" subtitle="Siklus 8 hari: P P M M S S L L">
       <div className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
