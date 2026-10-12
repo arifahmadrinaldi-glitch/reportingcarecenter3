@@ -24,6 +24,12 @@
   --color-ops-blue: var(--ops-blue);
   --color-ops-mist: var(--ops-mist);
   --shadow-panel: var(--shadow-panel-value);
+  --color-shift-off: var(--shift-off);
+  --color-shift-light: var(--shift-light);
+  --color-shift-night: var(--shift-night);
+  --color-shift-morning: var(--shift-morning);
+  --color-shift-day: var(--shift-day);
+  --color-shift-ink: var(--shift-ink);
 }
 
 /*
@@ -85,6 +91,12 @@
 
 :root {
   --radius: 0.625rem;
+  --shift-off: oklch(0 0 0);
+  --shift-light: oklch(1 0 0);
+  --shift-ink: oklch(0.2 0.02 250);
+  --shift-night: oklch(0.82 0.09 230);
+  --shift-morning: oklch(0.57 0.17 150);
+  --shift-day: oklch(0.84 0.16 85);
   --background: oklch(0.972 0.006 247.9);
   --foreground: oklch(0.24 0.035 261);
   --surface: oklch(1 0 0);
