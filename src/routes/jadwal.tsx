@@ -37,11 +37,11 @@ type Cell = { code: string; backupFor?: string | undefined };
 type ScheduleData = { members: string[]; cells: Record<string, Record<string, Cell>> };
 
 const codeTone: Record<string, string> = {
-  P: "bg-primary/15 text-primary",
-  S: "bg-warning/20 text-foreground",
-  M: "bg-ops-navy text-primary-foreground",
-  L: "bg-muted text-muted-foreground",
-  CT: "bg-destructive/15 text-destructive",
+  P: "bg-emerald-600 text-white font-bold",
+  S: "bg-amber-400 text-slate-900 font-bold",
+  M: "bg-sky-400 text-slate-950 font-bold",
+  L: "bg-slate-900 text-white font-bold",
+  CT: "bg-rose-500 text-white font-bold",
 };
 
 const rosterCode = (memberIdx: number, year: number, month: number, day: number) => {
@@ -223,6 +223,40 @@ function JadwalPage() {
               </tr>
             </thead>
             <tbody>
+              <tr className="border-t bg-muted/20 font-medium">
+                <td className="sticky left-0 z-10 bg-card px-2 py-1 text-xs font-semibold text-foreground">
+                  Reguler
+                </td>
+                {Array.from({ length: days }, (_, i) => {
+                  const dow = new Date(year, month, i + 1).getDay();
+                  const isWeekend = dow === 0 || dow === 6; // 0 = Minggu, 6 = Sabtu
+                  const customCode = data.cells[-1]?.[i + 1]?.code;
+                  const code = customCode ?? (isWeekend ? "L" : "P");
+                  return (
+                    <td key={i} className="p-0.5 text-center">
+                      <button
+                        type="button"
+                        onClick={() => openEdit(-1, i + 1)}
+                        className={`relative h-6 w-full rounded text-[10px] ${codeTone[code] ?? ""}`}
+                        title="Klik untuk ubah (misal: jika tanggal merah)"
+                      >
+                        {code}
+                      </button>
+                    </td>
+                  );
+                })}
+                <td className="text-center text-xs font-bold text-primary">
+                  {Array.from({ length: days }).filter((_, i) => {
+                    const dow = new Date(year, month, i + 1).getDay();
+                    const code = data.cells[-1]?.[i + 1]?.code ?? (dow === 0 || dow === 6 ? "L" : "P");
+                    return code === "P" || code === "S" || code === "M";
+                  }).length}
+                </td>
+                <td className="text-center font-semibold text-destructive">
+                  {Array.from({ length: days }).filter((_, i) => data.cells[-1]?.[i + 1]?.code === "CT").length}
+                </td>
+                <td className="text-center font-semibold text-muted-foreground">-</td>
+              </tr>
               {data.members.map((name, m) => (
                 <tr key={m} className="border-t">
                   <td className="sticky left-0 z-10 bg-card px-1 py-1">
