@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { BULAN_LIST } from "@/lib/daily-activity-constants";
-import { CODES, WORK, DEFAULT_MEMBERS, initializeSchedule, rosterCode, type Cell, type ScheduleData } from "@/lib/schedule";
+import { CODES, WORK, initializeSchedule, rosterCode, type Cell, type ScheduleData } from "@/lib/schedule";
 import { regularCode, isNationalHoliday } from "@/lib/indonesia-holidays";
 
 export const Route = createFileRoute("/jadwal")({
@@ -121,7 +121,7 @@ function JadwalPage() {
       if (pendingCode === "CT" && backup !== "none") {
         const b = Number(backup);
         const shift = WORK.has(original) ? original : rosterCode(m, year, month, d, data);
-        setCell(draft, b, d, { code: WORK.has(shift) ? shift : "P", backupFor: m === -1 ? draft.regular?.name ?? "Reguler" : draft.members[m], originalCode: getCell(b, d).originalCode ?? getCell(b, d).code });
+        setCell(draft, b, d, { code: WORK.has(shift) ? shift : "P", backupFor: m === -1 ? draft.regular?.name ?? "Reguler" : draft.members[m] ?? "Anggota", originalCode: getCell(b, d).originalCode ?? getCell(b, d).code });
       }
     });
     setEditing(null);
