@@ -27,25 +27,25 @@ export function rosterCode(m: number, year: number, month: number, day: number, 
 }
 
 export function initializeSchedule(saved?: ScheduleData, previous?: { period: string; data: ScheduleData }): ScheduleData {
-  if (saved) return structuredClone(saved);
+  if (saved && Array.isArray(saved.members) && saved.cells) return structuredClone(saved);
   const source = previous?.data;
+  const hasValidSource = Boolean(source && Array.isArray(source.members) && source.cells);
   const result: ScheduleData = {
-    members: source?.members?.length === 4 ? [...source.members] : [...DEFAULT_MEMBERS],
+    members: hasValidSource && source?.members?.length === 4 ? [...source.members] : [...DEFAULT_MEMBERS],
     niks: [...(source?.niks ?? ["", "", "", ""])],
     phones: [...(source?.phones ?? ["", "", "", ""])],
     regular: { ...(source?.regular ?? { nik: "", name: "Reguler", phone: "" }) },
     cells: {},
     normalCells: {},
   };
-  if (!previous || !source) return result;
+  if (!previous || !hasValidSource || !source) return result;
   const [y, mo] = previous.period.split("-").map(Number);
   if (!y || !mo) return result;
   const last = new Date(y, mo, 0).getDate();
   result.patternAnchor = Date.UTC(y, mo - 1, last - 7);
-  result.patterns = source.members.map((_, m) => Array.from({ length: 8 }, (_, i) => {
+  result.patterns = result.members.map((_, m) => Array.from({ length: 8 }, (_, i) => {
     const d = last - 7 + i;
     const cell = source.normalCells?.[m]?.[d] ?? source.cells[m]?.[d];
-    // Never propagate leave or replacement assignments into a normal month.
     return cell?.originalCode ?? (cell && cell.code !== "CT" && !cell.backupFor ? cell.code : rosterCode(m, y, mo - 1, d, source));
   }));
   return result;
