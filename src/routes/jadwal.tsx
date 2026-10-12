@@ -222,12 +222,23 @@ function JadwalPage() {
         {query.error && <p role="alert" className="text-xs text-destructive">Jadwal gagal dimuat. Silakan coba lagi.</p>}
         <div className="overflow-x-auto rounded-lg border bg-card" aria-busy={query.isFetching}>
           {query.isFetching ? <p className="p-4 text-xs text-muted-foreground">Memuat jadwal…</p> : <>
-          <table className="w-full min-w-[1420px] border-collapse text-[10px]">
+          <table className="w-full min-w-[1420px] table-fixed border-collapse text-[10px]">
+  <colgroup>
+    <col className="w-[90px]" />
+    <col className="w-[220px]" />
+    <col className="w-[140px]" />
+    {Array.from({ length: days }, (_, i) => (
+      <col key={i} />
+    ))}
+    <col />
+    <col />
+    <col />
+  </colgroup>
             <thead>
               <tr className="bg-ops-navy text-primary-foreground">
-                <th className="min-w-[100px] px-2 py-1.5 text-left">NIK</th>
-                <th className="min-w-[140px] px-2 py-1.5 text-left">Nama</th>
-                <th className="min-w-[110px] px-2 py-1.5 text-left">No. Tlp</th>
+                <th className="px-2 py-1.5 text-left">NIK</th>
+                <th className="px-2 py-1.5 text-left">Nama</th>
+                <th className="px-2 py-1.5 text-left">No. Tlp</th>
                 {Array.from({ length: days }, (_, i) => {
                   const dow = new Date(year, month, i + 1).getDay();
                   return (
