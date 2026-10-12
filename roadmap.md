@@ -1,5 +1,7 @@
 # Roadmap
 
+- [ ] Sesuaikan warna shift, reguler/tanggal merah, roster normal antarbulan, NIK/no tlp dan export Excel; verifikasi
+
 - [x] Ringkas tabel Daily Activity menjadi lima kolom dan dialog detail lengkap
 - [x] Pertahankan seleksi, filter, export lengkap, import, edit, hapus dan rollback; verifikasi tampilan
 
