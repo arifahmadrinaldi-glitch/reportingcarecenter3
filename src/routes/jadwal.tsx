@@ -30,6 +30,7 @@ export const Route = createFileRoute("/jadwal")({
 });
 
 const codeTone: Record<string, string> = {
+const toneFor = (code: string) => codeTone[code] ?? "bg-success text-success-foreground font-bold hover:bg-success/90";
   P: "bg-shift-morning text-shift-light font-bold hover:bg-shift-morning/90",
   S: "bg-shift-day text-shift-ink font-bold hover:bg-shift-day/90",
   M: "bg-shift-night text-shift-ink font-bold hover:bg-shift-night/90",
@@ -118,10 +119,16 @@ function JadwalPage() {
         draft.normalCells[m] ??= {};
         draft.normalCells[m][d] = { code: pendingCode };
       }
-      if (pendingCode === "CT" && backup !== "none") {
+            if (pendingCode === "CT" && backup !== "none") {
         const b = Number(backup);
         const shift = WORK.has(original) ? original : rosterCode(m, year, month, d, data);
-        setCell(draft, b, d, { code: WORK.has(shift) ? shift : "P", backupFor: m === -1 ? draft.regular?.name ?? "Reguler" : draft.members[m] ?? "Anggota", originalCode: getCell(b, d).originalCode ?? getCell(b, d).code });
+        const ownCell = getCell(b, d);
+        const own = ownCell.originalCode ?? (ownCell.backupFor ? "" : ownCell.code);
+        const combined = [...new Set((own + (WORK.has(shift) ? shift : "P")).split(""))]
+          .filter((c) => WORK.has(c))
+          .sort((a, b2) => ["P", "S", "M"].indexOf(a) - ["P", "S", "M"].indexOf(b2))
+          .join("");
+        setCell(draft, b, d, { code: combined, backupFor: m === -1 ? draft.regular?.name ?? "Reguler" : draft.members[m] ?? "Anggota", originalCode: own || undefined });
       }
     });
     setEditing(null);
@@ -133,7 +140,7 @@ function JadwalPage() {
         let work = 0, ct = 0, bk = 0;
         for (let d = 1; d <= days; d++) {
           const c = data.cells[m]?.[d] ?? { code: rosterCode(m, year, month, d, data) };
-          if (WORK.has(c.code)) work++;
+          if (WORK.has(c.code)) || c.backupFor) work++;
           if (c.code === "CT") ct++;
           if (c.backupFor) bk++;
         }
@@ -250,7 +257,7 @@ function JadwalPage() {
                       <Button variant="ghost"
                         type="button"
                         onClick={() => openEdit(-1, i + 1)}
-                        className={`relative h-6 w-full rounded p-0 text-[10px] ${codeTone[code] ?? ""}`}
+                        className={`relative h-6 w-full rounded p-0 text-[10px] ${toneFor(code)` ?? ""}`}
                         aria-label={`Reguler tanggal ${i + 1}: ${code}`}
                          title="Ubah jadwal Reguler"
                       >
@@ -284,7 +291,7 @@ function JadwalPage() {
                           aria-label={`${name} tanggal ${i + 1}: ${c.code}`}
                            title={c.backupFor ? `Backup untuk ${c.backupFor}` : undefined}
                           onClick={() => openEdit(m, i + 1)}
-                          className={`relative h-6 w-full rounded p-0 text-[10px] font-semibold ${codeTone[c.code] ?? ""} ${c.backupFor ? "ring-2 ring-success" : ""}`}
+                          className={`relative h-6 w-full rounded p-0 text-[10px] font-semibold ${toneFor(c.code)` ?? ""} ${c.backupFor ? "ring-2 ring-success" : ""}`}
                         >
                           {c.code}
                         </Button>
