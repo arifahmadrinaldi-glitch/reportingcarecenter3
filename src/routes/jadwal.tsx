@@ -121,7 +121,7 @@ function JadwalPage() {
         draft.normalCells[m] ??= {};
         draft.normalCells[m][d] = { code: pendingCode };
       }
-            if (pendingCode === "CT" && backup !== "none") {
+      if (pendingCode === "CT" && backup !== "none") {
         const b = Number(backup);
         const shift = WORK.has(original) ? original : rosterCode(m, year, month, d, data);
         const ownCell = getCell(b, d);
@@ -142,7 +142,7 @@ function JadwalPage() {
         let work = 0, ct = 0, bk = 0;
         for (let d = 1; d <= days; d++) {
           const c = data.cells[m]?.[d] ?? { code: rosterCode(m, year, month, d, data) };
-          if (WORK.has(c.code)) || c.backupFor) work++;
+          if (WORK.has(c.code) || c.backupFor) work++;
           if (c.code === "CT") ct++;
           if (c.backupFor) bk++;
         }
@@ -261,7 +261,7 @@ function JadwalPage() {
                         onClick={() => openEdit(-1, i + 1)}
                         className={`relative h-6 w-full rounded p-0 text-[10px] ${toneFor(code) ?? ""}`}
                         aria-label={`Reguler tanggal ${i + 1}: ${code}`}
-                         title="Ubah jadwal Reguler"
+                        title="Ubah jadwal Reguler"
                       >
                         {code}
                       </Button>
@@ -291,7 +291,7 @@ function JadwalPage() {
                         <Button variant="ghost"
                           type="button"
                           aria-label={`${name} tanggal ${i + 1}: ${c.code}`}
-                           title={c.backupFor ? `Backup untuk ${c.backupFor}` : undefined}
+                          title={c.backupFor ? `Backup untuk ${c.backupFor}` : undefined}
                           onClick={() => openEdit(m, i + 1)}
                           className={`relative h-6 w-full rounded p-0 text-[10px] font-semibold ${toneFor(c.code) ?? ""} ${c.backupFor ? "ring-2 ring-success" : ""}`}
                         >
