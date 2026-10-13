@@ -4,7 +4,7 @@ export const WORK = new Set<string>(["P", "S", "M"]);
 export const DEFAULT_MEMBERS = ["Anggota 1", "Anggota 2", "Anggota 3", "Anggota 4"];
 const ANCHOR = Date.UTC(2026, 0, 1);
 const DAY = 86400000;
-export type Cell = { code: string; backupFor?: string; originalCode?: string; covered?: string };
+export type Cell = { code: string; backupFor?: string; originalCode?: string | undefined; covered?: string };
 export const BUSINESS_CYCLE = ["P", "PS", "SM", "M", "L", "L", "L"] as const;
 export const BUSINESS_CODES = ["P", "S", "M", "L", "CT", "PS", "SM", "MP", "PM", "PSM"] as const;
 export const shiftCount = (code: string) => (code === "CT" ? 0 : code.split("").filter((c) => WORK.has(c)).length);
