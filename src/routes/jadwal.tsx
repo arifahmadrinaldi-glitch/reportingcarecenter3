@@ -297,7 +297,7 @@ function JadwalPage() {
                 <td className="text-center text-xs font-bold text-primary">
                   {Array.from({ length: days }).filter((_, i) => {
                     const code = getCell(-1, i + 1).code;
-                    return code === "P" || code === "S" || code === "M"; || code === "R";
+                    return code === "P" || code === "S" || code === "M" || code === "R";
                   }).length}
                 </td>
                 <td className="text-center font-semibold text-destructive">
