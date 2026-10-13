@@ -11,6 +11,8 @@ import { BUSINESS_CODES, businessCode, shiftCount, type BusinessData, type Cell 
 const tone: Record<string, string> = {
   P: "bg-shift-morning text-shift-light hover:bg-shift-morning/90",
   S: "bg-shift-day text-shift-ink hover:bg-shift-day/90",
+  PS: "bg-shift-day text-shift-ink hover:bg-shift-day/90",
+  SM: "bg-shift-day text-shift-ink hover:bg-shift-day/90",
   M: "bg-shift-night text-shift-ink hover:bg-shift-night/90",
   L: "bg-shift-off text-transparent hover:bg-shift-off/90 select-none",
   CT: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
