@@ -37,7 +37,7 @@ const codeTone: Record<string, string> = {
   M: "bg-shift-night text-shift-ink font-bold hover:bg-shift-night/90",
   L: "bg-shift-off text-transparent font-bold hover:bg-shift-off/90 select-none",
   CT: "bg-destructive text-destructive-foreground font-bold hover:bg-destructive/90",
-  R: "bg-slate-200 text-slate-700 font-bold hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200",
+  R: "bg-slate-500 text-white font-bold hover:bg-slate-600 dark:bg-slate-500 dark:text-white dark:hover:bg-slate-600",
 };
 
 const toneFor = (code: string) =>
