@@ -237,7 +237,7 @@ function JadwalPage() {
         {query.error && <p role="alert" className="text-xs text-destructive">Jadwal gagal dimuat. Silakan coba lagi.</p>}
         <div className="overflow-x-auto rounded-lg border bg-card" aria-busy={query.isFetching}>
           {query.isFetching ? <p className="p-4 text-xs text-muted-foreground">Memuat jadwal…</p> : <>
-          <table className="w-full min-w-[1420px] table-fixed border-collapse text-[10px]">
+          <table className="w-full table-fixed border-collapse text-[10px]">
   <colgroup>
     <col className="w-[90px]" />
     <col className="w-[220px]" />
