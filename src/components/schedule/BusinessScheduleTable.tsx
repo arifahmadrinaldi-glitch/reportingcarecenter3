@@ -139,7 +139,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
           <tbody>{[-1, 0, 1, 2, 3].map(row)}</tbody>
         </table>
       </div>
-      <p className="text-[10px] text-muted-foreground">Siklus P → PS → SM → M → L → L → L · Hari kerja dihitung per shift (P/S/M = 1, PS/SM/MP/PM = 2, PSM = 3) · bingkai hijau = Backup</p>
+      <p className="text-[10px] text-muted-foreground"></p>
 
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-sm">
