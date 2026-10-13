@@ -87,15 +87,17 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
       <tr key={m} className={`border-t ${m === -1 ? "bg-muted/20" : ""}`}>
         {idInputs(m)}
         {Array.from({ length: days }, (_, i) => {
-          const c = get(m, i + 1);
-          return (
-            <td key={i} className="p-0.5 text-center">
-              <Button variant="ghost" type="button" onClick={() => { setEditing({ m, d: i + 1 }); setPending(c.code); setBackup("none"); }}
-                aria-label={`Business ${name} tanggal ${i + 1}: ${c.code}`} title={c.backupFor ? `Backup untuk ${c.backupFor}` : undefined}
-                className={`h-6 w-full rounded p-0 text-[9px] ${toneFor(c.code)} ${c.backupFor ? "ring-2 ring-success" : ""}`}>{c.code}</Button>
-            </td>
-          );
-        })}
+  const dow = new Date(year, month, i + 1).getDay();
+  const isHoliday = dow === 0 || dow === 6 || isNationalHoliday(year, month, i + 1);
+  return (
+    <th key={i} className={`min-w-[26px] px-0.5 py-1 text-center ${isHoliday ? "text-red-400" : ""}`}>
+      <div className={isHoliday ? "font-bold text-red-400" : ""}>{i + 1}</div>
+      <div className={`text-[8px] ${isHoliday ? "font-bold text-red-400" : "font-normal opacity-70"}`}>
+        {["Mg", "Sn", "Sl", "Rb", "Km", "Jm", "Sb"][dow]}
+      </div>
+    </th>
+  );
+})}
         <td className="text-center text-xs font-bold text-primary">{s.work}</td>
         <td className="text-center font-semibold text-destructive">{s.ct}</td>
         <td className="text-center font-semibold text-success">{m === -1 ? "-" : s.bk}</td>
