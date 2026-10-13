@@ -1,4 +1,4 @@
-export const ON_DUTY_OPTIONS = ["Arif", "Ari", "Dicky", "Hari", "Rangga", "Raihan"] as const;
+export const ON_DUTY_OPTIONS = ["Arif", "Ari", "Dicky", "Rangga", "Raihan"] as const;
 
 export const SHIFT_OPTIONS = ["Pagi", "Siang", "Malam"] as const;
 
