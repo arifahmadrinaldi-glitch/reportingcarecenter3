@@ -14,6 +14,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { BULAN_LIST } from "@/lib/daily-activity-constants";
 import { CODES, WORK, initializeSchedule, rosterCode, type Cell, type ScheduleData } from "@/lib/schedule";
 import { regularCode, isNationalHoliday } from "@/lib/indonesia-holidays";
+import { BusinessScheduleTable, businessCell, businessStats } from "@/components/schedule/BusinessScheduleTable";
+import { initializeBusiness } from "@/lib/schedule";
 
 export const Route = createFileRoute("/jadwal")({
   head: () => ({
@@ -190,6 +192,18 @@ function JadwalPage() {
     ws["!cols"] = [{ wch: 16 }, { wch: 20 }, { wch: 18 }, ...dayHeads.map(() => ({ wch: 5 })), { wch: 12 }, { wch: 6 }, { wch: 8 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Jadwal");
+    const b = data.business ?? initializeBusiness();
+    const brows: unknown[][] = [[`Jadwal Business ${BULAN_LIST[month]} ${year}`], ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup"]];
+    [-1, 0, 1, 2, 3].forEach((m) => {
+      const st = businessStats(b, m, days, year, month);
+      brows.push([m === -1 ? b.regular.nik : b.niks[m], m === -1 ? b.regular.name : b.members[m], m === -1 ? b.regular.phone : b.phones[m],
+        ...dayHeads.map((_, i) => { const c = businessCell(b, m, i + 1, year, month); return c.backupFor ? `${c.code} (BK ${c.backupFor})` : c.code; }),
+        st.work, st.ct, st.bk]);
+    });
+    brows.push([], ["Keterangan: P/S/M = 1 shift, PS/SM/MP/PM = 2 shift, PSM = 3 shift, L = Libur, CT = Cuti, BK = Backup"]);
+    const bws = XLSX.utils.aoa_to_sheet(brows);
+    bws["!cols"] = ws["!cols"];
+    XLSX.utils.book_append_sheet(wb, bws, "Jadwal Business");
     XLSX.writeFile(wb, `Jadwal_${period}.xlsx`);
   };
 
@@ -320,6 +334,8 @@ function JadwalPage() {
           </table>
           </>}
         </div>
+        <BusinessScheduleTable data={data.business ?? initializeBusiness()} year={year} month={month} days={days}
+          onChange={(fn) => update((draft) => { draft.business ??= initializeBusiness(); fn(draft.business); })} />
         {![2026, 2027].includes(year) && <p className="text-[10px] text-muted-foreground">Tanggal merah keagamaan tahun {year} belum tersedia; sesuaikan sel Reguler secara manual.</p>}
         <p className="text-[10px] text-muted-foreground">
           P = Pagi · S = Siang · M = Malam · L = Libur · CT = Cuti (mengurangi hari kerja) · bingkai hijau = Backup (menambah hari kerja)
