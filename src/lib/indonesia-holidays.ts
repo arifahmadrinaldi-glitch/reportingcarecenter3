@@ -10,5 +10,5 @@ export function isNationalHoliday(year: number, month: number, day: number) {
 }
 export function regularCode(year: number, month: number, day: number) {
   const dow = new Date(year, month, day).getDay();
-  return dow === 0 || dow === 6 || isNationalHoliday(year, month, day) ? "L" : "P";
+  return dow === 0 || dow === 6 || isNationalHoliday(year, month, day) ? "L" : "R";
 }
