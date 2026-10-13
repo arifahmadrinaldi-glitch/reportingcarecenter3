@@ -15,7 +15,7 @@ const tone: Record<string, string> = {
   L: "bg-shift-off text-transparent hover:bg-shift-off/90 select-none",
   CT: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
   PSM: "bg-primary text-primary-foreground hover:bg-primary/90",
-  R: "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200",
+  R: "bg-slate-500 text-white hover:bg-slate-600 dark:bg-slate-500 dark:text-white dark:hover:bg-slate-600",
 };
 const toneFor = (c: string) => `font-bold ${tone[c] ?? "bg-success text-success-foreground hover:bg-success/90"}`;
 const ORDER = ["P", "S", "M"];
