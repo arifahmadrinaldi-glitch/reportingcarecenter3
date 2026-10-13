@@ -35,8 +35,9 @@ const codeTone: Record<string, string> = {
   P: "bg-shift-morning text-shift-light font-bold hover:bg-shift-morning/90",
   S: "bg-shift-day text-shift-ink font-bold hover:bg-shift-day/90",
   M: "bg-shift-night text-shift-ink font-bold hover:bg-shift-night/90",
-  L: "bg-shift-off text-shift-light font-bold hover:bg-shift-off/90",
+  L: "bg-shift-off text-transparent font-bold hover:bg-shift-off/90",
   CT: "bg-destructive text-destructive-foreground font-bold hover:bg-destructive/90",
+  R: "bg-slate-200 text-slate-700 font-bold hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200",
 };
 
 const toneFor = (code: string) =>
@@ -296,7 +297,7 @@ function JadwalPage() {
                 <td className="text-center text-xs font-bold text-primary">
                   {Array.from({ length: days }).filter((_, i) => {
                     const code = getCell(-1, i + 1).code;
-                    return code === "P" || code === "S" || code === "M";
+                    return code === "P" || code === "S" || code === "M"; || code === "R";
                   }).length}
                 </td>
                 <td className="text-center font-semibold text-destructive">
