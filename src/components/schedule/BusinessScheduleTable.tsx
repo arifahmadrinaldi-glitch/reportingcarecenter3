@@ -120,8 +120,18 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
     <div className="space-y-2">
       <h2 className="font-display text-base font-semibold">Jadwal Business</h2>
       <div className="overflow-x-auto rounded-lg border bg-card">
-        <table className="w-full min-w-[1420px] table-fixed border-collapse text-[10px]">
-          <colgroup><col className="w-[90px]" /><col className="w-[220px]" /><col className="w-[140px]" />{Array.from({ length: days }, (_, i) => <col key={i} />)}<col /><col /><col /></colgroup>
+        <table className="w-full min-w-[1900px] table-fixed border-collapse text-[10px]">
+  <colgroup>
+    <col className="w-[120px]" /> {/* NIK */}
+    <col className="w-[260px]" /> {/* Nama */}
+    <col className="w-[160px]" /> {/* No. Tlp */}
+    {Array.from({ length: days }, (_, i) => (
+      <col key={i} className="w-[36px]" />
+    ))}
+    <col className="w-[80px]" /> {/* Hari Kerja */}
+    <col className="w-[56px]" /> {/* CT */}
+    <col className="w-[80px]" /> {/* Backup */}
+  </colgroup>
           <thead>
             <tr className="bg-ops-navy text-primary-foreground">
               <th className="px-2 py-1.5 text-left">NIK</th><th className="px-2 py-1.5 text-left">Nama</th><th className="px-2 py-1.5 text-left">No. Tlp</th>
