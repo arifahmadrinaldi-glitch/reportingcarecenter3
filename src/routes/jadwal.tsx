@@ -142,11 +142,11 @@ function JadwalPage() {
         let work = 0, ct = 0, bk = 0;
         for (let d = 1; d <= days; d++) {
           const c = data.cells[m]?.[d] ?? { code: rosterCode(m, year, month, d, data) };
-          if (WORK.has(c.code) || c.backupFor) work++;
+          if (WORK.has(c.code) && c.code != "CT") work++;
           if (c.code === "CT") ct++;
           if (c.backupFor) bk++;
         }
-        return { work, ct, bk };
+        return { work + bk, ct, bk };
       }),
     [data, days, year, month],
   );
@@ -180,7 +180,7 @@ function JadwalPage() {
       const r = rows.length + 1;
       const range = `${XLSX.utils.encode_col(3)}${r}:${XLSX.utils.encode_col(2 + days)}${r}`;
       rows.push([nik, name, phone, ...cells,
-        { t: "n", v: cells.filter((c) => WORK.has(c.split(" ")[0] ?? "")).length, f: `COUNTIF(${range},"P*")+COUNTIF(${range},"S*")+COUNTIF(${range},"M*")` },
+        { t: "n", v: cells.filter((c) => WORK.has(c.split(" ")[0] ?? "")).length + cells.filter((c) => c.includes("BK")).length, f: `COUNTIF(${range},"P*")+COUNTIF(${range},"S*")+COUNTIF(${range},"M*")+${XLSX.utils.encode_col(5 + days)}${r}` },
         { t: "n", v: cells.filter((c) => c === "CT").length, f: `COUNTIF(${range},"CT")` },
         { t: "n", v: cells.filter((c) => c.includes("BK")).length, f: `COUNTIF(${range},"*BK*")` },
       ]);
