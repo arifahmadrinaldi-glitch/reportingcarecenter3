@@ -127,14 +127,16 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
           <thead>
             <tr className="bg-ops-navy text-primary-foreground">
               <th className="px-2 py-1.5 text-left">NIK</th><th className="px-2 py-1.5 text-left">Nama</th><th className="px-2 py-1.5 text-left">No. Tlp</th>
-              {Array.from({ length: days }, (_, i) => {
-                const dow = new Date(year, month, i + 1).getDay();
-                return (
-                  <th key={i} className={`px-0.5 py-1 text-center ${dow === 0 || dow === 6 || isNationalHoliday(year, month, i + 1) ? "text-destructive-foreground/70" : ""}`}>
-                    <div>{i + 1}</div><div className="text-[8px] font-normal opacity-70">{["Mg", "Sn", "Sl", "Rb", "Km", "Jm", "Sb"][dow]}</div>
-                  </th>
-                );
-              })}
+                {Array.from({ length: days }, (_, i) => {
+                  const dow = new Date(year, month, i + 1).getDay();
+                  const isOff = dow === 0 || dow === 6 || isNationalHoliday(year, month, i + 1);
+                  return (
+                    <th key={i} className={`min-w-[26px] px-0.5 py-1 text-center ${isOff ? "font-bold text-red-400" : ""}`}>
+                      <div>{i + 1}</div>
+                      <div className={`text-[8px] font-normal ${isOff ? "font-bold" : "opacity-70"}`}>{["Mg", "Sn", "Sl", "Rb", "Km", "Jm", "Sb"][dow]}</div>
+                    </th>
+                  );
+                })}
               <th className="px-2 text-center">Hari Kerja</th><th className="px-2 text-center">CT</th><th className="px-2 text-center">Backup</th>
             </tr>
           </thead>
