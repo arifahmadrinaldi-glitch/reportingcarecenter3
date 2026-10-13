@@ -342,7 +342,6 @@ function JadwalPage() {
           onChange={(fn) => update((draft) => { draft.business ??= initializeBusiness(); fn(draft.business); })} />
         {![2026, 2027].includes(year) && <p className="text-[10px] text-muted-foreground">Tanggal merah keagamaan tahun {year} belum tersedia; sesuaikan sel Reguler secara manual.</p>}
         <p className="text-[10px] text-muted-foreground">
-          P = Pagi · S = Siang · M = Malam · L = Libur · CT = Cuti (mengurangi hari kerja) · bingkai hijau = Backup (menambah hari kerja)
         </p>
       </div>
 
