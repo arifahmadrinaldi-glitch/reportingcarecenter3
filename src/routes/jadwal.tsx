@@ -288,11 +288,7 @@ function JadwalPage() {
                       <Button variant="ghost"
                         type="button"
                         onClick={() => openEdit(-1, i + 1)}
-                        className={`relative h-6 w-full rounded p-0 text-[10px] ${
-code === "L"
-  ? "bg-red-600 text-transparent hover:bg-red-700"
-  : toneFor(code)
-}`}
+                        className={`relative h-6 w-full rounded p-0 text-[10px] ${toneFor(code)}`}
                         aria-label={`Reguler tanggal ${i + 1}: ${code}`}
                         title="Ubah jadwal Reguler"
                       >
