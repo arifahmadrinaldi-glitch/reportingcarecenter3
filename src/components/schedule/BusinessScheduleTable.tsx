@@ -100,11 +100,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
         }}
         aria-label={`Business ${name} tanggal ${i + 1}: ${c.code}`}
         title={c.backupFor ? `Backup untuk ${c.backupFor}` : undefined}
-        className={`h-6 w-full rounded p-0 text-[9px] ${
-          m === -1 && c.code === "L"
-            ? "bg-red-600 text-transparent hover:bg-red-700"
-            : toneFor(c.code)
-        } ${c.backupFor ? "ring-2 ring-success" : ""}`}
+        className={`h-6 w-full rounded p-0 text-[9px] ${toneFor(c.code)} ${c.backupFor ? "ring-2 ring-success" : ""}`}
       >
         {c.code}
       </Button>
