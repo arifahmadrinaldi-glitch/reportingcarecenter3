@@ -146,7 +146,7 @@ function JadwalPage() {
           if (c.code === "CT") ct++;
           if (c.backupFor) bk++;
         }
-        return { work + bk, ct, bk };
+        return { work: work + bk, ct, bk };
       }),
     [data, days, year, month],
   );
