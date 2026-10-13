@@ -15,7 +15,7 @@ const tone: Record<string, string> = {
   L: "bg-shift-off text-transparent hover:bg-shift-off/90 select-none",
   CT: "bg-destructive text-destructive-foreground hover:bg-destructive/90",
   PSM: "bg-primary text-primary-foreground hover:bg-primary/90",
-  R: "bg-slate-200 text-slate-700 hover:bg-slate-300 dark:bg-slate-700 dark:text-slate-200",
+  R: "bg-slate-500 text-white hover:bg-slate-600 dark:bg-slate-500 dark:text-white dark:hover:bg-slate-600",
 };
 const toneFor = (c: string) => `font-bold ${tone[c] ?? "bg-success text-success-foreground hover:bg-success/90"}`;
 const ORDER = ["P", "S", "M"];
@@ -100,11 +100,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
         }}
         aria-label={`Business ${name} tanggal ${i + 1}: ${c.code}`}
         title={c.backupFor ? `Backup untuk ${c.backupFor}` : undefined}
-        className={`h-6 w-full rounded p-0 text-[9px] ${
-          m === -1 && c.code === "L"
-            ? "bg-red-600 text-transparent hover:bg-red-700"
-            : toneFor(c.code)
-        } ${c.backupFor ? "ring-2 ring-success" : ""}`}
+        className={`h-6 w-full rounded p-0 text-[9px] ${toneFor(c.code)} ${c.backupFor ? "ring-2 ring-success" : ""}`}
       >
         {c.code}
       </Button>
@@ -127,14 +123,16 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
           <thead>
             <tr className="bg-ops-navy text-primary-foreground">
               <th className="px-2 py-1.5 text-left">NIK</th><th className="px-2 py-1.5 text-left">Nama</th><th className="px-2 py-1.5 text-left">No. Tlp</th>
-              {Array.from({ length: days }, (_, i) => {
-                const dow = new Date(year, month, i + 1).getDay();
-                return (
-                  <th key={i} className={`px-0.5 py-1 text-center ${dow === 0 || dow === 6 || isNationalHoliday(year, month, i + 1) ? "text-destructive-foreground/70" : ""}`}>
-                    <div>{i + 1}</div><div className="text-[8px] font-normal opacity-70">{["Mg", "Sn", "Sl", "Rb", "Km", "Jm", "Sb"][dow]}</div>
-                  </th>
-                );
-              })}
+                {Array.from({ length: days }, (_, i) => {
+                  const dow = new Date(year, month, i + 1).getDay();
+                  const isOff = dow === 0 || dow === 6 || isNationalHoliday(year, month, i + 1);
+                  return (
+                    <th key={i} className={`min-w-[26px] px-0.5 py-1 text-center ${isOff ? "font-bold text-red-400" : ""}`}>
+                      <div>{i + 1}</div>
+                      <div className={`text-[8px] font-normal ${isOff ? "font-bold" : "opacity-70"}`}>{["Mg", "Sn", "Sl", "Rb", "Km", "Jm", "Sb"][dow]}</div>
+                    </th>
+                  );
+                })}
               <th className="px-2 text-center">Hari Kerja</th><th className="px-2 text-center">CT</th><th className="px-2 text-center">Backup</th>
             </tr>
           </thead>
