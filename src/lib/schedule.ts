@@ -1,6 +1,6 @@
 export const CYCLE = ["P", "P", "M", "M", "S", "S", "L", "L"] as const;
-export const CODES = ["P", "S", "M", "L", "CT"] as const;
-export const WORK = new Set<string>(["P", "S", "M"]);
+export const CODES = ["P", "S", "M", "L", "CT", "R"] as const;
+export const WORK = new Set<string>(["P", "S", "M", "R"]);
 export const DEFAULT_MEMBERS = ["Anggota 1", "Anggota 2", "Anggota 3", "Anggota 4"];
 const ANCHOR = Date.UTC(2026, 0, 1);
 const DAY = 86400000;
