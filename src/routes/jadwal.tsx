@@ -250,7 +250,7 @@ function JadwalPage() {
     <col />
   </colgroup>
             <thead>
-              <tr className="bg-ops-navy text-primary-foreground">
+              <tr className="bg-ops-navy text-primary-foreground dark:bg-ops-mist">
                 <th className="px-2 py-1.5 text-left">NIK</th>
                 <th className="px-2 py-1.5 text-left">Nama</th>
                 <th className="px-2 py-1.5 text-left">No. Tlp</th>
