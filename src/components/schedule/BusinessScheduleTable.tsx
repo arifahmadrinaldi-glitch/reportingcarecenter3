@@ -131,7 +131,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
     <col />
   </colgroup>
           <thead>
-            <tr className="bg-ops-navy text-primary-foreground">
+            <tr className="bg-ops-navy text-primary-foreground dark:bg-ops-mist">
               <th className="px-2 py-1.5 text-left">NIK</th><th className="px-2 py-1.5 text-left">Nama</th><th className="px-2 py-1.5 text-left">No. Tlp</th>
                 {Array.from({ length: days }, (_, i) => {
                   const dow = new Date(year, month, i + 1).getDay();
