@@ -91,7 +91,7 @@
 
 :root {
   --radius: 0.625rem;
-  --shift-off: oklch(0 0 0);
+  --shift-off: oklch(1 0 0);
   --shift-light: oklch(1 0 0);
   --shift-ink: oklch(0.2 0.02 250);
   --shift-night: oklch(0.82 0.09 230);
@@ -148,6 +148,7 @@
 }
 
 .dark {
+  --shift-off: oklch(0 0 0);
   --background: oklch(0.18 0.035 262);
   --foreground: oklch(0.96 0.006 248);
   --surface: oklch(0.235 0.04 262);
