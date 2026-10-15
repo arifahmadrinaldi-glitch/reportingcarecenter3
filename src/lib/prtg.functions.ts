@@ -18,8 +18,8 @@ export const listPrtgSensors = createServerFn({ method: "POST" })
       if (!res.ok) return { sensors: [], error: `PRTG membalas ${res.status}` };
       const json = (await res.json()) as { sensors?: Record<string, unknown>[] };
       const sensors = (json.sensors ?? []).map((s) => ({
-        objid: String(s.objid ?? ""), device: String(s.device ?? ""), sensor: String(s.sensor ?? ""),
-        status: String(s.status ?? ""), lastvalue: String(s.lastvalue ?? ""),
+        objid: String(s['objid'] ?? ""), device: String(s['device'] ?? ""), sensor: String(s['sensor'] ?? ""),
+        status: String(s['status'] ?? ""), lastvalue: String(s['lastvalue'] ?? ""),
       }));
       return { sensors };
     } catch (e) {
