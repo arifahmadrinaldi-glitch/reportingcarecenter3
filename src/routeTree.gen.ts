@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DailyActivityRouteImport } from './routes/daily-activity'
 import { Route as JadwalRouteImport } from './routes/jadwal'
+import { Route as PrtgRouteImport } from './routes/prtg'
 import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 
@@ -30,6 +31,11 @@ const JadwalRoute = JadwalRouteImport.update({
   path: '/jadwal',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrtgRoute = PrtgRouteImport.update({
+  id: '/prtg',
+  path: '/prtg',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TicketsRoute = TicketsRouteImport.update({
   id: '/tickets',
   path: '/tickets',
@@ -46,6 +52,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/daily-activity': typeof DailyActivityRoute
   '/jadwal': typeof JadwalRoute
+  '/prtg': typeof PrtgRoute
   '/tickets': typeof TicketsRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
@@ -53,6 +60,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/daily-activity': typeof DailyActivityRoute
   '/jadwal': typeof JadwalRoute
+  '/prtg': typeof PrtgRoute
   '/tickets': typeof TicketsRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
@@ -61,6 +69,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/daily-activity': typeof DailyActivityRoute
   '/jadwal': typeof JadwalRoute
+  '/prtg': typeof PrtgRoute
   '/tickets': typeof TicketsRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
@@ -70,6 +79,7 @@ export interface FileRouteTypes {
     | '/'
     | '/daily-activity'
     | '/jadwal'
+    | '/prtg'
     | '/tickets'
     | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
@@ -77,6 +87,7 @@ export interface FileRouteTypes {
     | '/'
     | '/daily-activity'
     | '/jadwal'
+    | '/prtg'
     | '/tickets'
     | '/api/public/telegram/webhook'
   id:
@@ -84,6 +95,7 @@ export interface FileRouteTypes {
     | '/'
     | '/daily-activity'
     | '/jadwal'
+    | '/prtg'
     | '/tickets'
     | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
@@ -92,6 +104,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DailyActivityRoute: typeof DailyActivityRoute
   JadwalRoute: typeof JadwalRoute
+  PrtgRoute: typeof PrtgRoute
   TicketsRoute: typeof TicketsRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
@@ -119,6 +132,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof JadwalRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/prtg': {
+      id: '/prtg'
+      path: '/prtg'
+      fullPath: '/prtg'
+      preLoaderRoute: typeof PrtgRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/tickets': {
       id: '/tickets'
       path: '/tickets'
@@ -140,6 +160,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DailyActivityRoute: DailyActivityRoute,
   JadwalRoute: JadwalRoute,
+  PrtgRoute: PrtgRoute,
   TicketsRoute: TicketsRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
