@@ -533,17 +533,40 @@ function TicketsPage() {
   return (
     <AppShell title="Daftar Ticket" subtitle="Data ticket gangguan realtime">
       <section className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7" aria-label="Ringkasan ticket">
-        {summaryCards.map((card) => {
-          const value = card.status
-            ? filtered.filter((ticket) => ticket.status === card.status).length
-            : filtered.length;
-            const cmCount = filtered.filter(
-    (t) => t.jenis_ticket?.toLowerCase().includes("corrective") || t.jenis_ticket === "CM",
-  ).length;
+                {summaryCards.map((card) => {
+          const isSelected = card.status
+            ? status.length === 1 && status[0] === card.status
+            : status.length === 0;
 
-  const pmCount = filtered.filter(
-    (t) => t.jenis_ticket?.toLowerCase().includes("preventive") || t.jenis_ticket === "PM",
-  ).length;
+          // Menjaga agar angka di kartu lain tidak jadi 0 saat salah satu status diklik
+          const baseList = status.length > 0
+            ? tickets.filter((t) => {
+                if (regional.length && !regional.includes(t.regional ?? "")) return false;
+                if (customer.length && !customer.includes(t.customer ?? "")) return false;
+                if (jenis.length && !jenis.includes(t.jenis_ticket ?? "")) return false;
+                if (layanan.length && !layanan.includes(t.layanan ?? "")) return false;
+                if (bulan.length || tahun.length) {
+                  if (!t.tanggal_open) return false;
+                  const d = new Date(t.tanggal_open);
+                  if (bulan.length && !bulan.includes(BULAN_OPTIONS[d.getMonth()] as string)) return false;
+                  if (tahun.length && !tahun.includes(String(d.getFullYear()))) return false;
+                }
+                return true;
+              })
+            : filtered;
+
+          const value = card.status
+            ? baseList.filter((ticket) => ticket.status === card.status).length
+            : baseList.length;
+
+          const cmCount = baseList.filter(
+            (t) => t.jenis_ticket?.toLowerCase().includes("corrective") || t.jenis_ticket === "CM",
+          ).length;
+
+          const pmCount = baseList.filter(
+            (t) => t.jenis_ticket?.toLowerCase().includes("preventive") || t.jenis_ticket === "PM",
+          ).length;
+
           const Icon = card.icon;
           const toneClass =
             card.tone === "warning"
@@ -563,29 +586,23 @@ function TicketsPage() {
           return (
             <article
               key={card.label}
-              className={`group relative min-h-16 overflow-hidden rounded-lg border bg-surface p-2 shadow-panel transition-transform hover:-translate-y-0.5 ${toneClass}`}
+              onClick={() => {
+                if (!card.status) {
+                  setStatus([]);
+                } else {
+                  setStatus((prev) => (prev.length === 1 && prev[0] === card.status ? [] : [card.status]));
+                }
+                setPage(1);
+              }}
+              className={`group relative min-h-16 cursor-pointer overflow-hidden rounded-lg border bg-surface p-2 shadow-panel transition-all hover:-translate-y-0.5 select-none ${toneClass} ${
+                isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-md" : "hover:border-primary/50 opacity-80 hover:opacity-100"
+              }`}
             >
               <div className="flex items-start justify-between gap-2">
                 <div>
                   <h2 className="text-[9px] font-bold tracking-wide uppercase">{card.label}</h2>
                   <div className="mt-1 flex items-baseline gap-2">
-  <span className="font-display text-lg font-bold tabular-nums text-foreground">{value}</span>
-  {card.label === "Total Ticket" && (
-    <span className="text-[11px] font-semibold text-muted-foreground">
-      (CM: {cmCount} · PM: {pmCount})
-    </span>
-  )}
-</div>
-                  <p className="italic mt-0 text-[9px] text-muted-foreground">{card.note}</p>
-                </div>
-                <span className="flex size-7 shrink-0 items-center justify-center rounded-md bg-current/10">
-                  <Icon className="size-3.5" />
-                </span>
-              </div>
-              <span className="absolute inset-x-0 bottom-0 h-0.5 bg-current opacity-60" />
-            </article>
-          );
-        })}
+                    <span className="font-disp
       </section>
 
       <div className="panel overflow-hidden border-ops-blue/20">
