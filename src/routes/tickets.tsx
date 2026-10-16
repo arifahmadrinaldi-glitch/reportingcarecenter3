@@ -587,13 +587,13 @@ function TicketsPage() {
             <article
               key={card.label}
               onClick={() => {
-                if (!card.status) {
-                  setStatus([]);
-                } else {
-                  setStatus((prev) => (prev.length === 1 && prev[0] === card.status ? [] : [card.status]));
-                }
-                setPage(1);
-              }}
+  if (!card.status) {
+    setStatus([]);
+  } else {
+    setStatus([card.status]);
+  }
+  setPage(1);
+}}
               className={`group relative min-h-16 cursor-pointer overflow-hidden rounded-lg border bg-surface p-2 shadow-panel transition-all hover:-translate-y-0.5 select-none ${toneClass} ${
                 isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-md" : "hover:border-primary/50 opacity-80 hover:opacity-100"
               }`}
