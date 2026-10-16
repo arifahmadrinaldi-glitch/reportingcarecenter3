@@ -137,7 +137,7 @@ const summaryCards = [
     status: null,
     icon: Tickets,
     tone: "primary",
-    note: "Ticket Hasil Filter",
+    note: "Belum Close",
   },
   {
     label: "Pending Transport",
