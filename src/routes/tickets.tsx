@@ -133,7 +133,7 @@ function Subline({
 
 const summaryCards = [
   {
-    label: "Total Ticket",
+    label: "Ticket Aktif",
     status: null,
     icon: Tickets,
     tone: "primary",
@@ -534,9 +534,12 @@ function TicketsPage() {
     <AppShell title="Daftar Ticket" subtitle="Data ticket gangguan realtime">
       <section className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7" aria-label="Ringkasan ticket">
                 {summaryCards.map((card) => {
+          const activeStatuses = STATUS_OPTIONS.filter(
+            (s) => s !== "Close" && s !== "Technical Close",
+          );
           const isSelected = card.status
             ? status.length === 1 && status[0] === card.status
-            : status.length === 0;
+            : status.length === activeStatuses.length && activeStatuses.every((s) => status.includes(s));
 
           // Menjaga agar angka di kartu lain tidak jadi 0 saat salah satu status diklik
           const baseList = status.length > 0
@@ -592,14 +595,18 @@ function TicketsPage() {
           return (
             <article
               key={card.label}
-              onClick={() => {
-  if (!card.status) {
-    setStatus([]);
-  } else {
-    setStatus([card.status]);
-  }
-  setPage(1);
-}}
+                            onClick={() => {
+                if (!card.status) {
+                  // Filter hanya tiket yang masih aktif (tanpa Close & Technical Close)
+                  const activeStatuses = STATUS_OPTIONS.filter(
+                    (s) => s !== "Close" && s !== "Technical Close",
+                  );
+                  setStatus([...activeStatuses]);
+                } else {
+                  setStatus([card.status]);
+                }
+                setPage(1);
+              }}
               className={`group relative min-h-16 cursor-pointer overflow-hidden rounded-lg border bg-surface p-2 shadow-panel transition-all hover:-translate-y-0.5 select-none ${toneClass} ${
                 isSelected ? "ring-2 ring-primary ring-offset-2 ring-offset-background shadow-md" : "hover:border-primary/50 opacity-80 hover:opacity-100"
               }`}
