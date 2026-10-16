@@ -602,7 +602,16 @@ function TicketsPage() {
                 <div>
                   <h2 className="text-[9px] font-bold tracking-wide uppercase">{card.label}</h2>
                   <div className="mt-1 flex items-baseline gap-2">
-                    <span className="font-disp
+                    <span className="font-display text-base font-bold leading-none">{value}</span>
+                    <span className="text-[8px] text-muted-foreground">{card.note}</span>
+                  </div>
+                </div>
+                <Icon className="size-4 shrink-0 opacity-70" />
+              </div>
+              <div className="mt-1.5 h-0.5 rounded-full bg-current opacity-30" />
+            </article>
+          );
+        })}
       </section>
 
       <div className="panel overflow-hidden border-ops-blue/20">
