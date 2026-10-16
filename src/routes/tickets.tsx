@@ -534,9 +534,7 @@ function TicketsPage() {
     <AppShell title="Daftar Ticket" subtitle="Data ticket gangguan realtime">
       <section className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7" aria-label="Ringkasan ticket">
                 {summaryCards.map((card) => {
-          const activeStatuses = STATUS_OPTIONS.filter(
-            (s) => s !== "Close" && s !== "Technical Close",
-          );
+                    const activeStatuses = STATUS_OPTIONS.filter((s) => s !== "Close");
           const isSelected = card.status
             ? status.length === 1 && status[0] === card.status
             : status.length === activeStatuses.length && activeStatuses.every((s) => status.includes(s));
@@ -558,10 +556,9 @@ function TicketsPage() {
               })
             : filtered;
 
-          // Kartu Total Ticket hanya menghitung tiket yang belum close
-          // (Close dan Technical Close tidak ikut dihitung).
+          // Kartu Ticket Aktif menghitung semua tiket kecuali yang sudah "Close"
           const openList = baseList.filter(
-            (ticket) => ticket.status !== "Close" && ticket.status !== "Technical Close",
+            (ticket) => ticket.status !== "Close",
           );
 
           const value = card.status
@@ -595,12 +592,10 @@ function TicketsPage() {
           return (
             <article
               key={card.label}
-                            onClick={() => {
+                                          onClick={() => {
                 if (!card.status) {
-                  // Filter hanya tiket yang masih aktif (tanpa Close & Technical Close)
-                  const activeStatuses = STATUS_OPTIONS.filter(
-                    (s) => s !== "Close" && s !== "Technical Close",
-                  );
+                  // Memfilter semua status kecuali "Close" (Technical Close tetap masuk)
+                  const activeStatuses = STATUS_OPTIONS.filter((s) => s !== "Close");
                   setStatus([...activeStatuses]);
                 } else {
                   setStatus([card.status]);
