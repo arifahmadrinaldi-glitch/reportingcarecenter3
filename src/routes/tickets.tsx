@@ -137,7 +137,7 @@ const summaryCards = [
     status: null,
     icon: Tickets,
     tone: "primary",
-    note: "Ticket Hasil Filter",
+    note: "Belum Close",
   },
   {
     label: "Pending Transport",
@@ -555,15 +555,21 @@ function TicketsPage() {
               })
             : filtered;
 
+          // Kartu Total Ticket hanya menghitung tiket yang belum close
+          // (Close dan Technical Close tidak ikut dihitung).
+          const openList = baseList.filter(
+            (ticket) => ticket.status !== "Close" && ticket.status !== "Technical Close",
+          );
+
           const value = card.status
             ? baseList.filter((ticket) => ticket.status === card.status).length
-            : baseList.length;
+            : openList.length;
 
-          const cmCount = baseList.filter(
+          const cmCount = openList.filter(
             (t) => t.jenis_ticket?.toLowerCase().includes("corrective") || t.jenis_ticket === "CM",
           ).length;
 
-          const pmCount = baseList.filter(
+          const pmCount = openList.filter(
             (t) => t.jenis_ticket?.toLowerCase().includes("preventive") || t.jenis_ticket === "PM",
           ).length;
 
@@ -605,6 +611,11 @@ function TicketsPage() {
                     <span className="font-display text-base font-bold leading-none">{value}</span>
                     <span className="text-[8px] text-muted-foreground">{card.note}</span>
                   </div>
+                  {!card.status && (
+                    <div className="mt-0.5 text-[8px] font-semibold text-muted-foreground">
+                      (CM: {cmCount} · PM: {pmCount})
+                    </div>
+                  )}
                 </div>
                 <Icon className="size-4 shrink-0 opacity-70" />
               </div>
