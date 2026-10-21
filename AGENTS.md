@@ -12,3 +12,4 @@
 - Keep Daily Activity's compact table separate from its full-detail dialog and reuse the activity form for editing, so presentation changes do not remove fields or editing access.
 - Store schedule identities, normal roster patterns and per-month overrides separately within schedule JSON; this preserves legacy rows and prevents leave/backup from propagating into new months.
 - Keep Indonesian national holiday dates in a browser-safe calendar module with explicit yearly coverage; unverified religious dates must remain manually editable rather than guessed.
+- Use shared browser-safe schedule statistics for both tables and Excel exports so combined shifts, backup coverage and regular-relative totals stay consistent.

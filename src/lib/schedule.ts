@@ -1,5 +1,5 @@
 export const CYCLE = ["P", "P", "M", "M", "S", "S", "L", "L"] as const;
-export const CODES = ["P", "S", "M", "L", "CT", "R"] as const;
+export const CODES = ["P", "S", "M", "L", "CT", "R", "PS", "SM", "MP", "PM", "PSM"] as const;
 export const WORK = new Set<string>(["P", "S", "M", "R"]);
 export const DEFAULT_MEMBERS = ["Anggota 1", "Anggota 2", "Anggota 3", "Anggota 4"];
 const ANCHOR = Date.UTC(2026, 0, 1);
@@ -8,6 +8,24 @@ export type Cell = { code: string; backupFor?: string; originalCode?: string | u
 export const BUSINESS_CYCLE = ["PS", "PS", "M", "M", "L", "L", "L", "L"] as const;
 export const BUSINESS_CODES = ["P", "S", "M", "L", "CT", "PS", "SM", "MP", "PM", "PSM"] as const;
 export const shiftCount = (code: string) => (code === "CT" ? 0 : code.split("").filter((c) => WORK.has(c)).length);
+export function scheduleStats(getCell: (day: number) => Cell, days: number, regularWork = 0) {
+  let work = 0, ct = 0, bk = 0;
+  for (let day = 1; day <= days; day++) {
+    const cell = getCell(day);
+    if (cell.code === "CT") ct++;
+    if (cell.backupFor) bk++;
+    work += cell.backupFor && cell.covered
+      ? shiftCount(cell.originalCode ?? "") + shiftCount(cell.covered)
+      : shiftCount(cell.code);
+  }
+  return { work, ct, bk, buffer: work - regularWork };
+}
+
+export function workExcelFormula(range: string, backupAdjustment = 0) {
+  return CODES.filter((code) => shiftCount(code) > 0)
+    .map((code) => `${shiftCount(code)}*COUNTIF(${range},"${code}")+${shiftCount(code)}*COUNTIF(${range},"${code} (BK *)")`)
+    .join("+") + `+${backupAdjustment}`;
+}
 export type BusinessData = {
   members: string[];
   niks: string[];
