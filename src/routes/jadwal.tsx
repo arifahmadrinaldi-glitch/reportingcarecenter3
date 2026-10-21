@@ -1,7 +1,7 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { FileSpreadsheet, RotateCcw, Save } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import * as XLSX from "xlsx";
 
@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { BULAN_LIST } from "@/lib/daily-activity-constants";
-import { CODES, WORK, initializeSchedule, rosterCode, shiftCount, type Cell, type ScheduleData } from "@/lib/schedule";
+import { CODES, WORK, initializeSchedule, rosterCode, shiftCount, scheduleStats, workExcelFormula, type Cell, type ScheduleData } from "@/lib/schedule";
 import { regularCode, isNationalHoliday } from "@/lib/indonesia-holidays";
 import { BusinessScheduleTable, businessCell, businessStats } from "@/components/schedule/BusinessScheduleTable";
 import { initializeBusiness } from "@/lib/schedule";
@@ -126,33 +126,21 @@ function JadwalPage() {
       }
       if (pendingCode === "CT" && backup !== "none") {
         const b = Number(backup);
-        const shift = WORK.has(original) ? original : rosterCode(m, year, month, d, data);
+        const shift = shiftCount(normal) ? normal : "P";
         const ownCell = getCell(b, d);
         const own = ownCell.originalCode ?? (ownCell.backupFor ? "" : ownCell.code);
-        const combined = [...new Set((own + (WORK.has(shift) ? shift : "P")).split(""))]
+        const combined = [...new Set((own + shift).split(""))]
           .filter((c) => WORK.has(c))
           .sort((a, b2) => ["P", "S", "M"].indexOf(a) - ["P", "S", "M"].indexOf(b2))
           .join("");
-        setCell(draft, b, d, { code: combined, backupFor: m === -1 ? draft.regular?.name ?? "Reguler" : draft.members[m] ?? "Anggota", originalCode: own || undefined });
+        setCell(draft, b, d, { code: combined, backupFor: m === -1 ? draft.regular?.name ?? "Reguler" : draft.members[m] ?? "Anggota", originalCode: own || undefined, covered: shift });
       }
     });
     setEditing(null);
   };
 
-    const stats = useMemo(
-    () =>
-      data.members.map((_, m) => {
-        let work = 0, ct = 0, bk = 0;
-        for (let d = 1; d <= days; d++) {
-          const c = data.cells[m]?.[d] ?? { code: rosterCode(m, year, month, d, data) };
-          if (c.code === "CT") ct++;
-          if (c.backupFor) bk++;
-          work += shiftCount(c.code);
-        }
-        return { work, ct, bk };
-      }),
-    [data, days, year, month],
-  );
+  const regularStats = scheduleStats((d) => getCell(-1, d), days);
+  const stats = data.members.map((_, m) => scheduleStats((d) => getCell(m, d), days, regularStats.work));
 
   const save = async () => {
     const payload = { period, title: `Jadwal ${BULAN_LIST[month]} ${year}`, data: data as never };
@@ -170,7 +158,7 @@ function JadwalPage() {
     const dayHeads = Array.from({ length: days }, (_, i) => String(i + 1));
     const rows: unknown[][] = [
       [`Jadwal Shift ${BULAN_LIST[month]} ${year}`],
-      ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup"],
+      ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Buffer"],
     ];
     [-1, 0, 1, 2, 3].forEach((m) => {
       const name = m === -1 ? data.regular?.name ?? "Reguler" : data.members[m];
@@ -182,24 +170,27 @@ function JadwalPage() {
       });
       const r = rows.length + 1;
       const range = `${XLSX.utils.encode_col(3)}${r}:${XLSX.utils.encode_col(2 + days)}${r}`;
+      const st = scheduleStats((d) => getCell(m, d), days, regularStats.work);
+      const displayedWork = Array.from({ length: days }, (_, i) => shiftCount(getCell(m, i + 1).code)).reduce((sum, n) => sum + n, 0);
       rows.push([nik, name, phone, ...cells,
-        { t: "n", v: cells.filter((c) => WORK.has(c.split(" ")[0] ?? "")).length + cells.filter((c) => c.includes("BK")).length, f: `COUNTIF(${range},"P*")+COUNTIF(${range},"S*")+COUNTIF(${range},"M*")+${XLSX.utils.encode_col(5 + days)}${r}` },
-        { t: "n", v: cells.filter((c) => c === "CT").length, f: `COUNTIF(${range},"CT")` },
-        { t: "n", v: cells.filter((c) => c.includes("BK")).length, f: `COUNTIF(${range},"*BK*")` },
+        { t: "n", v: st.work, f: workExcelFormula(range, st.work - displayedWork) },
+        { t: "n", v: st.ct, f: `COUNTIF(${range},"CT")` },
+        { t: "n", v: st.bk, f: `COUNTIF(${range},"*BK*")` },
+        m === -1 ? "-" : { t: "n", v: st.buffer, f: `${XLSX.utils.encode_col(3 + days)}${r}-$${XLSX.utils.encode_col(3 + days)}$3` },
       ]);
     });
     rows.push([], ["Keterangan: P = Pagi, S = Siang, M = Malam, L = Libur, CT = Cuti, BK = Backup"]);
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"] = [{ wch: 16 }, { wch: 20 }, { wch: 18 }, ...dayHeads.map(() => ({ wch: 5 })), { wch: 12 }, { wch: 6 }, { wch: 8 }];
+    ws["!cols"] = [{ wch: 16 }, { wch: 20 }, { wch: 18 }, ...dayHeads.map(() => ({ wch: 5 })), { wch: 12 }, { wch: 6 }, { wch: 8 }, { wch: 8 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Jadwal");
     const b = data.business ?? initializeBusiness();
-    const brows: unknown[][] = [[`Jadwal Business ${BULAN_LIST[month]} ${year}`], ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup"]];
+    const brows: unknown[][] = [[`Jadwal Business ${BULAN_LIST[month]} ${year}`], ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Buffer"]];
     [-1, 0, 1, 2, 3].forEach((m) => {
       const st = businessStats(b, m, days, year, month);
       brows.push([m === -1 ? b.regular.nik : b.niks[m], m === -1 ? b.regular.name : b.members[m], m === -1 ? b.regular.phone : b.phones[m],
         ...dayHeads.map((_, i) => { const c = businessCell(b, m, i + 1, year, month); return c.backupFor ? `${c.code} (BK ${c.backupFor})` : c.code; }),
-        st.work, st.ct, st.bk]);
+        st.work, st.ct, st.bk, m === -1 ? "-" : st.buffer]);
     });
     brows.push([], ["Keterangan: P/S/M = 1 shift, PS/SM/MP/PM = 2 shift, PSM = 3 shift, L = Libur, CT = Cuti, BK = Backup"]);
     const bws = XLSX.utils.aoa_to_sheet(brows);
@@ -237,7 +228,7 @@ function JadwalPage() {
         {query.error && <p role="alert" className="text-xs text-destructive">Jadwal gagal dimuat. Silakan coba lagi.</p>}
         <div className="overflow-x-auto rounded-lg border bg-card" aria-busy={query.isFetching}>
           {query.isFetching ? <p className="p-4 text-xs text-muted-foreground">Memuat jadwal…</p> : <>
-          <table className="w-full table-fixed border-collapse text-[10px]">
+          <table className="w-full min-w-[1500px] table-fixed border-collapse text-[10px]">
   <colgroup>
     <col className="w-[90px]" />
     <col className="w-[220px]" />
@@ -245,9 +236,10 @@ function JadwalPage() {
     {Array.from({ length: days }, (_, i) => (
       <col key={i} />
     ))}
-    <col />
-    <col />
-    <col />
+    <col className="w-14" />
+    <col className="w-8" />
+    <col className="w-12" />
+    <col className="w-12" />
   </colgroup>
             <thead>
               <tr className="bg-ops-navy text-primary-foreground dark:bg-ops-mist dark:text-foreground">
@@ -269,6 +261,7 @@ function JadwalPage() {
                 <th className="px-2 text-center">Hari Kerja</th>
                 <th className="px-2 text-center">CT</th>
                 <th className="px-2 text-center">Backup</th>
+                <th className="px-2 text-center">Buffer</th>
               </tr>
             </thead>
             <tbody>
@@ -298,14 +291,10 @@ function JadwalPage() {
                   );
                 })}
                 <td className="text-center text-xs font-bold text-primary">
-                  {Array.from({ length: days }).filter((_, i) => {
-                    const code = getCell(-1, i + 1).code;
-                    return code === "P" || code === "S" || code === "M" || code === "R";
-                  }).length}
+                  {regularStats.work}
                 </td>
-                <td className="text-center font-semibold text-destructive">
-                  {Array.from({ length: days }).filter((_, i) => data.cells[-1]?.[i + 1]?.code === "CT").length}
-                </td>
+                <td className="text-center font-semibold text-destructive">{regularStats.ct}</td>
+                <td className="text-center font-semibold text-muted-foreground">-</td>
                 <td className="text-center font-semibold text-muted-foreground">-</td>
               </tr>
               {data.members.map((name, m) => (
@@ -332,6 +321,7 @@ function JadwalPage() {
                   <td className="text-center text-xs font-bold text-primary">{stats[m]?.work}</td>
                   <td className="text-center font-semibold text-destructive">{stats[m]?.ct}</td>
                   <td className="text-center font-semibold text-success">{stats[m]?.bk}</td>
+                  <td className="text-center font-semibold text-foreground">{stats[m]?.buffer}</td>
                 </tr>
               ))}
             </tbody>
