@@ -1,6 +1,6 @@
 # Roadmap
 
-- [ ] Pastikan hitungan shift gabungan, tambah Buffer setelah Backup pada kedua jadwal dan Excel, lalu uji.
+- [x] Pastikan hitungan shift gabungan, tambah Buffer setelah Backup pada kedua jadwal dan Excel, lalu uji.
 
 - [x] Sesuaikan warna shift, reguler/tanggal merah, roster normal antarbulan, NIK/no tlp dan export Excel; verifikasi
 
