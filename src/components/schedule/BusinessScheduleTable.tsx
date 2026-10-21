@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BULAN_LIST } from "@/lib/daily-activity-constants";
 import { isNationalHoliday, regularCode } from "@/lib/indonesia-holidays";
-import { BUSINESS_CODES, businessCode, shiftCount, type BusinessData, type Cell } from "@/lib/schedule";
+import { BUSINESS_CODES, businessCode, shiftCount, scheduleStats, type BusinessData, type Cell } from "@/lib/schedule";
 
 const tone: Record<string, string> = {
   P: "bg-shift-morning text-shift-light hover:bg-shift-morning/90",
@@ -26,14 +26,8 @@ export function businessCell(b: BusinessData, m: number, d: number, year: number
   return b.cells[m]?.[d] ?? { code: m === -1 ? regularCode(year, month, d) : businessCode(m, year, month, d) };
 }
 export function businessStats(b: BusinessData, m: number, days: number, year: number, month: number) {
-  let work = 0, ct = 0, bk = 0;
-  for (let d = 1; d <= days; d++) {
-    const c = businessCell(b, m, d, year, month);
-    if (c.code === "CT") ct++;
-    if (c.backupFor) { bk++; work += shiftCount(c.originalCode ?? "") + Math.max(1, shiftCount(c.covered ?? "")); }
-    else work += shiftCount(c.code);
-  }
-  return { work, ct, bk };
+  const regularWork = scheduleStats((d) => businessCell(b, -1, d, year, month), days).work;
+  return scheduleStats((d) => businessCell(b, m, d, year, month), days, regularWork);
 }
 
 export function BusinessScheduleTable({ data, onChange, year, month, days }: {
@@ -112,6 +106,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
         <td className="text-center text-xs font-bold text-primary">{s.work}</td>
         <td className="text-center font-semibold text-destructive">{s.ct}</td>
         <td className="text-center font-semibold text-success">{m === -1 ? "-" : s.bk}</td>
+        <td className="text-center font-semibold text-foreground">{m === -1 ? "-" : s.buffer}</td>
       </tr>
     );
   };
@@ -120,15 +115,16 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
     <div className="space-y-2">
       <h2 className="font-display text-base font-semibold">Jadwal Business</h2>
       <div className="overflow-x-auto rounded-lg border bg-card">
-        <table className="w-full table-fixed border-collapse text-[10px]">
+        <table className="w-full min-w-[1500px] table-fixed border-collapse text-[10px]">
   <colgroup>
     <col className="w-[90px]" />
     <col className="w-[220px]" />
     <col className="w-[140px]" />
     {Array.from({ length: days }, (_, i) => <col key={i} />)}
-    <col />
-    <col />
-    <col />
+    <col className="w-14" />
+    <col className="w-8" />
+    <col className="w-12" />
+    <col className="w-12" />
   </colgroup>
           <thead>
             <tr className="bg-ops-navy text-primary-foreground dark:bg-ops-mist dark:text-foreground">
@@ -143,7 +139,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
                     </th>
                   );
                 })}
-              <th className="px-2 text-center">Hari Kerja</th><th className="px-2 text-center">CT</th><th className="px-2 text-center">Backup</th>
+              <th className="px-2 text-center">Hari Kerja</th><th className="px-2 text-center">CT</th><th className="px-2 text-center">Backup</th><th className="px-2 text-center">Buffer</th>
             </tr>
           </thead>
           <tbody>{[-1, 0, 1, 2, 3].map(row)}</tbody>
