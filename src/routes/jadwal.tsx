@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { BULAN_LIST } from "@/lib/daily-activity-constants";
-import { CODES, WORK, initializeSchedule, rosterCode, type Cell, type ScheduleData } from "@/lib/schedule";
+import { CODES, WORK, initializeSchedule, rosterCode, shiftCount, type Cell, type ScheduleData } from "@/lib/schedule";
 import { regularCode, isNationalHoliday } from "@/lib/indonesia-holidays";
 import { BusinessScheduleTable, businessCell, businessStats } from "@/components/schedule/BusinessScheduleTable";
 import { initializeBusiness } from "@/lib/schedule";
@@ -139,17 +139,17 @@ function JadwalPage() {
     setEditing(null);
   };
 
-  const stats = useMemo(
+    const stats = useMemo(
     () =>
       data.members.map((_, m) => {
         let work = 0, ct = 0, bk = 0;
         for (let d = 1; d <= days; d++) {
           const c = data.cells[m]?.[d] ?? { code: rosterCode(m, year, month, d, data) };
-          if (WORK.has(c.code) && c.code != "CT") work++;
           if (c.code === "CT") ct++;
           if (c.backupFor) bk++;
+          work += shiftCount(c.code);
         }
-        return { work: work + bk, ct, bk };
+        return { work, ct, bk };
       }),
     [data, days, year, month],
   );
