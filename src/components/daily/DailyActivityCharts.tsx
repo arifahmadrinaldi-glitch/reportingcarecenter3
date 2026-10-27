@@ -103,7 +103,7 @@ export function DailyActivityCharts({ rows }: { rows: DailyActivityRow[] }) {
           <HorizontalBars data={perProduct} />
         </Panel>
 
-        <Panel title="Total Aktivitas On Duty" subtitle="Jumlah activity per petugas On Duty">
+        <Panel title="Total Aktivitas On Duty" subtitle="Jumlah activity On Duty">
           <div className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={perOnDuty} margin={{ left: 8, right: 16, top: 8 }}>
