@@ -309,7 +309,7 @@ function DailyActivityPage() {
   return (
     <AppShell
       title="Daily Activity"
-      subtitle="Pencatatan aktivitas harian tim Reporting CC 3"
+      subtitle="Pencatatan aktivitas harian Care Center 3"
       actions={
         <Button size="sm" onClick={openAddForm}>
           <Plus className="size-4" /> Tambah Activity
