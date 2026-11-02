@@ -50,11 +50,14 @@ import { notifyNewTicket } from "@/lib/telegram.functions";
 import {
   BULAN_OPTIONS,
   JENIS_OPTIONS,
-  LAYANAN_OPTIONS,
+  LAYANAN_OPTIONS_NON_VSAT,
+  LAYANAN_OPTIONS_VSAT,
   REGIONAL_OPTIONS,
   STATUS_OPTIONS,
   formatDateTime,
   parseUpdateHistory,
+  ticketCategory,
+  type TicketCategory,
   type TicketFormValues,
   type TicketRow,
 } from "@/lib/ticket-constants";
@@ -131,12 +134,9 @@ function Subline({
   );
 }
 
-// Klasifikasi tab: semua layanan (termasuk "Vsat Star") masuk Care Center Non-Vsat;
-// tab Care Center Vsat tetap ada dan tampil kosong.
-type TicketCategory = "vsat" | "non-vsat";
-
-const ticketCategory = (_layanan: string | null): TicketCategory => "non-vsat";
-
+// Klasifikasi tab memakai ticketCategory dari ticket-constants:
+// layanan VSAT (Vsat IP, SCPC, DSCPC, HTS, Mangoes Family, IMP) -> Care Center Vsat,
+// lainnya (termasuk "Vsat Star") -> Care Center Non-Vsat.
 const TICKET_TABS: { key: TicketCategory; label: string }[] = [
   { key: "vsat", label: "Care Center Vsat" },
   { key: "non-vsat", label: "Care Center Non-Vsat" },
