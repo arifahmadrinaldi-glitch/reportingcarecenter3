@@ -293,6 +293,7 @@ function TicketsPage() {
 
   const tickets = activeQuery.data ?? [];
   const deleted = deletedQuery.data ?? [];
+  const tabTickets = useMemo(() => tickets.filter((t) => ticketCategory(t.layanan) === tab), [tickets, tab]);
 
   useEffect(() => {
     const channel = supabase
