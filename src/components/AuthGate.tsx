@@ -81,7 +81,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
             <Radio className="size-6" />
           </span>
           <div>
-            <h1 className="font-display text-lg font-bold text-foreground">Reporting CC 3</h1>
+            <h1 className="font-display text-lg font-bold text-foreground">Reporting Care Center</h1>
             <p className="text-[10px] uppercase text-muted-foreground">Private Operations</p>
           </div>
         </div>
