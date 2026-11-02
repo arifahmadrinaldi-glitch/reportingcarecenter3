@@ -1,8 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { createClient } from "@supabase/supabase-js";
 import { createHash, timingSafeEqual } from "crypto";
+import { z } from "zod";
+import { filterCareCenterRows, type CareCenterSelection } from "@/lib/care-center-filter";
+import { parseTelegramCommand, telegramCategoryLabel, openTicketResume } from "@/lib/telegram-report";
 
-import { buildTicketMessage, mono, type NewTicketPayload } from "@/lib/telegram.server";
+import { buildTicketMessage, mono, telegramRequest, type NewTicketPayload } from "@/lib/telegram.server";
 
 const CLOSED_STATUSES = ["Close", "Technical Close"];
 
@@ -36,15 +39,27 @@ function getSupabase() {
 }
 
 async function reply(chatId: number, text: string) {
-  const token = "8774951056:AAG-K2ykvKIK10d7jxkCehbjWqhChZbEKVs";
-  const response = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
-  });
+  // Split long monospace reports on lines while preserving valid Telegram HTML.
+  const isMono = text.startsWith("<pre>") && text.endsWith("</pre>");
+  const body = isMono ? text.slice(5, -6) : text;
+  let chunk = "";
+  for (const line of body.split("\n")) {
+    if (chunk.length + line.length + 1 > 3500 && chunk) {
+      await telegramRequest("sendMessage", { chat_id: chatId, text: isMono ? mono(chunk) : chunk, parse_mode: "HTML" });
+      chunk = "";
+    }
+    chunk += (chunk ? "\n" : "") + line;
+  }
+  if (chunk) await telegramRequest("sendMessage", { chat_id: chatId, text: isMono ? mono(chunk) : chunk, parse_mode: "HTML" });
+}
 
-  if (!response.ok) {
-    console.error(`Telegram reply failed [${response.status}]: ${await response.text()}`);
+async function readTickets(query: ReturnType<ReturnType<ReturnType<typeof getSupabase>["from"]>["select"]>): Promise<Row[]> {
+  const rows: Row[] = [];
+  for (let offset = 0; ; offset += 500) {
+    const { data, error } = await query.range(offset, offset + 499);
+    if (error) throw new Error(`Gagal mengambil tiket: ${error.message}`);
+    rows.push(...(data ?? []) as Row[]);
+    if (!data || data.length < 500) return rows;
   }
 }
 
@@ -81,58 +96,24 @@ const fmtDate = (value: string | null | undefined) => {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
-async function buildOpenTicketSummary(): Promise<string> {
-  const supabase = getSupabase();
-  const { data, error } = await supabase
-    .from("tickets")
-    .select(TICKET_FIELDS)
-    .is("deleted_at", null)
-    .not("status", "in", '("Close","Technical Close")')
-    .order("created_at", { ascending: true })
-    .order("id", { ascending: true })
-    .limit(40);
-
-  if (error) {
-    console.error(`Gagal ambil tiket: ${error.message}`);
-    return "⚠️ Gagal mengambil data tiket.";
-  }
-
-  const rows = (data ?? []) as Row[];
-  if (rows.length === 0) return "✅ Tidak ada tiket yang masih open.";
-
-  // Status summary like the dashboard (statuses with at least one ticket).
-  const statusCounts = new Map<string, number>();
-  const jenisCounts = new Map<string, number>();
-  for (const row of rows) {
-    const status = row["status"] ?? "-";
-    statusCounts.set(status, (statusCounts.get(status) ?? 0) + 1);
-    const jenis = row["jenis_ticket"] ?? "-";
-    jenisCounts.set(jenis, (jenisCounts.get(jenis) ?? 0) + 1);
-  }
-  const statusLines = [...statusCounts.entries()]
-    .sort((a, b) => b[1] - a[1])
-    .map(([name, total]) => `• ${escapeHtml(name)}: ${total}`)
-    .join("\n");
-
-  const cmTotal = jenisCounts.get("Corrective Maintenance") ?? 0;
-  const pmTotal = jenisCounts.get("Preventive Maintenance") ?? 0;
-  const jenisLines = `• CM: ${cmTotal}\n• PM: ${pmTotal}`;
-
-  const cards = rows.slice(0, 15).map((row, index) => `${index + 1}. ${buildTicketMessage(asPayload(row))}`);
-  const more = rows.length > 15 ? `\n\n…dan ${rows.length - 15} tiket lainnya.` : "";
-  return mono(
-    `🎫 TIKET BELUM CLOSE (total ${rows.length})\n\n` +
-      `${statusLines}\n\n` +
-      `${jenisLines}\n\n` +
-      `${cards.join("\n\n")}${more}`,
-  );
+async function buildOpenTicketSummary(category: CareCenterSelection): Promise<string> {
+  const rows = await readTickets(getSupabase().from("tickets").select(TICKET_FIELDS)
+    .is("deleted_at", null).not("status", "in", '("Close","Technical Close")')
+    .order("created_at", { ascending: true }).order("id", { ascending: true }));
+  const resume = openTicketResume(rows, category);
+  const lines = (items: [string, number][]) => items.map(([name, total]) => `• ${escapeHtml(name)}: ${total}`).join("\n");
+  const cards = resume.rows.slice(0, 15).map((row, index) => `${index + 1}. ${buildTicketMessage(asPayload(row))}`);
+  const more = resume.total > 15 ? `\n\n…dan ${resume.total - 15} tiket lainnya.` : "";
+  return mono(`🎫 TIKET BELUM CLOSE (total ${resume.total})\n${telegramCategoryLabel(category)}\n\n` +
+    `${lines(resume.statuses)}\n\n• CM: ${resume.cm}\n• PM: ${resume.pm}\n\nPer Layanan\n${lines(resume.services) || "-"}\n\n` +
+    (resume.total ? `${cards.join("\n\n")}${more}` : "Tidak ada tiket yang masih open."));
 }
 
 /** /rekap [bulan] [tahun] — rekap tiket dalam satu bulan. */
-async function buildRekap(args: string[]): Promise<string> {
-  const now = new Date();
-  let monthIndex = now.getMonth();
-  let year = now.getFullYear();
+async function buildRekap(args: string[], category: CareCenterSelection): Promise<string> {
+  const now = new Date(Date.now() + 7 * 3600 * 1000);
+  let monthIndex = now.getUTCMonth();
+  let year = now.getUTCFullYear();
 
   for (const arg of args) {
     const numeric = Number(arg);
@@ -146,24 +127,20 @@ async function buildRekap(args: string[]): Promise<string> {
     }
   }
 
-  const start = new Date(year, monthIndex, 1);
-  const end = new Date(year, monthIndex + 1, 1);
+  const start = new Date(Date.UTC(year, monthIndex, 1, -7));
+  const end = new Date(Date.UTC(year, monthIndex + 1, 1, -7));
 
   const supabase = getSupabase();
-  const { data, error } = await supabase
+  const data = await readTickets(supabase
     .from("tickets")
     .select(TICKET_FIELDS)
     .is("deleted_at", null)
     .gte("tanggal_open", start.toISOString())
-    .lt("tanggal_open", end.toISOString());
+    .lt("tanggal_open", end.toISOString()).order("id"));
 
-  if (error) {
-    console.error(`Gagal rekap tiket: ${error.message}`);
-    return "⚠️ Gagal mengambil rekap tiket.";
-  }
 
-  const rows = (data ?? []) as Row[];
-  const label = `${BULAN[monthIndex]} ${year}`;
+  const rows = filterCareCenterRows(data, category, (row) => row["layanan"]);
+  const label = `${BULAN[monthIndex]} ${year} · ${telegramCategoryLabel(category)}`;
   if (rows.length === 0) return mono(`📊 REKAP ${escapeHtml(label).toUpperCase()}\n\nTidak ada tiket.`);
 
   const tally = (key: string) => {
@@ -191,7 +168,7 @@ async function buildRekap(args: string[]): Promise<string> {
 }
 
 /** /tiketclose [dd/mm/yyyy] — tiket yang close pada tanggal tertentu (default: hari ini WIB). */
-async function buildCloseToday(args: string[] = []): Promise<string> {
+async function buildCloseToday(args: string[], category: CareCenterSelection): Promise<string> {
   let day: number | undefined;
   let month: number | undefined;
   let year: number | undefined;
@@ -217,23 +194,19 @@ async function buildCloseToday(args: string[] = []): Promise<string> {
   const start = new Date(Date.UTC(year, month - 1, day, -7, 0, 0));
   const end = new Date(Date.UTC(year, month - 1, day + 1, -7, 0, 0));
   const pad = (n: number) => String(n).padStart(2, "0");
-  const label = `${pad(day)}/${pad(month)}/${year}`;
+  const label = `${pad(day)}/${pad(month)}/${year} · ${telegramCategoryLabel(category)}`;
 
   const supabase = getSupabase();
-  const { data, error } = await supabase
+  const data = await readTickets(supabase
     .from("tickets")
     .select(TICKET_FIELDS)
     .is("deleted_at", null)
     .gte("tanggal_close", start.toISOString())
     .lt("tanggal_close", end.toISOString())
-    .order("tanggal_close", { ascending: true });
+    .order("tanggal_close", { ascending: true }).order("id"));
 
-  if (error) {
-    console.error(`Gagal ambil tiket close: ${error.message}`);
-    return "⚠️ Gagal mengambil data tiket close.";
-  }
 
-  const rows = (data ?? []) as Row[];
+  const rows = filterCareCenterRows(data, category, (row) => row["layanan"]);
   if (rows.length === 0) return mono(`✅ TIKET CLOSE ${label}\n\nTidak ada tiket yang close pada tanggal ini.`);
 
   const cards = rows
@@ -247,12 +220,12 @@ async function buildCloseToday(args: string[] = []): Promise<string> {
 }
 
 /** /caritiket <kode> — cari tiket berdasarkan kode mantools / noxis / lokasi. */
-async function buildCariTiket(query: string): Promise<string> {
+async function buildCariTiket(query: string, category: CareCenterSelection): Promise<string> {
   if (!query) return "🔍 Format: <code>/caritiket KODE_TIKET</code>";
 
   const supabase = getSupabase();
-  const like = `%${query}%`;
-  const { data, error } = await supabase
+  const like = `%${query.replace(/[%,()\\]/g, " ")}%`;
+  const data = await readTickets(supabase
     .from("tickets")
     .select(TICKET_FIELDS)
     .is("deleted_at", null)
@@ -260,21 +233,17 @@ async function buildCariTiket(query: string): Promise<string> {
       `tiket_mantools.ilike.${like},tiket_noxis.ilike.${like},tiket_epicor.ilike.${like},nama_lokasi.ilike.${like},customer.ilike.${like}`,
     )
     .order("created_at", { ascending: false })
-    .limit(10);
+    .order("id"));
 
-  if (error) {
-    console.error(`Gagal cari tiket: ${error.message}`);
-    return "⚠️ Gagal mencari tiket.";
-  }
 
-  const rows = (data ?? []) as Row[];
+  const rows = filterCareCenterRows(data, category, (row) => row["layanan"]);
   if (rows.length === 0) return `🔍 Tiket <b>${escapeHtml(query)}</b> tidak ditemukan.`;
 
-  const cards = rows.map(
+  const cards = rows.slice(0, 10).map(
     (row, index) =>
       `${index + 1}. ${buildTicketMessage(asPayload(row))}\n   Open : ${escapeHtml(fmtDate(row["tanggal_open"]))}\n   Close: ${escapeHtml(fmtDate(row["tanggal_close"]))}`,
   );
-  return mono(`🔍 HASIL PENCARIAN "${escapeHtml(query)}" (${rows.length})\n\n${cards.join("\n\n")}`);
+  return mono(`🔍 HASIL PENCARIAN "${escapeHtml(query)}" (${rows.length}) · ${telegramCategoryLabel(category)}\n\n${cards.join("\n\n")}`);
 }
 function formatDuration(ms: number): string {
   if (ms <= 0 || Number.isNaN(ms)) return "0 menit";
@@ -291,10 +260,10 @@ function formatDuration(ms: number): string {
 }
 
 /** /tiketterlama [bulan] [tahun] — 5 tiket CM close dengan durasi terlama dalam 1 bulan */
-async function buildTiketTerlama(args: string[]): Promise<string> {
-  const now = new Date();
-  let monthIndex = now.getMonth();
-  let year = now.getFullYear();
+async function buildTiketTerlama(args: string[], category: CareCenterSelection): Promise<string> {
+  const now = new Date(Date.now() + 7 * 3600 * 1000);
+  let monthIndex = now.getUTCMonth();
+  let year = now.getUTCFullYear();
 
   for (const arg of args) {
     const numeric = Number(arg);
@@ -308,12 +277,12 @@ async function buildTiketTerlama(args: string[]): Promise<string> {
     }
   }
 
-  const start = new Date(year, monthIndex, 1);
-  const end = new Date(year, monthIndex + 1, 1);
-  const label = `${BULAN[monthIndex]} ${year}`;
+  const start = new Date(Date.UTC(year, monthIndex, 1, -7));
+  const end = new Date(Date.UTC(year, monthIndex + 1, 1, -7));
+  const label = `${BULAN[monthIndex]} ${year} · ${telegramCategoryLabel(category)}`;
 
   const supabase = getSupabase();
-  const { data, error } = await supabase
+  const data = await readTickets(supabase
     .from("tickets")
     .select(TICKET_FIELDS)
     .is("deleted_at", null)
@@ -322,14 +291,10 @@ async function buildTiketTerlama(args: string[]): Promise<string> {
     .not("tanggal_open", "is", null)
     .not("tanggal_close", "is", null)
     .gte("tanggal_close", start.toISOString())
-    .lt("tanggal_close", end.toISOString());
+    .lt("tanggal_close", end.toISOString()).order("id"));
 
-  if (error) {
-    console.error(`Gagal ambil tiket terlama: ${error.message}`);
-    return "⚠️ Gagal mengambil data tiket terlama.";
-  }
 
-  const rows = (data ?? []) as Row[];
+  const rows = filterCareCenterRows(data, category, (row) => row["layanan"]);
   if (rows.length === 0) {
     return mono(
       `⏱️ TOP 5 TIKET CM TERLAMA (${escapeHtml(label).toUpperCase()})\n\nTidak ada tiket CM yang close pada bulan ini.`,
@@ -338,8 +303,8 @@ async function buildTiketTerlama(args: string[]): Promise<string> {
 
   const withDuration = rows
     .map((row) => {
-      const openTime = new Date(row["tanggal_open"]!).getTime();
-      const closeTime = new Date(row["tanggal_close"]!).getTime();
+      const openTime = new Date(row["tanggal_open"] ?? "").getTime();
+      const closeTime = new Date(row["tanggal_close"] ?? "").getTime();
       return { row, durationMs: closeTime - openTime };
     })
     .filter((item) => item.durationMs > 0)
@@ -352,7 +317,7 @@ async function buildTiketTerlama(args: string[]): Promise<string> {
 
   const cards = withDuration.map(({ row, durationMs }, index) => {
     return (
-      `${index + 1}. ⏱️ <b>Durasi: ${formatDuration(durationMs)}</b>\n` +
+      `${index + 1}. ⏱️ Durasi: ${formatDuration(durationMs)}\n` +
       `   ${buildTicketMessage(asPayload(row))}\n` +
       `   Open : ${escapeHtml(fmtDate(row["tanggal_open"]))}\n` +
       `   Close: ${escapeHtml(fmtDate(row["tanggal_close"]))}`
@@ -368,19 +333,18 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        // const provided = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
-        // if (!safeEqual(provided, deriveSecret(telegramKey))) {
-        //   return new Response("Unauthorized", { status: 401 });
-        // }
-
-        const update = (await request.json()) as {
-          message?: { chat?: { id?: number; title?: string; username?: string }; text?: string };
-          edited_message?: {
-            chat?: { id?: number; title?: string; username?: string };
-            text?: string;
-          };
-        };
-
+        const telegramKey = process.env["TELEGRAM_API_KEY"];
+        const provided = request.headers.get("X-Telegram-Bot-Api-Secret-Token") ?? "";
+        if (!telegramKey || !safeEqual(provided, deriveSecret(telegramKey))) {
+          return new Response("Unauthorized", { status: 401 });
+        }
+        const messageSchema = z.object({
+          chat: z.object({ id: z.number().int(), title: z.string().max(256).optional(), username: z.string().max(256).optional() }),
+          text: z.string().max(4096).optional(),
+        });
+        const parsed = z.object({ message: messageSchema.optional(), edited_message: messageSchema.optional() }).safeParse(await request.json());
+        if (!parsed.success) return Response.json({ error: "Invalid update" }, { status: 400 });
+        const update = parsed.data;
         const message = update.message ?? update.edited_message;
         const chatId = message?.chat?.id;
         if (!chatId) return Response.json({ ok: true, ignored: true });
@@ -398,31 +362,31 @@ export const Route = createFileRoute("/api/public/telegram/webhook")({
           );
 
         const raw = (message?.text ?? "").trim();
-        const parts = raw.split(/\s+/);
-        const command = (parts[0] ?? "").toLowerCase().split("@")[0];
-        const args = parts.slice(1);
+        const { command, args, category } = parseTelegramCommand(raw);
 
         if (command === "/ping") {
-          await reply(chatId, "🏓 Pong! Bot Reporting CC 3 aktif.");
+          await reply(chatId, `🏓 Pong! Bot Reporting CC 3 aktif.\n${telegramCategoryLabel(category)}`);
         } else if (command === "/tiketopen") {
-          await reply(chatId, await buildOpenTicketSummary());
+          await reply(chatId, await buildOpenTicketSummary(category));
         } else if (command === "/rekap") {
-          await reply(chatId, await buildRekap(args));
+          await reply(chatId, await buildRekap(args, category));
         } else if (command === "/tiketclose") {
-          await reply(chatId, await buildCloseToday(args));
+          await reply(chatId, await buildCloseToday(args, category));
         } else if (command === "/tiketterlama") {
-          await reply(chatId, await buildTiketTerlama(args));
+          await reply(chatId, await buildTiketTerlama(args, category));
         } else if (command === "/caritiket") {
-          await reply(chatId, await buildCariTiket(args.join(" ")));
+          await reply(chatId, await buildCariTiket(args.join(" "), category));
         } else if (command === "/start" || command === "/help") {
           await reply(
             chatId,
-            "👋 Bot Reporting CC 3 siap.\n\n" +
+            `👋 Bot Reporting CC 3 siap.\n${telegramCategoryLabel(category)}\n\n` +
               "/ping — cek bot aktif\n" +
-              "/tiketopen — tiket yang belum close\n" +
-              "/rekap [bulan] — rekap tiket per bulan (contoh: /rekap September)\n" +
-              "/tiketclose — tiket close hari ini\n" +
-              "/caritiket [kode] — cari tiket berdasarkan kode/lokasi\n\n" +
+              "/opentiket [vsat/nonvsat] — tiket belum close (alias /tiketopen)\n" +
+              "/rekap [vsat/nonvsat] [bulan] [tahun] — rekap bulanan\n" +
+              "/tiketclose [vsat/nonvsat] [dd/mm/yyyy] — tiket close\n" +
+              "/tiketterlama [vsat/nonvsat] [bulan] [tahun] — top 5 CM\n" +
+              "/caritiket [vsat/nonvsat] [kode] — cari kode/lokasi\n\n" +
+              "Tanpa kategori: gabungan Vsat dan Non-Vsat.\n\n" +
               "Notifikasi tiket baru akan dikirim ke chat ini.",
           );
         }

@@ -94,7 +94,6 @@ async function listChatIds(): Promise<number[]> {
 }
 
 export async function sendTelegramTicket(ticket: NewTicketPayload): Promise<{ sent: boolean; reason?: string }> {
-  const BOT_TOKEN = "8774951056:AAG-K2ykvKIK10d7jxkCehbjWqhChZbEKVs";
 
   const chatIds = await listChatIds();
   if (chatIds.length === 0) {
@@ -105,29 +104,14 @@ export async function sendTelegramTicket(ticket: NewTicketPayload): Promise<{ se
   let lastReason: string | undefined;
 
   for (const chatId of chatIds) {
-    const response = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    try {
+      await telegramRequest("sendMessage", {
         chat_id: chatId,
         text: mono(`TIKET BARU\n\n${buildTicketMessage(ticket)}`),
         parse_mode: "HTML",
-      }),
-    });
-
-    if (!response.ok) {
-      const body = await response.text();
-      console.error(`Telegram sendMessage failed [${response.status}]: ${body}`);
-      lastReason = `gagal kirim (${response.status})`;
-      continue;
-    }
-
-    const result = (await response.json()) as { ok?: boolean; description?: string };
-    if (!result.ok) {
-      console.error(`Telegram API error: ${result.description ?? "unknown"}`);
-      lastReason = result.description ?? "gagal kirim";
+      });
+    } catch (error) {
+      lastReason = error instanceof Error ? error.message : "gagal kirim";
       continue;
     }
 
@@ -136,4 +120,23 @@ export async function sendTelegramTicket(ticket: NewTicketPayload): Promise<{ se
 
   if (sent === 0) return { sent: false, reason: lastReason ?? "gagal kirim" };
   return { sent: true };
+}
+
+export async function telegramRequest(method: string, body: Record<string, unknown>) {
+  const appKey = process.env["LOVABLE_API_KEY"];
+  const connectionKey = process.env["TELEGRAM_API_KEY"];
+  if (!appKey || !connectionKey) throw new Error("Koneksi Telegram belum dikonfigurasi");
+  const response = await fetch(`${GATEWAY_URL}/${method}`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${appKey}`, "X-Connection-Api-Key": connectionKey, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    const errorBody = await response.text();
+    console.error(`Telegram failed [${response.status}]: ${errorBody}`);
+    throw new Error(`Telegram failed [${response.status}]: ${errorBody}`);
+  }
+  const result = await response.json() as { ok?: boolean; description?: string };
+  if (!result.ok) throw new Error(`Telegram: ${result.description ?? "gagal kirim"}`);
+  return result;
 }
