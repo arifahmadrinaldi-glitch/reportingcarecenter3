@@ -3,19 +3,16 @@ import { useMemo, useState } from "react";
 
 import { DailyActivityCharts } from "@/components/daily/DailyActivityCharts";
 import { DailyActivityFilters } from "@/components/daily/DailyActivityFilters";
-import { CareCenterFilter } from "@/components/CareCenterFilter";
-import type { TicketCategory } from "@/lib/ticket-constants";
+import { filterCareCenterRows, type CareCenterSelection } from "@/lib/care-center-filter";
 import { supabase } from "@/integrations/supabase/client";
 import {
   emptyDailyFilters,
-  dailyActivityCategory,
   filterDailyRows,
   tahunOptionsFrom,
   type DailyActivityRow,
 } from "@/lib/daily-activity-constants";
 
-export function DailyActivityDashboard() {
-  const [category, setCategory] = useState<TicketCategory>("non-vsat");
+export function DailyActivityDashboard({ category }: { category: CareCenterSelection }) {
   const [filters, setFilters] = useState(emptyDailyFilters);
 
   const { data: rows = [] } = useQuery({
@@ -31,7 +28,7 @@ export function DailyActivityDashboard() {
     },
   });
 
-  const categoryRows = useMemo(() => rows.filter((row) => dailyActivityCategory(row) === category), [rows, category]);
+  const categoryRows = useMemo(() => filterCareCenterRows(rows, category, (row) => row.product), [rows, category]);
   const tahunOptions = useMemo(() => tahunOptionsFrom(categoryRows), [categoryRows]);
   const onDutyOptions = useMemo(() => Array.from(new Set(categoryRows.map((row) => row.on_duty).filter((name): name is string => Boolean(name)))).sort((a, b) => a.localeCompare(b)), [categoryRows]);
   const filtered = useMemo(() => filterDailyRows(categoryRows, filters), [categoryRows, filters]);
@@ -40,10 +37,6 @@ export function DailyActivityDashboard() {
     <section className="mt-6">
       <h2 className="mb-3 text-sm font-bold">Dashboard Analisis Daily Activity</h2>
       <div className="panel p-4">
-        <CareCenterFilter id="daily-care-center" value={category} onChange={(next) => {
-          setCategory(next);
-          setFilters(emptyDailyFilters());
-        }} />
         <DailyActivityFilters
           filters={filters}
           onChange={setFilters}

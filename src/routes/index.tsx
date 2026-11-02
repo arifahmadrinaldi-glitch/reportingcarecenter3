@@ -25,7 +25,8 @@ import { DailyActivityDashboard } from "@/components/daily/DailyActivityDashboar
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { BULAN_OPTIONS, ticketCategory, type TicketCategory, type TicketRow } from "@/lib/ticket-constants";
+import { BULAN_OPTIONS, type TicketRow } from "@/lib/ticket-constants";
+import { filterCareCenterRows, type CareCenterSelection } from "@/lib/care-center-filter";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -140,7 +141,7 @@ function Donut({
 }
 
 function Index() {
-  const [category, setCategory] = useState<TicketCategory>("non-vsat");
+  const [category, setCategory] = useState<CareCenterSelection>("non-vsat");
   const [bulan, setBulan] = useState(ALL);
   const [tahun, setTahun] = useState(ALL);
 
@@ -157,7 +158,7 @@ function Index() {
     },
   });
 
-  const categoryTickets = useMemo(() => tickets.filter((ticket) => ticketCategory(ticket.layanan) === category), [tickets, category]);
+  const categoryTickets = useMemo(() => filterCareCenterRows(tickets, category, (ticket) => ticket.layanan), [tickets, category]);
 
   const tahunOptions = useMemo(
     () =>
@@ -348,7 +349,7 @@ function Index() {
         </Panel>
       </div>
 
-      <DailyActivityDashboard />
+      <DailyActivityDashboard key={category} category={category} />
     </AppShell>
   );
 }
