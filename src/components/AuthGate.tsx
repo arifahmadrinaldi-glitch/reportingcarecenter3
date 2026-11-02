@@ -61,7 +61,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     if (result === "otp-required") {
       setOtpRequired(true);
       setPassword("");
-      toast.success("Kode OTP telah dikirim ke email");
+      toast.success("Kode OTP telah dikirim melalui @CC3Notif_bot");
       return;
     }
     if (result === "confirmation-required") {
@@ -95,7 +95,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
           </h2>
           <p className="mt-1 text-xs leading-5 text-muted-foreground">
             {otpRequired
-              ? `Masukkan 6 digit kode yang dikirim ke ${email}.`
+              ? "Masukkan 6 digit kode yang dikirim melalui @CC3Notif_bot."
               : "Aplikasi ini hanya dapat dibuka oleh akun yang telah ditentukan."}
           </p>
 

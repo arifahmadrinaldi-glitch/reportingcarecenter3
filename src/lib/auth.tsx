@@ -3,10 +3,9 @@ import type { ReactNode } from "react";
 import type { User } from "@supabase/supabase-js";
 
 import { supabase } from "@/integrations/supabase/client";
+import { sendLoginOtp } from "./telegram-otp.functions";
 
 export const APPROVED_EMAIL = "ahmadarifrinaldi@gmail.com";
-const BOT_TOKEN = "8774951056:AAG-K2ykvKIK10d7jxkCehbjWqhChZbEKVs";
-const TARGET_CHAT_ID = -1004310653064;
 
 type AuthContextValue = {
   user: User | null;
@@ -20,24 +19,6 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-async function sendOtpToTelegram(otp: string): Promise<boolean> {
-  try {
-    const text = `🔐 <b>Kode Verifikasi Login CC3</b>\n\nKode OTP Anda: <code>${otp}</code>\n\nBerlaku selama 5 menit. Jangan berikan kode ini kepada siapa pun.`;
-    const res = await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: TARGET_CHAT_ID,
-        text,
-        parse_mode: "HTML",
-      }),
-    });
-    return res.ok;
-  } catch (e) {
-    console.error("Gagal mengirim OTP ke Telegram:", e);
-    return false;
-  }
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -101,7 +82,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return false;
     }
 
-    return await sendOtpToTelegram(randomOtp);
+    try {
+      const result = await sendLoginOtp();
+      return result.sent;
+    } catch {
+      return false;
+    }
   };
 
   const signIn = useCallback(async (email: string, password: string) => {
