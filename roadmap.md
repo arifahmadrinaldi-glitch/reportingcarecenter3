@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Gunakan koneksi @CC3Notif_bot untuk OTP login tanpa token di browser; verifikasi pengiriman.
 - [x] Tambahkan kategori vsat/nonvsat untuk semua perintah Telegram dan rincian layanan pada resume; 12 pengujian lulus, kedua kategori teruji dengan data asli dan pesan terkirim ke chat pengguna.
 - [ ] Arahkan webhook Telegram ke aplikasi ini setelah versi terbaru tersedia di alamat publik; alamat bot saat ini berada di layanan lain dan membalas 404, sedangkan alamat preview publik masih menjalankan versi lama (belum verifikasi secret).
 - [x] Satukan filter Care Center kedua dashboard, tambahkan Semua untuk gabungan kategori; enam pengujian aturan dan pilihan pada dashboard dengan data asli terverifikasi.
