@@ -207,7 +207,7 @@ function JadwalPage() {
       <div className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
-            <h1 className="font-display text-lg font-semibold">Jadwal Shift Care Center 3</h1>
+            <h1 className="font-display text-lg font-semibold">Jadwal Shift Care Center</h1>
             <p className="text-[11px] text-muted-foreground"></p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
