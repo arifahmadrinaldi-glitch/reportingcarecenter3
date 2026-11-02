@@ -20,11 +20,12 @@ import {
 } from "recharts";
 
 import { AppShell } from "@/components/AppShell";
+import { CareCenterFilter } from "@/components/CareCenterFilter";
 import { DailyActivityDashboard } from "@/components/daily/DailyActivityDashboard";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { BULAN_OPTIONS, type TicketRow } from "@/lib/ticket-constants";
+import { BULAN_OPTIONS, ticketCategory, type TicketCategory, type TicketRow } from "@/lib/ticket-constants";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -139,6 +140,7 @@ function Donut({
 }
 
 function Index() {
+  const [category, setCategory] = useState<TicketCategory>("non-vsat");
   const [bulan, setBulan] = useState(ALL);
   const [tahun, setTahun] = useState(ALL);
 
@@ -155,23 +157,25 @@ function Index() {
     },
   });
 
+  const categoryTickets = useMemo(() => tickets.filter((ticket) => ticketCategory(ticket.layanan) === category), [tickets, category]);
+
   const tahunOptions = useMemo(
     () =>
       Array.from(
         new Set(
-          tickets
+          categoryTickets
             .map((t) => (t.tanggal_open ? new Date(t.tanggal_open).getFullYear() : null))
             .filter(Boolean) as number[],
         ),
       )
         .sort((a, b) => b - a)
         .map(String),
-    [tickets],
+    [categoryTickets],
   );
 
   const filtered = useMemo(
     () =>
-      tickets.filter((t) => {
+      categoryTickets.filter((t) => {
         if (bulan === ALL && tahun === ALL) return true;
         if (!t.tanggal_open) return false;
         const date = new Date(t.tanggal_open);
@@ -179,7 +183,7 @@ function Index() {
         if (tahun !== ALL && String(date.getFullYear()) !== tahun) return false;
         return true;
       }),
-    [tickets, bulan, tahun],
+    [categoryTickets, bulan, tahun],
   );
 
   const count = (predicate: (t: TicketRow) => boolean) => filtered.filter(predicate).length;
@@ -232,7 +236,13 @@ function Index() {
         </Button>
       }
     >
-      <div className="panel grid gap-4 p-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+      <div className="panel p-4">
+        <CareCenterFilter id="ticket-care-center" value={category} onChange={(next) => {
+          setCategory(next);
+          setBulan(ALL);
+          setTahun(ALL);
+        }} />
+        <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
         <label className="block">
           <span className="text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">Filter Bulan</span>
           <Select value={bulan} onValueChange={setBulan}>
@@ -271,15 +281,17 @@ function Index() {
             </SelectContent>
           </Select>
         </label>
-        <button
+        <Button
+          variant="link"
           onClick={() => {
             setBulan(ALL);
             setTahun(ALL);
           }}
-          className="pb-2 text-[11px] font-semibold text-primary hover:underline"
+          className="text-[11px] font-semibold"
         >
           Reset filter
-        </button>
+        </Button>
+        </div>
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">

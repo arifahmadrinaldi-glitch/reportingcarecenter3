@@ -88,7 +88,7 @@ function HorizontalBars({ data }: { data: { name: string; value: number }[] }) {
   );
 }
 
-export function DailyActivityCharts({ rows }: { rows: DailyActivityRow[] }) {
+export function DailyActivityCharts({ rows, showTitle = true }: { rows: DailyActivityRow[]; showTitle?: boolean }) {
   const perProduct = groupBy(rows, "product").slice(0, 10);
   const perOnDuty = groupBy(rows, "on_duty");
   const perToDo = groupBy(rows, "to_do");
@@ -97,7 +97,7 @@ export function DailyActivityCharts({ rows }: { rows: DailyActivityRow[] }) {
 
   return (
     <section className="mt-4">
-      <h2 className="mb-3 text-sm font-bold">Dashboard Analisis Daily Activity</h2>
+      {showTitle ? <h2 className="mb-3 text-sm font-bold">Dashboard Analisis Daily Activity</h2> : null}
       <div className="grid gap-4 xl:grid-cols-2">
         <Panel title="Top Product / Layanan" subtitle="Aktivitas terbanyak berdasarkan kolom Product">
           <HorizontalBars data={perProduct} />

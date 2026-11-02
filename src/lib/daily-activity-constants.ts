@@ -1,3 +1,5 @@
+import { ticketCategory } from "./ticket-constants";
+
 export const ON_DUTY_OPTIONS = ["Arif", "Ari", "Dicky", "Rangga", "Raihan"] as const;
 
 export const SHIFT_OPTIONS = ["Pagi", "Siang", "Malam"] as const;
@@ -101,6 +103,10 @@ export const DAILY_DROPDOWNS = {
   to_do: TO_DO_OPTIONS,
   rfo_general: RFO_GENERAL_OPTIONS,
 } as const;
+
+/** Use the same service classification as tickets; legacy Gyro/VSTAR remain Non-Vsat. */
+export const dailyActivityCategory = (row: Pick<DailyActivityRow, "product">) =>
+  ticketCategory(row.product);
 
 export type DailyFilters = {
   bulan: string[];
