@@ -58,7 +58,11 @@ export function buildTicketMessage(ticket: NewTicketPayload) {
     .filter(Boolean)
     .join(" | ");
 
-    const statusDisplay = [ticket.status, ticket.keterangan]
+      const cleanKeterangan = (ticket.keterangan ?? "")
+    .replace(/^pending\s+sampai\s*:?\s*/i, "")
+    .trim();
+
+  const statusDisplay = [ticket.status, cleanKeterangan]
     .map((part) => (part ?? "").trim())
     .filter(Boolean)
     .join(" ");
