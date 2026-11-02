@@ -78,7 +78,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content: "Aplikasi manajemen ticket gangguan layanan satelit dan data.",
       },
       { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Reporting CC 3" },
+      { property: "og:title", content: "Reporting Care Center" },
       {
         property: "og:description",
         content: "Aplikasi manajemen ticket gangguan layanan satelit dan data.",
