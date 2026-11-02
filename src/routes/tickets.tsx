@@ -548,6 +548,29 @@ function TicketsPage() {
 
   return (
     <AppShell title="Daftar Ticket" subtitle="Data ticket gangguan realtime">
+      <div className="mb-3 flex gap-1 rounded-lg border border-ops-blue/20 bg-ops-mist/45 p-1 dark:bg-ops-mist/20" role="tablist" aria-label="Kategori care center">
+        {TICKET_TABS.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            role="tab"
+            aria-selected={tab === item.key}
+            onClick={() => {
+              if (item.key === tab) return;
+              setTab(item.key);
+              setPage(1);
+              setSelected([]);
+            }}
+            className={`flex-1 rounded-md px-3 py-2 text-xs font-bold tracking-wide uppercase transition-colors ${
+              tab === item.key
+                ? "bg-ops-navy text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-ops-blue/10 hover:text-foreground"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
       <section className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7" aria-label="Ringkasan ticket">
                 {summaryCards.map((card) => {
                     const activeStatuses = STATUS_OPTIONS.filter((s) => s !== "Close");
