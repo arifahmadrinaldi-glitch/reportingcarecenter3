@@ -70,6 +70,12 @@ export const LAYANAN_OPTIONS_NON_VSAT = [
 
 export const VSAT_LAYANAN_SET = new Set<string>(LAYANAN_OPTIONS_VSAT);
 
+export type TicketCategory = "vsat" | "non-vsat";
+
+/** Layanan dalam daftar VSAT masuk tab Care Center Vsat; lainnya (termasuk "Vsat Star") ke Non-Vsat. */
+export const ticketCategory = (layanan: string | null): TicketCategory =>
+  layanan != null && VSAT_LAYANAN_SET.has(layanan) ? "vsat" : "non-vsat";
+
 export const JENIS_OPTIONS = ["Corrective Maintenance", "Preventive Maintenance", "Instalasi", "Relokasi"] as const;
 
 export const REGIONAL_OPTIONS = ["Regional 1", "Regional 2", "Regional 3", "Regional 4",] as const;

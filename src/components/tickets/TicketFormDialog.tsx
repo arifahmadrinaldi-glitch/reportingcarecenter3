@@ -18,8 +18,10 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ASAL_GANGGUAN_OPTIONS,
   JENIS_OPTIONS,
-  LAYANAN_OPTIONS,
-  OPEN_BY_OPTIONS,
+  LAYANAN_OPTIONS_NON_VSAT,
+  LAYANAN_OPTIONS_VSAT,
+  OPEN_BY_OPTIONS_NON_VSAT,
+  OPEN_BY_OPTIONS_VSAT,
   REGIONAL_OPTIONS,
   STATUS_OPTIONS,
   TEAM_SEM_OPTIONS,
@@ -27,6 +29,7 @@ import {
   emptyTicket,
   parseUpdateHistory,
   toInputDateTime,
+  type TicketCategory,
   type TicketFormValues,
   type TicketRow,
 } from "@/lib/ticket-constants";
@@ -38,6 +41,7 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ticket: TicketRow | null;
+  category: TicketCategory;
   onSubmit: (values: TicketFormValues, meta?: SaveMeta) => Promise<void>;
 };
 
