@@ -327,6 +327,7 @@ function TicketsPage() {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return tickets.filter((t) => {
+      if (ticketCategory(t.layanan) !== tab) return false;
       if (status.length && !status.includes(t.status)) return false;
       if (regional.length && !regional.includes(t.regional ?? "")) return false;
       if (customer.length && !customer.includes(t.customer ?? "")) return false;
