@@ -205,6 +205,7 @@ function TicketsPage() {
   const [customer, setCustomer] = useState<string[]>([]);
   const [jenis, setJenis] = useState<string[]>([]);
   const [layanan, setLayanan] = useState<string[]>([]);
+  const [tab, setTab] = useState<TicketCategory>("vsat");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [selected, setSelected] = useState<string[]>([]);
