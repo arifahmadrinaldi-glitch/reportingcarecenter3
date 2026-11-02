@@ -1,4 +1,5 @@
 import { MultiSelect } from "@/components/ui/multi-select";
+import { Button } from "@/components/ui/button";
 import {
   BULAN_LIST,
   DAILY_DROPDOWNS,
@@ -10,10 +11,12 @@ export function DailyActivityFilters({
   filters,
   onChange,
   tahunOptions,
+  onDutyOptions = DAILY_DROPDOWNS.on_duty,
 }: {
   filters: DailyFilters;
   onChange: (filters: DailyFilters) => void;
   tahunOptions: string[];
+  onDutyOptions?: readonly string[];
 }) {
   const set = (key: keyof DailyFilters, values: string[]) =>
     onChange({ ...filters, [key]: values });
@@ -25,7 +28,7 @@ export function DailyActivityFilters({
       <MultiSelect
         label="On Duty"
         values={filters.on_duty}
-        options={DAILY_DROPDOWNS.on_duty}
+        options={onDutyOptions}
         onChange={(v) => set("on_duty", v)}
       />
       <MultiSelect
@@ -52,13 +55,14 @@ export function DailyActivityFilters({
         options={DAILY_DROPDOWNS.rfo_general}
         onChange={(v) => set("rfo_general", v)}
       />
-      <button
+      <Button
         type="button"
+        variant="link"
         onClick={() => onChange(emptyDailyFilters())}
-        className="justify-self-start text-[11px] font-semibold text-primary hover:underline"
+        className="h-auto justify-self-start p-0 text-[11px] font-semibold"
       >
         Reset filter
-      </button>
+      </Button>
     </div>
   );
 }
