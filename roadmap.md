@@ -16,3 +16,4 @@
 - [x] Perbaiki kesalahan sintaks StatusBadge yang menghambat aplikasi
 - [x] Verifikasi alur login dan tampilan aplikasi
 - [x] Tambah kolom Tiket Epicor di bawah Noxis (tabel, detail, form tambah tiket, import, pesan Telegram)
+- [x] Tab tiket: daftar Layanan & Open By berbeda per kategori (Vsat vs Non-Vsat), Tim SEM +5 opsi baru

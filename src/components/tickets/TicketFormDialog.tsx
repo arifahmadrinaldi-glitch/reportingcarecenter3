@@ -18,8 +18,10 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   ASAL_GANGGUAN_OPTIONS,
   JENIS_OPTIONS,
-  LAYANAN_OPTIONS,
-  OPEN_BY_OPTIONS,
+  LAYANAN_OPTIONS_NON_VSAT,
+  LAYANAN_OPTIONS_VSAT,
+  OPEN_BY_OPTIONS_NON_VSAT,
+  OPEN_BY_OPTIONS_VSAT,
   REGIONAL_OPTIONS,
   STATUS_OPTIONS,
   TEAM_SEM_OPTIONS,
@@ -27,6 +29,7 @@ import {
   emptyTicket,
   parseUpdateHistory,
   toInputDateTime,
+  type TicketCategory,
   type TicketFormValues,
   type TicketRow,
 } from "@/lib/ticket-constants";
@@ -38,13 +41,16 @@ type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   ticket: TicketRow | null;
+  category: TicketCategory;
   onSubmit: (values: TicketFormValues, meta?: SaveMeta) => Promise<void>;
 };
 
 const toIso = (value: string) => (value ? new Date(value).toISOString() : null);
 
-export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props) {
+export function TicketFormDialog({ open, onOpenChange, ticket, category, onSubmit }: Props) {
   const { isAdmin } = useAccess();
+  const layananOptions = category === "vsat" ? LAYANAN_OPTIONS_VSAT : LAYANAN_OPTIONS_NON_VSAT;
+  const openByOptions = category === "vsat" ? OPEN_BY_OPTIONS_VSAT : OPEN_BY_OPTIONS_NON_VSAT;
   const [values, setValues] = useState<TicketFormValues>(emptyTicket());
   const [openAt, setOpenAt] = useState("");
   const [closeAt, setCloseAt] = useState("");
@@ -70,6 +76,16 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
       setLastUpdateAt("");
     }
   }, [open, ticket]);
+
+  // Jika kategori tab berubah dan layanan tersimpan bukan milik kategori ini, kosongkan.
+  useEffect(() => {
+    if (!open) return;
+    setValues((prev) =>
+      prev.layanan && !(layananOptions as readonly string[]).includes(prev.layanan)
+        ? { ...prev, layanan: "" }
+        : prev,
+    );
+  }, [open, category, layananOptions]);
 
   const set = <K extends keyof TicketFormValues>(key: K, value: TicketFormValues[K]) =>
     setValues((prev) => ({ ...prev, [key]: value }));
@@ -168,7 +184,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
             {textField("Tiket Mantools", "tiket_mantools")}
             {textField("Tiket Noxis", "tiket_noxis")}
             {textField("Tiket Epicor", "tiket_epicor")}
-            {selectField("Layanan", "layanan", LAYANAN_OPTIONS)}
+            {selectField("Layanan", "layanan", layananOptions)}
             {selectField("Jenis Ticket", "jenis_ticket", JENIS_OPTIONS)}
             {selectField("Regional", "regional", REGIONAL_OPTIONS)}
             {textField("Teknisi", "teknisi")}
@@ -198,7 +214,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, onSubmit }: Props
               />
             </div>
             {selectField("Team SEM", "team_sem", TEAM_SEM_OPTIONS)}
-            {selectField("Open By", "open_by", OPEN_BY_OPTIONS)}
+            {selectField("Open By", "open_by", openByOptions)}
             <div className="space-y-1.5">
               {fieldLabel("Tanggal Open")}
               <DateTimePicker value={openAt} onChange={setOpenAt} />

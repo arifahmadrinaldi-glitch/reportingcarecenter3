@@ -50,11 +50,14 @@ import { notifyNewTicket } from "@/lib/telegram.functions";
 import {
   BULAN_OPTIONS,
   JENIS_OPTIONS,
-  LAYANAN_OPTIONS,
+  LAYANAN_OPTIONS_NON_VSAT,
+  LAYANAN_OPTIONS_VSAT,
   REGIONAL_OPTIONS,
   STATUS_OPTIONS,
   formatDateTime,
   parseUpdateHistory,
+  ticketCategory,
+  type TicketCategory,
   type TicketFormValues,
   type TicketRow,
 } from "@/lib/ticket-constants";
@@ -131,12 +134,9 @@ function Subline({
   );
 }
 
-// Klasifikasi tab: semua layanan (termasuk "Vsat Star") masuk Care Center Non-Vsat;
-// tab Care Center Vsat tetap ada dan tampil kosong.
-type TicketCategory = "vsat" | "non-vsat";
-
-const ticketCategory = (_layanan: string | null): TicketCategory => "non-vsat";
-
+// Klasifikasi tab memakai ticketCategory dari ticket-constants:
+// layanan VSAT (Vsat IP, SCPC, DSCPC, HTS, Mangoes Family, IMP) -> Care Center Vsat,
+// lainnya (termasuk "Vsat Star") -> Care Center Non-Vsat.
 const TICKET_TABS: { key: TicketCategory; label: string }[] = [
   { key: "vsat", label: "Care Center Vsat" },
   { key: "non-vsat", label: "Care Center Non-Vsat" },
@@ -234,7 +234,7 @@ function TicketsPage() {
         setRegional(valid(saved.regional, REGIONAL_OPTIONS));
         setCustomer(Array.isArray(saved.customer) ? saved.customer.map(String) : []);
         setJenis(valid(saved.jenis, JENIS_OPTIONS));
-        setLayanan(valid(saved.layanan, LAYANAN_OPTIONS));
+        setLayanan(valid(saved.layanan, [...LAYANAN_OPTIONS_VSAT, ...LAYANAN_OPTIONS_NON_VSAT]));
         setTab(saved.tab === "non-vsat" ? "non-vsat" : "vsat");
         setPerPage(Number(saved.perPage) || 10);
       }
@@ -749,7 +749,7 @@ function TicketsPage() {
             {filterSelect("Regional", regional, setRegional, REGIONAL_OPTIONS)}
             {filterSelect("Customer", customer, setCustomer, customerOptions)}
             {filterSelect("Jenis", jenis, setJenis, JENIS_OPTIONS)}
-            {filterSelect("Layanan", layanan, setLayanan, LAYANAN_OPTIONS)}
+            {filterSelect("Layanan", layanan, setLayanan, tab === "vsat" ? LAYANAN_OPTIONS_VSAT : LAYANAN_OPTIONS_NON_VSAT)}
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
@@ -957,7 +957,13 @@ function TicketsPage() {
         </div>
       </div>
 
-      <TicketFormDialog open={formOpen} onOpenChange={setFormOpen} ticket={editing} onSubmit={saveTicket} />
+      <TicketFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        ticket={editing}
+        category={tab}
+        onSubmit={saveTicket}
+      />
       <TicketDetailDialog ticket={detail} onOpenChange={() => setDetail(null)} />
       <RollbackDialog
         open={rollbackOpen}
