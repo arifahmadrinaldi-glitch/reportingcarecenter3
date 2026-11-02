@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+  import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import {
   CheckCircle2,
@@ -404,6 +404,7 @@ function TicketsPage() {
         const result = await notifyNewTicket({
           data: {
             status: values.status,
+            keterangan: values.keterangan ?? "",
             customer: values.customer ?? "",
             nama_lokasi: values.nama_lokasi ?? "",
             tiket_mantools: values.tiket_mantools ?? "",
