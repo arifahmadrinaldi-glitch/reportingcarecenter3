@@ -53,7 +53,9 @@ async function reply(chatId: number, text: string) {
   if (chunk) await telegramRequest("sendMessage", { chat_id: chatId, text: isMono ? mono(chunk) : chunk, parse_mode: "HTML" });
 }
 
-async function readTickets(query: ReturnType<ReturnType<ReturnType<typeof getSupabase>["from"]>["select"]>): Promise<Row[]> {
+async function readTickets(query: {
+  range: (from: number, to: number) => PromiseLike<{ data: Row[] | null; error: { message: string } | null }>;
+}): Promise<Row[]> {
   const rows: Row[] = [];
   for (let offset = 0; ; offset += 500) {
     const { data, error } = await query.range(offset, offset + 499);
