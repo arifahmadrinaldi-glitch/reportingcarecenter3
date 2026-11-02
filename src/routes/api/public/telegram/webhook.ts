@@ -70,10 +70,11 @@ const escapeHtml = (value: string) => value.replace(/&/g, "&amp;").replace(/</g,
 type Row = Record<string, string | null>;
 
 const TICKET_FIELDS =
-  "status, customer, nama_lokasi, tiket_mantools, tiket_noxis, tiket_epicor, layanan, jenis_ticket, regional, indikasi_gangguan, open_by, teknisi, last_update, tanggal_open, tanggal_close";
+  "status, keterangan, customer, nama_lokasi, tiket_mantools, tiket_noxis, tiket_epicor, layanan, jenis_ticket, regional, indikasi_gangguan, open_by, teknisi, last_update, tanggal_open, tanggal_close";
 
 const asPayload = (row: Row): NewTicketPayload => ({
   status: row["status"] ?? "",
+  keterangan: row["keterangan"] ?? "",
   customer: row["customer"] ?? "",
   nama_lokasi: row["nama_lokasi"] ?? "",
   tiket_mantools: row["tiket_mantools"] ?? "",
