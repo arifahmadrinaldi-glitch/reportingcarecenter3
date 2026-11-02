@@ -754,7 +754,7 @@ function TicketsPage() {
 
           <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <span>
-              Menampilkan {filtered.length} dari {tickets.length} ticket
+              Menampilkan {filtered.length} dari {tabTickets.length} ticket
             </span>
             <button onClick={resetFilters} className="text-primary hover:underline">
               Reset semua filter
