@@ -21,7 +21,8 @@ export const OPEN_STATUSES = [
 ] as const;
 
 export const OPEN_BY_OPTIONS_VSAT = [
-  "Arif Ardi",
+  "Arif",
+  "Ardi",
   "Aunurofiq",
   "Ferdi. H",
   "Ahmad",
@@ -46,7 +47,7 @@ export const OPEN_BY_OPTIONS_NON_VSAT = [
   "Randretya",
 ] as const;
 
-export const LAYANAN_OPTIONS_VSAT = ["Vsat IP", "SCPC", "DSCPC", "HTS", "Mangoes Family", "IMP"] as const;
+export const LAYANAN_OPTIONS_VSAT = ["Vsat IP", "Vsat IP Gyro", "SCPC", "DSCPC", "HTS", "Mangoes Family", "IMP"] as const;
 
 export const LAYANAN_OPTIONS_NON_VSAT = [
   "Vsat Star",

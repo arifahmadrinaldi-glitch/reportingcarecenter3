@@ -1,4 +1,5 @@
 # Roadmap
+- [ ] Tambahkan Vsat IP Gyro, pisahkan Arif/Ardi, dan filter kategori kedua dashboard beserta data/personil; uji.
 
 - [x] Daftar Ticket: tab Care Center Vsat / Non-Vsat (klasifikasi via layanan), fitur tetap sama, tab tersimpan; terverifikasi
 
