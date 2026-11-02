@@ -9,5 +9,5 @@ export function filterCareCenterRows<T>(
 ): T[] {
   return selection === "all"
     ? rows
-    : rows.filter((row) => ticketCategory(service(row)) === selection);
+    : rows.filter((row) => ticketCategory(service(row) ?? null) === selection);
 }
