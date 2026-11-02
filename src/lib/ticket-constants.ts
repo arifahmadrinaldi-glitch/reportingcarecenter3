@@ -20,9 +20,35 @@ export const OPEN_STATUSES = [
   "Monev",
 ] as const;
 
-export const OPEN_BY_OPTIONS = ["Arif", "Ari", "Dicky", "Hari", "Nawin", "Rangga", "Raihan"] as const;
+export const OPEN_BY_OPTIONS_VSAT = [
+  "Arif Ardi",
+  "Aunurofiq",
+  "Ferdi. H",
+  "Ahmad",
+  "Andri",
+  "Avian",
+  "Ferdi Arsy",
+  "Opi",
+  "Rachmat",
+] as const;
 
-export const LAYANAN_OPTIONS = [
+export const OPEN_BY_OPTIONS_NON_VSAT = [
+  "Arif",
+  "Ardi",
+  "Aunurofiq",
+  "Ferdi. H",
+  "Ari",
+  "Algyan",
+  "Dicky",
+  "Indra",
+  "Raihan",
+  "Rangga",
+  "Randretya",
+] as const;
+
+export const LAYANAN_OPTIONS_VSAT = ["Vsat IP", "SCPC", "DSCPC", "HTS", "Mangoes Family", "IMP"] as const;
+
+export const LAYANAN_OPTIONS_NON_VSAT = [
   "Vsat Star",
   "CGW",
   "Star Data",
@@ -36,7 +62,13 @@ export const LAYANAN_OPTIONS = [
   "BGAN",
   "FBB",
   "MSP",
+  "Gateway",
+  "Datakom",
+  "MCS",
+  "Radio IP",
 ] as const;
+
+export const VSAT_LAYANAN_SET = new Set<string>(LAYANAN_OPTIONS_VSAT);
 
 export const JENIS_OPTIONS = ["Corrective Maintenance", "Preventive Maintenance", "Instalasi", "Relokasi"] as const;
 
