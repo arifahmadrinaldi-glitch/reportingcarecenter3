@@ -84,6 +84,11 @@ export const TEAM_SEM_OPTIONS = [
   "Rowland/Yoga",
   "Deny/Ibnu",
   "Tim Datakom",
+  "Rowland/ Galih",
+  "Deny/ Rafdo",
+  "Ridwan/ Syarifudin",
+  "Danang/ Grandis",
+  "Danang/ Romy",
 ] as const;
 
 export const BULAN_OPTIONS = [
