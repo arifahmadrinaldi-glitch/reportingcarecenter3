@@ -258,10 +258,11 @@ function TicketsPage() {
         customer,
         jenis,
         layanan,
+        tab,
         perPage,
       }),
     );
-  }, [search, bulan, tahun, status, regional, customer, jenis, layanan, perPage, filtersReady]);
+  }, [search, bulan, tahun, status, regional, customer, jenis, layanan, tab, perPage, filtersReady]);
 
   const activeQuery = useQuery({
     queryKey: ["tickets", "active"],
