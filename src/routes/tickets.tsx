@@ -346,7 +346,7 @@ function TicketsPage() {
           .includes(term),
       );
     });
-  }, [tickets, search, status, regional, customer, jenis, layanan, bulan, tahun]);
+  }, [tickets, tab, search, status, regional, customer, jenis, layanan, bulan, tahun]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const currentPage = Math.min(page, totalPages);
