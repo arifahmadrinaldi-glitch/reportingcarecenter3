@@ -557,6 +557,7 @@ function TicketsPage() {
           // Menjaga agar angka di kartu lain tidak jadi 0 saat salah satu status diklik
           const baseList = status.length > 0
             ? tickets.filter((t) => {
+                if (ticketCategory(t.layanan) !== tab) return false;
                 if (regional.length && !regional.includes(t.regional ?? "")) return false;
                 if (customer.length && !customer.includes(t.customer ?? "")) return false;
                 if (jenis.length && !jenis.includes(t.jenis_ticket ?? "")) return false;
