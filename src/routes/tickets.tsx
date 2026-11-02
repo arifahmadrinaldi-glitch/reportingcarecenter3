@@ -234,7 +234,7 @@ function TicketsPage() {
         setRegional(valid(saved.regional, REGIONAL_OPTIONS));
         setCustomer(Array.isArray(saved.customer) ? saved.customer.map(String) : []);
         setJenis(valid(saved.jenis, JENIS_OPTIONS));
-        setLayanan(valid(saved.layanan, LAYANAN_OPTIONS));
+        setLayanan(valid(saved.layanan, [...LAYANAN_OPTIONS_VSAT, ...LAYANAN_OPTIONS_NON_VSAT]));
         setTab(saved.tab === "non-vsat" ? "non-vsat" : "vsat");
         setPerPage(Number(saved.perPage) || 10);
       }
@@ -749,7 +749,7 @@ function TicketsPage() {
             {filterSelect("Regional", regional, setRegional, REGIONAL_OPTIONS)}
             {filterSelect("Customer", customer, setCustomer, customerOptions)}
             {filterSelect("Jenis", jenis, setJenis, JENIS_OPTIONS)}
-            {filterSelect("Layanan", layanan, setLayanan, LAYANAN_OPTIONS)}
+            {filterSelect("Layanan", layanan, setLayanan, tab === "vsat" ? LAYANAN_OPTIONS_VSAT : LAYANAN_OPTIONS_NON_VSAT)}
           </div>
 
           <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
@@ -957,7 +957,13 @@ function TicketsPage() {
         </div>
       </div>
 
-      <TicketFormDialog open={formOpen} onOpenChange={setFormOpen} ticket={editing} onSubmit={saveTicket} />
+      <TicketFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        ticket={editing}
+        category={tab}
+        onSubmit={saveTicket}
+      />
       <TicketDetailDialog ticket={detail} onOpenChange={() => setDetail(null)} />
       <RollbackDialog
         open={rollbackOpen}
