@@ -131,6 +131,17 @@ function Subline({
   );
 }
 
+// Klasifikasi tab: layanan "Vsat Star" masuk Care Center Vsat, selain itu Non-Vsat.
+type TicketCategory = "vsat" | "non-vsat";
+
+const ticketCategory = (layanan: string | null): TicketCategory =>
+  layanan?.toLowerCase().includes("vsat") ? "vsat" : "non-vsat";
+
+const TICKET_TABS: { key: TicketCategory; label: string }[] = [
+  { key: "vsat", label: "Care Center Vsat" },
+  { key: "non-vsat", label: "Care Center Non-Vsat" },
+];
+
 const summaryCards = [
   {
     label: "Ticket Aktif",
