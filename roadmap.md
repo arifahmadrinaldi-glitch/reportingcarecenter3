@@ -1,5 +1,8 @@
 # Roadmap
 
+- [x] Daftar Ticket: tab Care Center Vsat / Non-Vsat (klasifikasi via layanan), fitur tetap sama, tab tersimpan; terverifikasi
+
+
 - [x] Pastikan hitungan shift gabungan, tambah Buffer setelah Backup pada kedua jadwal dan Excel, lalu uji.
 
 - [x] Sesuaikan warna shift, reguler/tanggal merah, roster normal antarbulan, NIK/no tlp dan export Excel; verifikasi

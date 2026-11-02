@@ -131,6 +131,17 @@ function Subline({
   );
 }
 
+// Klasifikasi tab: layanan "Vsat Star" masuk Care Center Vsat, selain itu Non-Vsat.
+type TicketCategory = "vsat" | "non-vsat";
+
+const ticketCategory = (layanan: string | null): TicketCategory =>
+  layanan?.toLowerCase().includes("vsat") ? "vsat" : "non-vsat";
+
+const TICKET_TABS: { key: TicketCategory; label: string }[] = [
+  { key: "vsat", label: "Care Center Vsat" },
+  { key: "non-vsat", label: "Care Center Non-Vsat" },
+];
+
 const summaryCards = [
   {
     label: "Ticket Aktif",
@@ -194,6 +205,7 @@ function TicketsPage() {
   const [customer, setCustomer] = useState<string[]>([]);
   const [jenis, setJenis] = useState<string[]>([]);
   const [layanan, setLayanan] = useState<string[]>([]);
+  const [tab, setTab] = useState<TicketCategory>("vsat");
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(10);
   const [selected, setSelected] = useState<string[]>([]);
@@ -223,6 +235,7 @@ function TicketsPage() {
         setCustomer(Array.isArray(saved.customer) ? saved.customer.map(String) : []);
         setJenis(valid(saved.jenis, JENIS_OPTIONS));
         setLayanan(valid(saved.layanan, LAYANAN_OPTIONS));
+        setTab(saved.tab === "non-vsat" ? "non-vsat" : "vsat");
         setPerPage(Number(saved.perPage) || 10);
       }
     } catch {
@@ -245,10 +258,11 @@ function TicketsPage() {
         customer,
         jenis,
         layanan,
+        tab,
         perPage,
       }),
     );
-  }, [search, bulan, tahun, status, regional, customer, jenis, layanan, perPage, filtersReady]);
+  }, [search, bulan, tahun, status, regional, customer, jenis, layanan, tab, perPage, filtersReady]);
 
   const activeQuery = useQuery({
     queryKey: ["tickets", "active"],
@@ -279,6 +293,7 @@ function TicketsPage() {
 
   const tickets = activeQuery.data ?? [];
   const deleted = deletedQuery.data ?? [];
+  const tabTickets = useMemo(() => tickets.filter((t) => ticketCategory(t.layanan) === tab), [tickets, tab]);
 
   useEffect(() => {
     const channel = supabase
@@ -313,6 +328,7 @@ function TicketsPage() {
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
     return tickets.filter((t) => {
+      if (ticketCategory(t.layanan) !== tab) return false;
       if (status.length && !status.includes(t.status)) return false;
       if (regional.length && !regional.includes(t.regional ?? "")) return false;
       if (customer.length && !customer.includes(t.customer ?? "")) return false;
@@ -331,7 +347,7 @@ function TicketsPage() {
           .includes(term),
       );
     });
-  }, [tickets, search, status, regional, customer, jenis, layanan, bulan, tahun]);
+  }, [tickets, tab, search, status, regional, customer, jenis, layanan, bulan, tahun]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const currentPage = Math.min(page, totalPages);
@@ -532,6 +548,29 @@ function TicketsPage() {
 
   return (
     <AppShell title="Daftar Ticket" subtitle="Data ticket gangguan realtime">
+      <div className="mb-3 flex gap-1 rounded-lg border border-ops-blue/20 bg-ops-mist/45 p-1 dark:bg-ops-mist/20" role="tablist" aria-label="Kategori care center">
+        {TICKET_TABS.map((item) => (
+          <button
+            key={item.key}
+            type="button"
+            role="tab"
+            aria-selected={tab === item.key}
+            onClick={() => {
+              if (item.key === tab) return;
+              setTab(item.key);
+              setPage(1);
+              setSelected([]);
+            }}
+            className={`flex-1 rounded-md px-3 py-2 text-xs font-bold tracking-wide uppercase transition-colors ${
+              tab === item.key
+                ? "bg-ops-navy text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-ops-blue/10 hover:text-foreground"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
+      </div>
       <section className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7" aria-label="Ringkasan ticket">
                 {summaryCards.map((card) => {
                     const activeStatuses = STATUS_OPTIONS.filter((s) => s !== "Close");
@@ -542,6 +581,7 @@ function TicketsPage() {
           // Menjaga agar angka di kartu lain tidak jadi 0 saat salah satu status diklik
           const baseList = status.length > 0
             ? tickets.filter((t) => {
+                if (ticketCategory(t.layanan) !== tab) return false;
                 if (regional.length && !regional.includes(t.regional ?? "")) return false;
                 if (customer.length && !customer.includes(t.customer ?? "")) return false;
                 if (jenis.length && !jenis.includes(t.jenis_ticket ?? "")) return false;
@@ -714,7 +754,7 @@ function TicketsPage() {
 
           <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
             <span>
-              Menampilkan {filtered.length} dari {tickets.length} ticket
+              Menampilkan {filtered.length} dari {tabTickets.length} ticket
             </span>
             <button onClick={resetFilters} className="text-primary hover:underline">
               Reset semua filter
