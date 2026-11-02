@@ -2,6 +2,7 @@ const GATEWAY_URL = "https://connector-gateway.lovable.dev/telegram";
 
 export type NewTicketPayload = {
   status: string;
+  keterangan?: string | null;
   customer: string;
   nama_lokasi: string;
   tiket_mantools: string;
@@ -57,6 +58,11 @@ export function buildTicketMessage(ticket: NewTicketPayload) {
     .filter(Boolean)
     .join(" | ");
 
+    const statusDisplay = [ticket.status, ticket.keterangan]
+    .map((part) => (part ?? "").trim())
+    .filter(Boolean)
+    .join(" ");
+
   const tiket = [ticket.tiket_mantools, ticket.tiket_noxis, ticket.tiket_epicor]
     .map((part) => (part ?? "").trim())
     .filter(Boolean)
@@ -66,7 +72,7 @@ export function buildTicketMessage(ticket: NewTicketPayload) {
     `${escapeHtml(ticket.nama_lokasi || "-")}\n` +
     `├ Customer: ${escapeHtml(ticket.customer || "-")}\n` +
     `├ Tiket: ${escapeHtml(tiket || "-")}\n` +
-    `├ Status: ${escapeHtml(ticket.status || "-")}\n` +
+    `├ Status: ${escapeHtml(statusDisplay || "-")}\n` +
     `├ Jenis: ${escapeHtml(jenisLine || "-")}\n` +
     `├ Indikasi: ${escapeHtml((ticket.indikasi_gangguan ?? "").trim() || "-")}\n` +
     `├ Durasi: ${escapeHtml(formatDuration(ticket.tanggal_open, ticket.tanggal_close))}\n` +
