@@ -235,6 +235,7 @@ function TicketsPage() {
         setCustomer(Array.isArray(saved.customer) ? saved.customer.map(String) : []);
         setJenis(valid(saved.jenis, JENIS_OPTIONS));
         setLayanan(valid(saved.layanan, LAYANAN_OPTIONS));
+        setTab(saved.tab === "non-vsat" ? "non-vsat" : "vsat");
         setPerPage(Number(saved.perPage) || 10);
       }
     } catch {
