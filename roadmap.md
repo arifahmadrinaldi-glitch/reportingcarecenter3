@@ -1,7 +1,7 @@
 # Roadmap
 - [x] Gunakan koneksi @CC3Notif_bot untuk OTP login tanpa token di browser; identitas bot terkonfirmasi dan pengiriman OTP dengan sesi asli berhasil (200).
 - [x] Tambahkan kategori vsat/nonvsat untuk semua perintah Telegram dan rincian layanan pada resume; 12 pengujian lulus, kedua kategori teruji dengan data asli dan pesan terkirim ke chat pengguna.
-- [ ] Arahkan webhook Telegram ke aplikasi ini setelah versi terbaru tersedia di alamat publik; alamat bot saat ini berada di layanan lain dan membalas 404, sedangkan alamat preview publik masih menjalankan versi lama (belum verifikasi secret).
+- [x] Webhook Telegram menggunakan alamat aplikasi publik dengan secret yang cocok; pendaftaran berhasil dan /ping terverifikasi menghasilkan 200, tanpa menonaktifkan perlindungan.
 - [x] Satukan filter Care Center kedua dashboard, tambahkan Semua untuk gabungan kategori; enam pengujian aturan dan pilihan pada dashboard dengan data asli terverifikasi.
 - [x] Tambahkan Vsat IP Gyro, pisahkan Arif/Ardi, dan filter kategori kedua dashboard beserta data/personil; teruji dengan data asli dan 3 pengujian aturan.
 
