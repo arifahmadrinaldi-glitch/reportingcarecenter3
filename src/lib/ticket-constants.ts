@@ -28,6 +28,7 @@ export const OPEN_BY_OPTIONS_VSAT = [
   "Ahmad",
   "Andri",
   "Avian",
+  "Faishal",
   "Ferdi Arsy",
   "Opi",
   "Rachmat",
