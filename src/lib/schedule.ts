@@ -91,21 +91,35 @@ export function rosterCode(m: number, year: number, month: number, day: number, 
   return CYCLE[((Math.floor((date - ANCHOR) / DAY) - m) % 7 + 7) % 7] ?? "P";
 }
 
-export function initializeSchedule(saved?: ScheduleData, previous?: { period: string; data: ScheduleData }): ScheduleData {
-  const r = initShift(saved, previous);
+export function initializeSchedule(saved?: ScheduleData, previous?: { period: string; data: ScheduleData }, targetPeriod?: string): ScheduleData {
+  const r = initShift(saved, previous, targetPeriod);
   r.business = initializeBusiness(saved?.business, previous?.data?.business, previous?.period);
   return r;
 }
-function initShift(saved?: ScheduleData, previous?: { period: string; data: ScheduleData }): ScheduleData {
+function initShift(saved?: ScheduleData, previous?: { period: string; data: ScheduleData }, targetPeriod?: string): ScheduleData {
   if (saved?.rosterVersion === 2 && Array.isArray(saved.members) && saved.cells) return structuredClone(saved);
   const source = previous?.data.rosterVersion === 2 ? previous.data : undefined;
   const hasValidSource = Boolean(source && Array.isArray(source.members) && source.cells);
   const regularCells = saved?.cells?.[-1];
+
+  let shiftSteps = 0;
+  if (targetPeriod) {
+    const [y, m] = targetPeriod.split("-").map(Number);
+    if (y && m) shiftSteps = (y - 2026) * 12 + (m - 11);
+  }
+
+  const rotate = <T>(arr: T[], steps: number): T[] => {
+    const n = arr.length;
+    if (n === 0) return arr;
+    const s = ((steps % n) + n) % n;
+    return [...arr.slice(s), ...arr.slice(0, s)];
+  };
+
   const result: ScheduleData = {
     rosterVersion: 2,
-    members: [...(source?.members ?? DEFAULT_MEMBERS)],
-    niks: [...(source?.niks ?? VSAT_NIKS)],
-    phones: [...(source?.phones ?? Array(7).fill("0813-8257-3869 / 0823-1129-2761"))],
+    members: rotate(DEFAULT_MEMBERS, shiftSteps),
+    niks: rotate(VSAT_NIKS, shiftSteps),
+    phones: Array(7).fill("0813-8257-3869 / 0823-1129-2761"),
     regular: { ...(saved?.regular ?? previous?.data.regular ?? { nik: "", name: "Reguler", phone: "" }) },
     cells: regularCells ? { [-1]: structuredClone(regularCells) } : {},
     normalCells: {},
