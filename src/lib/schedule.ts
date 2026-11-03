@@ -3,6 +3,16 @@ export const CODES = ["P", "S", "M", "L", "CT", "R", "PS", "SM", "MP", "PM", "PS
 export const WORK = new Set<string>(["P", "S", "M", "R"]);
 export const DEFAULT_MEMBERS = ["Ahmad Hidayah", "Opi Ul Umam", "Andriansyah", "Avian Dwi Nofyanto", "Muhammad Faishal Rayyan", "Ferdi Arsy Bahtiariyanza", "Rachmat Dwi Ramdani"];
 const VSAT_NIKS = ["9818001", "91210131", "9416031", "9119008", "02250398", "94210087", "9717053"];
+const VSAT_PHONES = [
+  "081294644170",
+  "08988012736",
+  "0895374541623",
+  "081319249194",
+  "085157152523",
+  "082220820862",
+  "08568600943",
+];
+
 const ANCHOR = Date.UTC(2026, 10, 1);
 const DAY = 86400000;
 export type Cell = { code: string; backupFor?: string; originalCode?: string | undefined; covered?: string };
@@ -52,6 +62,15 @@ const DEFAULT_BUSINESS_MEMBERS = [
   "Algyan Gufarira",
 ];
 const NON_VSAT_NIKS = ["99210193", "1230315", "9215020", "2230414", "94210128", "93210167", "92210124"];
+const NON_VSAT_PHONES = [
+  "08996684522",
+  "089516674619",
+  "08996684522",
+  "0895608290244",
+  "085171511840",
+  "089639219736",
+  "081290124197",
+];
 
 export function initializeBusiness(saved?: BusinessData, previous?: BusinessData, previousPeriod?: string, targetPeriod?: string): BusinessData {
   if (saved?.rosterVersion === 2 && Array.isArray(saved.members) && saved.cells) {
@@ -70,7 +89,7 @@ export function initializeBusiness(saved?: BusinessData, previous?: BusinessData
     rosterVersion: 2,
     members: [...(source?.members ?? DEFAULT_BUSINESS_MEMBERS)],
     niks: [...(source?.niks ?? NON_VSAT_NIKS)],
-    phones: [...(source?.phones ?? Array(7).fill("0811-1666-727 / 081213954835"))],
+    phones: [...(source?.phones ?? NON_VSAT_PHONES)],
     regular,
     cells: regularCells ? { [-1]: structuredClone(regularCells) } : {},
     normalCells: {},
@@ -122,7 +141,7 @@ function initShift(saved?: ScheduleData, previous?: { period: string; data: Sche
     rosterVersion: 2,
     members: [...(source?.members ?? DEFAULT_MEMBERS)],
     niks: [...(source?.niks ?? VSAT_NIKS)],
-    phones: [...(source?.phones ?? Array(7).fill("0813-8257-3869 / 0823-1129-2761"))],
+    phones: [...(source?.phones ?? VSAT_PHONES)],
     regular: { ...(saved?.regular ?? previous?.data.regular ?? { nik: "", name: "Reguler", phone: "" }) },
     cells: regularCells ? { [-1]: structuredClone(regularCells) } : {},
     normalCells: {},
@@ -144,6 +163,12 @@ function rotateIdentities(data: ScheduleData, sourcePeriod: string | undefined, 
   if (target === undefined || !data.members.length) return;
   // Backfill missing legacy NIKs by name before rotating, preserving manually entered identities.
   data.niks = data.members.map((name, i) => data.niks?.[i] || VSAT_NIKS[DEFAULT_MEMBERS.indexOf(name)] || "");
+  data.phones = data.members.map((name, i) => {
+    const existing = data.phones?.[i];
+    if (existing && !existing.includes("0813-8257-3869")) return existing;
+    const defIdx = DEFAULT_MEMBERS.indexOf(name);
+    return defIdx >= 0 ? VSAT_PHONES[defIdx] : "";
+  });
   const anchor = periodIndex("2026-11");
   if (anchor === undefined) return;
   const source = sourcePeriod ? periodIndex(sourcePeriod) : undefined;
