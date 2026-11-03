@@ -47,9 +47,9 @@ const DEFAULT_BUSINESS_MEMBERS = [
   "Ari Awaludin Muslim",
   "Rangga Putra Rimba",
   "Raihan Fachrudiansyah",
-  "Indra Nurrhaman",
+  "Indra Nurrahman",
   "Muhammad Dicky Chairudin",
-  "Algyan Gufaira",
+  "Algyan Gufarira",
 ];
 const NON_VSAT_NIKS = ["99210193", "1230315", "9215020", "2230414", "94210128", "93210167", "92210124"];
 
