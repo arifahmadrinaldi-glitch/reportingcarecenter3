@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Sesuaikan tim Jadwal ke Vsat/Non-Vsat masing-masing 7 personel dan pola PPSSMLL sesuai gambar tanpa mengubah perhitungan; uji tampilan dan Excel.
+- [x] Sesuaikan tim Jadwal ke Vsat/Non-Vsat masing-masing 7 personel dan pola PPSSMLL sesuai gambar tanpa mengubah perhitungan; 16 tes lulus, tampilan/Excel teruji, roster November disimpan dan terverifikasi setelah muat ulang.
 - [x] Gunakan koneksi @CC3Notif_bot untuk OTP login tanpa token di browser; identitas bot terkonfirmasi dan pengiriman OTP dengan sesi asli berhasil (200).
 - [x] Tambahkan kategori vsat/nonvsat untuk semua perintah Telegram dan rincian layanan pada resume; 12 pengujian lulus, kedua kategori teruji dengan data asli dan pesan terkirim ke chat pengguna.
 - [x] Webhook Telegram menggunakan alamat aplikasi publik dengan secret yang cocok; pendaftaran berhasil dan /ping terverifikasi menghasilkan 200, tanpa menonaktifkan perlindungan.
