@@ -208,7 +208,7 @@ function JadwalPage() {
   const editCell = editing ? getCell(editing.m, editing.d) : null;
 
   return (
-    <AppShell title="Jadwal Shift" subtitle="Care Center 3">
+    <AppShell title="Jadwal Shift" subtitle="Care Center Vsat & Non-Vsat">
       <div className="space-y-3">
         <div className="flex flex-wrap items-end justify-between gap-2">
           <div>
