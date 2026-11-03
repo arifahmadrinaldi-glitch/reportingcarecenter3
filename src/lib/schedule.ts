@@ -70,6 +70,7 @@ export function initializeBusiness(saved?: BusinessData, previous?: BusinessData
 }
 export type ScheduleData = {
   rosterVersion?: number;
+  identityPeriod?: string;
   members: string[];
   niks?: string[];
   phones?: string[];
@@ -97,36 +98,56 @@ export function initializeSchedule(saved?: ScheduleData, previous?: { period: st
   return r;
 }
 function initShift(saved?: ScheduleData, previous?: { period: string; data: ScheduleData }, targetPeriod?: string): ScheduleData {
-  if (saved?.rosterVersion === 2 && Array.isArray(saved.members) && saved.cells) return structuredClone(saved);
+  if (saved?.rosterVersion === 2 && Array.isArray(saved.members) && saved.cells) {
+    const result = structuredClone(saved);
+    if (targetPeriod) rotateIdentities(result, saved.identityPeriod, targetPeriod);
+    return result;
+  }
   const source = previous?.data.rosterVersion === 2 ? previous.data : undefined;
   const hasValidSource = Boolean(source && Array.isArray(source.members) && source.cells);
   const regularCells = saved?.cells?.[-1];
 
-  let shiftSteps = 0;
-  if (targetPeriod) {
-    const [y, m] = targetPeriod.split("-").map(Number);
-    if (y && m) shiftSteps = (y - 2026) * 12 + (m - 11);
-  }
-
-  const rotate = <T>(arr: T[], steps: number): T[] => {
-    const n = arr.length;
-    if (n === 0) return arr;
-    const s = ((steps % n) + n) % n;
-    return [...arr.slice(s), ...arr.slice(0, s)];
-  };
-
   const result: ScheduleData = {
     rosterVersion: 2,
-    members: rotate(DEFAULT_MEMBERS, shiftSteps),
-    niks: rotate(VSAT_NIKS, shiftSteps),
-    phones: Array(7).fill("0813-8257-3869 / 0823-1129-2761"),
+    members: [...(source?.members ?? DEFAULT_MEMBERS)],
+    niks: [...(source?.niks ?? VSAT_NIKS)],
+    phones: [...(source?.phones ?? Array(7).fill("0813-8257-3869 / 0823-1129-2761"))],
     regular: { ...(saved?.regular ?? previous?.data.regular ?? { nik: "", name: "Reguler", phone: "" }) },
     cells: regularCells ? { [-1]: structuredClone(regularCells) } : {},
     normalCells: {},
   };
+  if (targetPeriod) rotateIdentities(result, source ? previous?.period : "2026-11", targetPeriod);
   if (!previous || !hasValidSource || !source) return result;
   carryPatterns(result, source, previous.period);
   return result;
+}
+
+function periodIndex(period: string) {
+  const [year, month] = period.split("-").map(Number);
+  return year && month && month >= 1 && month <= 12 ? year * 12 + month - 1 : undefined;
+}
+
+// Rotate identity columns only: shift patterns and month-specific cells stay at their roster positions.
+function rotateIdentities(data: ScheduleData, sourcePeriod: string | undefined, targetPeriod: string) {
+  const target = periodIndex(targetPeriod);
+  if (target === undefined || !data.members.length) return;
+  const anchor = periodIndex("2026-11");
+  if (anchor === undefined) return;
+  const source = sourcePeriod ? periodIndex(sourcePeriod) : undefined;
+  // Older saves have no identity period. Infer their existing rotation rather than rotating twice.
+  const knownIndex = data.members.findIndex((name, i) => VSAT_NIKS.includes(data.niks?.[i] ?? "") || DEFAULT_MEMBERS.includes(name));
+  const knownOffset = knownIndex < 0 ? 0 : (() => {
+    const nikIndex = VSAT_NIKS.indexOf(data.niks?.[knownIndex] ?? "");
+    return (nikIndex >= 0 ? nikIndex : DEFAULT_MEMBERS.indexOf(data.members[knownIndex] ?? "")) - knownIndex;
+  })();
+  const steps = source === undefined ? target - anchor - knownOffset : target - source;
+  const count = data.members.length;
+  const offset = ((steps % count) + count) % count;
+  const order = Array.from({ length: count }, (_, i) => (i + offset) % count);
+  data.members = order.map((i) => data.members[i] ?? "");
+  if (data.niks) data.niks = order.map((i) => data.niks?.[i] ?? "");
+  if (data.phones) data.phones = order.map((i) => data.phones?.[i] ?? "");
+  data.identityPeriod = targetPeriod;
 }
 function carryPatterns(result: ScheduleData | BusinessData, source: ScheduleData | BusinessData, period: string) {
   const [y, mo] = period.split("-").map(Number);

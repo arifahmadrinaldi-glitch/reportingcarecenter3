@@ -78,7 +78,7 @@ function JadwalPage() {
     const draft = carry.current;
     const source = draft && draft.period < period && (!previous || draft.period >= previous.period) ? draft : previous ?? undefined;
     setData(initializeSchedule(saved, source, period));
-    setDirty(saved?.rosterVersion !== 2 || saved.business?.rosterVersion !== 2);
+    setDirty(saved?.rosterVersion !== 2 || saved.business?.rosterVersion !== 2 || saved.identityPeriod !== period);
     setEditing(null);
   }, [query.data, period]);
 
