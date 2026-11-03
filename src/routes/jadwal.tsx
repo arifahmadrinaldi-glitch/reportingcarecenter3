@@ -78,7 +78,7 @@ function JadwalPage() {
     const draft = carry.current;
     const source = draft && draft.period < period && (!previous || draft.period >= previous.period) ? draft : previous ?? undefined;
     setData(initializeSchedule(saved, source));
-    setDirty(false);
+    setDirty(saved?.rosterVersion !== 2 || saved.business?.rosterVersion !== 2);
     setEditing(null);
   }, [query.data, period]);
 
@@ -153,9 +153,9 @@ function JadwalPage() {
   };
 
   const resetRoster = () => update((draft) => {
-    draft.cells = {}; draft.normalCells = {}; draft.patterns = undefined; draft.patternAnchor = undefined;
+    draft.cells = {}; draft.normalCells = {}; delete draft.patterns; delete draft.patternAnchor;
     if (draft.business) {
-      draft.business.cells = {}; draft.business.normalCells = {}; draft.business.patterns = undefined; draft.business.patternAnchor = undefined;
+      draft.business.cells = {}; draft.business.normalCells = {}; delete draft.business.patterns; delete draft.business.patternAnchor;
     }
   });
 

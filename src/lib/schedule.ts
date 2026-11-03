@@ -55,13 +55,14 @@ export function initializeBusiness(saved?: BusinessData, previous?: BusinessData
   if (saved?.rosterVersion === 2 && Array.isArray(saved.members) && saved.cells) return structuredClone(saved);
   const source = previous?.rosterVersion === 2 ? previous : undefined;
   const regularSource = saved ?? previous;
+  const regularCells = saved?.cells?.[-1];
   const result: BusinessData = {
     rosterVersion: 2,
     members: [...(source?.members ?? DEFAULT_BUSINESS_MEMBERS)],
     niks: [...(source?.niks ?? ["99210193", "1230315", "9215020", "2230414", "94210128", "93210167", "92210124"])],
     phones: [...(source?.phones ?? Array(7).fill("0811-1666-727 / 081213954835"))],
     regular: { ...(regularSource?.regular ?? { nik: "", name: "Reguler", phone: "" }) },
-    cells: saved?.cells?.[-1] ? { [-1]: structuredClone(saved.cells[-1]) } : {},
+    cells: regularCells ? { [-1]: structuredClone(regularCells) } : {},
     normalCells: {},
   };
   if (source && previousPeriod) carryPatterns(result, source, previousPeriod);
@@ -99,13 +100,14 @@ function initShift(saved?: ScheduleData, previous?: { period: string; data: Sche
   if (saved?.rosterVersion === 2 && Array.isArray(saved.members) && saved.cells) return structuredClone(saved);
   const source = previous?.data.rosterVersion === 2 ? previous.data : undefined;
   const hasValidSource = Boolean(source && Array.isArray(source.members) && source.cells);
+  const regularCells = saved?.cells?.[-1];
   const result: ScheduleData = {
     rosterVersion: 2,
     members: [...(source?.members ?? DEFAULT_MEMBERS)],
     niks: [...(source?.niks ?? VSAT_NIKS)],
     phones: [...(source?.phones ?? Array(7).fill("0813-8257-3869 / 0823-1129-2761"))],
     regular: { ...(saved?.regular ?? previous?.data.regular ?? { nik: "", name: "Reguler", phone: "" }) },
-    cells: saved?.cells?.[-1] ? { [-1]: structuredClone(saved.cells[-1]) } : {},
+    cells: regularCells ? { [-1]: structuredClone(regularCells) } : {},
     normalCells: {},
   };
   if (!previous || !hasValidSource || !source) return result;
