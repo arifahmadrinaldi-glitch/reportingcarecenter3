@@ -64,7 +64,7 @@ function JadwalPage() {
     },
   });
 
-  const [data, setData] = useState<ScheduleData>(() => initializeSchedule());
+  const [data, setData] = useState<ScheduleData>(() => initializeSchedule(undefined, undefined, period));
   const carry = useRef<{ period: string; data: ScheduleData } | undefined>(undefined);
   const [dirty, setDirty] = useState(false);
   const [editing, setEditing] = useState<{ m: number; d: number } | null>(null);
@@ -77,7 +77,7 @@ function JadwalPage() {
     const previous = query.data.previous as { period: string; data: ScheduleData } | null;
     const draft = carry.current;
     const source = draft && draft.period < period && (!previous || draft.period >= previous.period) ? draft : previous ?? undefined;
-    setData(initializeSchedule(saved, source));
+    setData(initializeSchedule(saved, source, period));
     setDirty(saved?.rosterVersion !== 2 || saved.business?.rosterVersion !== 2);
     setEditing(null);
   }, [query.data, period]);
