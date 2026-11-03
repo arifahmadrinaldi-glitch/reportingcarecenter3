@@ -29,6 +29,54 @@ describe('schedule shift accounting', () => {
 });
 
 describe('Care Center PPSSMLL roster', () => {
+  test('December rotates November names and NIKs together by one position', () => {
+    const november = initializeSchedule(undefined, undefined, '2026-11');
+    const december = initializeSchedule(undefined, { period: '2026-11', data: november }, '2026-12');
+    expect(december.members).toEqual(['Opi Ul Umam', 'Andriansyah', 'Avian Dwi Nofyanto', 'Muhammad Faishal Rayyan', 'Ferdi Arsy Bahtiariyanza', 'Rachmat Dwi Ramdani', 'Ahmad Hidayah']);
+    expect(december.niks).toEqual(['91210131', '9416031', '9119008', '02250398', '94210087', '9717053', '9818001']);
+    expect(december.business.members).toEqual(november.business.members);
+  });
+  test('rotation continues across years, skipped months and a full seven-month cycle', () => {
+    expect(initializeSchedule(undefined, undefined, '2027-01').members[0]).toBe('Andriansyah');
+    expect(initializeSchedule(undefined, undefined, '2027-06').members[0]).toBe('Ahmad Hidayah');
+    expect(initializeSchedule(undefined, undefined, '2026-10').members[0]).toBe('Rachmat Dwi Ramdani');
+  });
+  test('legacy saved December rotates without changing cells or shift totals', () => {
+    const saved = initializeSchedule();
+    saved.cells[0] = { 1: { code: 'PSM' }, 2: { code: 'CT' } };
+    const before = structuredClone(saved);
+    const draft = initializeSchedule(saved, undefined, '2026-12');
+    expect(draft.members[0]).toBe('Opi Ul Umam');
+    expect(draft.niks[0]).toBe('91210131');
+    expect(draft.cells).toEqual(saved.cells);
+    expect(scheduleStats(d => draft.cells[0][d], 2, 1)).toEqual({ work: 3, ct: 1, bk: 0, buffer: 2 });
+    expect(saved).toEqual(before);
+    expect(initializeSchedule(draft, undefined, '2026-12')).toEqual(draft);
+  });
+  test('already rotated legacy saves are not rotated twice', () => {
+    const saved = initializeSchedule(undefined, undefined, '2026-12');
+    delete saved.identityPeriod;
+    const draft = initializeSchedule(saved, undefined, '2026-12');
+    expect(draft.members).toEqual(saved.members);
+    expect(draft.niks).toEqual(saved.niks);
+  });
+  test('legacy empty NIKs are filled automatically for the rotated names', () => {
+    const saved = initializeSchedule(undefined, undefined, '2026-12');
+    saved.niks = Array(7).fill('');
+    delete saved.identityPeriod;
+    const draft = initializeSchedule(saved, undefined, '2026-12');
+    expect(draft.niks).toEqual(['91210131', '9416031', '9119008', '02250398', '94210087', '9717053', '9818001']);
+  });
+  test('manual identities and phones follow the monthly rotation', () => {
+    const november = initializeSchedule(undefined, undefined, '2026-11');
+    november.members[0] = 'Personel pengganti';
+    november.niks[0] = '1234567';
+    november.phones[0] = '08123456789';
+    const december = initializeSchedule(undefined, { period: '2026-11', data: november }, '2026-12');
+    expect(december.members[6]).toBe('Personel pengganti');
+    expect(december.niks[6]).toBe('1234567');
+    expect(december.phones[6]).toBe('08123456789');
+  });
   test('both teams use the seven-day PPSSMLL cycle', () => {
     expect(CYCLE.join('')).toBe('PPSSMLL');
     for (const getCode of [rosterCode, businessCode]) {
