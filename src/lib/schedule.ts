@@ -203,6 +203,14 @@ function rotateBusinessIdentities(data: BusinessData, sourcePeriod: string | und
   if (target === undefined || !data.members.length) return;
   data.niks = data.members.map((name, i) => data.niks?.[i] || NON_VSAT_NIKS[DEFAULT_BUSINESS_MEMBERS.indexOf(name)] || "");
   const anchor = periodIndex("2026-11");
+  data.phones = data.members.map((name, i) => {
+    const existing = data.phones?.[i];
+    if (existing && !existing.includes("0811-1666-727")) return existing;
+    const defIdx = DEFAULT_BUSINESS_MEMBERS.indexOf(name);
+    return defIdx >= 0 ? NON_VSAT_PHONES[defIdx] : "";
+  });
+
+  const anchor = periodIndex("2026-11");
   if (anchor === undefined) return;
   const source = sourcePeriod ? periodIndex(sourcePeriod) : undefined;
   const knownIndex = data.members.findIndex((name, i) => NON_VSAT_NIKS.includes(data.niks?.[i] ?? "") || DEFAULT_BUSINESS_MEMBERS.includes(name));
