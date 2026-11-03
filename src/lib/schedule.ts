@@ -29,6 +29,7 @@ export function workExcelFormula(range: string, backupAdjustment = 0) {
 }
 export type BusinessData = {
   rosterVersion?: number;
+  identityPeriod?: string;
   normalCells?: Record<string, Record<string, Cell>>;
   patterns?: string[][];
   patternAnchor?: number;
@@ -46,25 +47,33 @@ const DEFAULT_BUSINESS_MEMBERS = [
   "Ari Awaludin Muslim",
   "Rangga Putra Rimba",
   "Raihan Fachrudiansyah",
-  "Indra Nurrahman",
+  "Indra Nurrhaman",
   "Muhammad Dicky Chairudin",
-  "Algyan Gufarira",
+  "Algyan Gufaira",
 ];
-
-export function initializeBusiness(saved?: BusinessData, previous?: BusinessData, previousPeriod?: string): BusinessData {
-  if (saved?.rosterVersion === 2 && Array.isArray(saved.members) && saved.cells) return structuredClone(saved);
+export function initializeBusiness(saved?: BusinessData, previous?: BusinessData, previousPeriod?: string, targetPeriod?: string): BusinessData {
+  if (saved?.rosterVersion === 2 && Array.isArray(saved.members) && saved.cells) {
+    const result = structuredClone(saved);
+    if (result.regular?.name === "Ahmad Arif Rinaldi") result.regular.name = "Reguler";
+    if (targetPeriod) rotateBusinessIdentities(result, saved.identityPeriod, targetPeriod);
+    return result;
+  }
   const source = previous?.rosterVersion === 2 ? previous : undefined;
   const regularSource = saved ?? previous;
   const regularCells = saved?.cells?.[-1];
+  const regular = { ...(regularSource?.regular ?? { nik: "", name: "Reguler", phone: "" }) };
+  if (regular.name === "Ahmad Arif Rinaldi") regular.name = "Reguler";
+
   const result: BusinessData = {
     rosterVersion: 2,
     members: [...(source?.members ?? DEFAULT_BUSINESS_MEMBERS)],
-    niks: [...(source?.niks ?? ["99210193", "1230315", "9215020", "2230414", "94210128", "93210167", "92210124"])],
+    niks: [...(source?.niks ?? NON_VSAT_NIKS)],
     phones: [...(source?.phones ?? Array(7).fill("0811-1666-727 / 081213954835"))],
-    regular: { ...(regularSource?.regular ?? { nik: "", name: "Reguler", phone: "" }) },
+    regular,
     cells: regularCells ? { [-1]: structuredClone(regularCells) } : {},
     normalCells: {},
   };
+  if (targetPeriod) rotateBusinessIdentities(result, source ? previousPeriod : "2026-11", targetPeriod);
   if (source && previousPeriod) carryPatterns(result, source, previousPeriod);
   return result;
 }
@@ -94,7 +103,7 @@ export function rosterCode(m: number, year: number, month: number, day: number, 
 
 export function initializeSchedule(saved?: ScheduleData, previous?: { period: string; data: ScheduleData }, targetPeriod?: string): ScheduleData {
   const r = initShift(saved, previous, targetPeriod);
-  r.business = initializeBusiness(saved?.business, previous?.data?.business, previous?.period);
+  r.business = initializeBusiness(saved?.business, previous?.data?.business, previous?.period, targetPeriod);
   return r;
 }
 function initShift(saved?: ScheduleData, previous?: { period: string; data: ScheduleData }, targetPeriod?: string): ScheduleData {
@@ -161,4 +170,25 @@ function carryPatterns(result: ScheduleData | BusinessData, source: ScheduleData
     const cell = source.normalCells?.[m]?.[d] ?? source.cells[m]?.[d];
     return cell?.originalCode ?? (cell && cell.code !== "CT" && !cell.backupFor ? cell.code : rosterCode(m, y, mo - 1, d, source));
   }));
+}
+function rotateBusinessIdentities(data: BusinessData, sourcePeriod: string | undefined, targetPeriod: string) {
+  const target = periodIndex(targetPeriod);
+  if (target === undefined || !data.members.length) return;
+  data.niks = data.members.map((name, i) => data.niks?.[i] || NON_VSAT_NIKS[DEFAULT_BUSINESS_MEMBERS.indexOf(name)] || "");
+  const anchor = periodIndex("2026-11");
+  if (anchor === undefined) return;
+  const source = sourcePeriod ? periodIndex(sourcePeriod) : undefined;
+  const knownIndex = data.members.findIndex((name, i) => NON_VSAT_NIKS.includes(data.niks?.[i] ?? "") || DEFAULT_BUSINESS_MEMBERS.includes(name));
+  const knownOffset = knownIndex < 0 ? 0 : (() => {
+    const nikIndex = NON_VSAT_NIKS.indexOf(data.niks?.[knownIndex] ?? "");
+    return (nikIndex >= 0 ? nikIndex : DEFAULT_BUSINESS_MEMBERS.indexOf(data.members[knownIndex] ?? "")) - knownIndex;
+  })();
+  const steps = source === undefined ? target - anchor - knownOffset : target - source;
+  const count = data.members.length;
+  const offset = ((steps % count) + count) % count;
+  const order = Array.from({ length: count }, (_, i) => (i + offset) % count);
+  data.members = order.map((i) => data.members[i] ?? "");
+  if (data.niks) data.niks = order.map((i) => data.niks?.[i] ?? "");
+  if (data.phones) data.phones = order.map((i) => data.phones?.[i] ?? "");
+  data.identityPeriod = targetPeriod;
 }
