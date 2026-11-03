@@ -60,6 +60,13 @@ describe('Care Center PPSSMLL roster', () => {
     expect(draft.members).toEqual(saved.members);
     expect(draft.niks).toEqual(saved.niks);
   });
+  test('legacy empty NIKs are filled automatically for the rotated names', () => {
+    const saved = initializeSchedule(undefined, undefined, '2026-12');
+    saved.niks = Array(7).fill('');
+    delete saved.identityPeriod;
+    const draft = initializeSchedule(saved, undefined, '2026-12');
+    expect(draft.niks).toEqual(['91210131', '9416031', '9119008', '02250398', '94210087', '9717053', '9818001']);
+  });
   test('manual identities and phones follow the monthly rotation', () => {
     const november = initializeSchedule(undefined, undefined, '2026-11');
     november.members[0] = 'Personel pengganti';

@@ -131,6 +131,8 @@ function periodIndex(period: string) {
 function rotateIdentities(data: ScheduleData, sourcePeriod: string | undefined, targetPeriod: string) {
   const target = periodIndex(targetPeriod);
   if (target === undefined || !data.members.length) return;
+  // Backfill missing legacy NIKs by name before rotating, preserving manually entered identities.
+  data.niks = data.members.map((name, i) => data.niks?.[i] || VSAT_NIKS[DEFAULT_MEMBERS.indexOf(name)] || "");
   const anchor = periodIndex("2026-11");
   if (anchor === undefined) return;
   const source = sourcePeriod ? periodIndex(sourcePeriod) : undefined;
