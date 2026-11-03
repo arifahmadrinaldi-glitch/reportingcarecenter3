@@ -202,7 +202,6 @@ function rotateBusinessIdentities(data: BusinessData, sourcePeriod: string | und
   const target = periodIndex(targetPeriod);
   if (target === undefined || !data.members.length) return;
   data.niks = data.members.map((name, i) => data.niks?.[i] || NON_VSAT_NIKS[DEFAULT_BUSINESS_MEMBERS.indexOf(name)] || "");
-  const anchor = periodIndex("2026-11");
   data.phones = data.members.map((name, i) => {
     const existing = data.phones?.[i];
     if (existing && !existing.includes("0811-1666-727")) return existing;
