@@ -21,7 +21,7 @@ export const Route = createFileRoute("/jadwal")({
   head: () => ({
     meta: [
       { title: "Jadwal Shift — Reporting CC 3" },
-      { name: "description", content: "Roster shift tim 4 orang dengan siklus P P M M S S L L, cuti, backup dan total hari kerja." },
+      { name: "description", content: "Jadwal Care Center Vsat dan Non-Vsat, masing-masing tujuh personel dengan roster PPSSMLL, cuti, backup dan buffer." },
       { property: "og:title", content: "Jadwal Shift — Reporting CC 3" },
       { property: "og:description", content: "Kelola jadwal shifting tim, cuti dan backup, lalu export ke Excel." },
       { property: "og:type", content: "website" },
@@ -152,15 +152,20 @@ function JadwalPage() {
     await qc.invalidateQueries({ queryKey: ["schedule", period] });
   };
 
-  const resetRoster = () => update((draft) => { draft.cells = {}; draft.normalCells = {}; });
+  const resetRoster = () => update((draft) => {
+    draft.cells = {}; draft.normalCells = {}; draft.patterns = undefined; draft.patternAnchor = undefined;
+    if (draft.business) {
+      draft.business.cells = {}; draft.business.normalCells = {}; draft.business.patterns = undefined; draft.business.patternAnchor = undefined;
+    }
+  });
 
   const exportExcel = () => {
     const dayHeads = Array.from({ length: days }, (_, i) => String(i + 1));
     const rows: unknown[][] = [
-      [`Jadwal Shift ${BULAN_LIST[month]} ${year}`],
+      [`Care Center Vsat ${BULAN_LIST[month]} ${year}`],
       ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Buffer"],
     ];
-    [-1, 0, 1, 2, 3].forEach((m) => {
+    [-1, ...data.members.map((_, i) => i)].forEach((m) => {
       const name = m === -1 ? data.regular?.name ?? "Reguler" : data.members[m];
       const nik = m === -1 ? data.regular?.nik ?? "" : data.niks?.[m] ?? "";
       const phone = m === -1 ? data.regular?.phone ?? "" : data.phones?.[m] ?? "";
@@ -183,10 +188,10 @@ function JadwalPage() {
     const ws = XLSX.utils.aoa_to_sheet(rows);
     ws["!cols"] = [{ wch: 16 }, { wch: 20 }, { wch: 18 }, ...dayHeads.map(() => ({ wch: 5 })), { wch: 12 }, { wch: 6 }, { wch: 8 }, { wch: 8 }];
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Jadwal");
+    XLSX.utils.book_append_sheet(wb, ws, "Care Center Vsat");
     const b = data.business ?? initializeBusiness();
-    const brows: unknown[][] = [[`Jadwal Business ${BULAN_LIST[month]} ${year}`], ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Buffer"]];
-    [-1, 0, 1, 2, 3].forEach((m) => {
+    const brows: unknown[][] = [[`Care Center Non-Vsat ${BULAN_LIST[month]} ${year}`], ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Buffer"]];
+    [-1, ...b.members.map((_, i) => i)].forEach((m) => {
       const st = businessStats(b, m, days, year, month);
       brows.push([m === -1 ? b.regular.nik : b.niks[m], m === -1 ? b.regular.name : b.members[m], m === -1 ? b.regular.phone : b.phones[m],
         ...dayHeads.map((_, i) => { const c = businessCell(b, m, i + 1, year, month); return c.backupFor ? `${c.code} (BK ${c.backupFor})` : c.code; }),
@@ -195,7 +200,7 @@ function JadwalPage() {
     brows.push([], ["Keterangan: P/S/M = 1 shift, PS/SM/MP/PM = 2 shift, PSM = 3 shift, L = Libur, CT = Cuti, BK = Backup"]);
     const bws = XLSX.utils.aoa_to_sheet(brows);
     bws["!cols"] = ws["!cols"];
-    XLSX.utils.book_append_sheet(wb, bws, "Jadwal Business");
+    XLSX.utils.book_append_sheet(wb, bws, "Care Center Non-Vsat");
     XLSX.writeFile(wb, `Jadwal_${period}.xlsx`);
   };
 
@@ -226,6 +231,7 @@ function JadwalPage() {
         </div>
 
         {query.error && <p role="alert" className="text-xs text-destructive">Jadwal gagal dimuat. Silakan coba lagi.</p>}
+        <h2 className="font-display text-base font-semibold">Care Center Vsat</h2>
         <div className="overflow-x-auto rounded-lg border bg-card" aria-busy={query.isFetching}>
           {query.isFetching ? <p className="p-4 text-xs text-muted-foreground">Memuat jadwal…</p> : <>
           <table className="w-full min-w-[1500px] table-fixed border-collapse text-[10px]">

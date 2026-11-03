@@ -23,7 +23,7 @@ const toneFor = (c: string) => `font-bold ${tone[c] ?? "bg-success text-success-
 const ORDER = ["P", "S", "M"];
 
 export function businessCell(b: BusinessData, m: number, d: number, year: number, month: number): Cell {
-  return b.cells[m]?.[d] ?? { code: m === -1 ? regularCode(year, month, d) : businessCode(m, year, month, d) };
+  return b.cells[m]?.[d] ?? { code: m === -1 ? regularCode(year, month, d) : businessCode(m, year, month, d, b) };
 }
 export function businessStats(b: BusinessData, m: number, days: number, year: number, month: number) {
   const regularWork = scheduleStats((d) => businessCell(b, -1, d, year, month), days).work;
@@ -42,10 +42,15 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
     if (!editing) return;
     const { m, d } = editing;
     const cur = get(m, d);
-    const normal = cur.originalCode ?? (cur.code !== "CT" && !cur.backupFor ? cur.code : m === -1 ? regularCode(year, month, d) : businessCode(m, year, month, d));
+    const normal = cur.originalCode ?? (cur.code !== "CT" && !cur.backupFor ? cur.code : m === -1 ? regularCode(year, month, d) : businessCode(m, year, month, d, data));
     onChange((b) => {
       b.cells[m] ??= {};
       b.cells[m][d] = { code: pending, ...(pending === "CT" ? { originalCode: normal } : {}) };
+      if (pending !== "CT") {
+        b.normalCells ??= {};
+        b.normalCells[m] ??= {};
+        b.normalCells[m][d] = { code: pending };
+      }
       if (pending === "CT" && backup !== "none") {
         const i = Number(backup);
         const oc = get(i, d);
@@ -113,7 +118,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
 
   return (
     <div className="space-y-2">
-      <h2 className="font-display text-base font-semibold">Jadwal Business</h2>
+      <h2 className="font-display text-base font-semibold">Care Center Non-Vsat</h2>
       <div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full min-w-[1500px] table-fixed border-collapse text-[10px]">
   <colgroup>
@@ -142,7 +147,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
               <th className="px-2 text-center">Hari Kerja</th><th className="px-2 text-center">CT</th><th className="px-2 text-center">Backup</th><th className="px-2 text-center">Buffer</th>
             </tr>
           </thead>
-          <tbody>{[-1, 0, 1, 2, 3].map(row)}</tbody>
+          <tbody>{[-1, ...data.members.map((_, i) => i)].map(row)}</tbody>
         </table>
       </div>
       <p className="text-[10px] text-muted-foreground"></p>
@@ -150,7 +155,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
       <Dialog open={!!editing} onOpenChange={(o) => !o && setEditing(null)}>
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Ubah Jadwal Business</DialogTitle>
+            <DialogTitle>Ubah Jadwal Non-Vsat</DialogTitle>
             <DialogDescription>{editing && `${editing.m === -1 ? data.regular.name : data.members[editing.m]} · ${editing.d} ${BULAN_LIST[month]} ${year}`}</DialogDescription>
           </DialogHeader>
           <div className="space-y-3">
