@@ -1,5 +1,5 @@
 # Roadmap
-- [ ] Otomatiskan rotasi bulanan identitas Vsat (nama/NIK), termasuk jadwal tersimpan, dan verifikasi tanpa mengubah perhitungan shift.
+- [x] Otomatiskan rotasi bulanan identitas Vsat (nama/NIK), termasuk jadwal tersimpan; 22 tes lulus, pergantian November–Desember, muat ulang dan Excel terverifikasi tanpa mengubah perhitungan shift.
 - [x] Sesuaikan tim Jadwal ke Vsat/Non-Vsat masing-masing 7 personel dan pola PPSSMLL sesuai gambar tanpa mengubah perhitungan; 16 tes lulus, tampilan/Excel teruji, roster November disimpan dan terverifikasi setelah muat ulang.
 - [x] Gunakan koneksi @CC3Notif_bot untuk OTP login tanpa token di browser; identitas bot terkonfirmasi dan pengiriman OTP dengan sesi asli berhasil (200).
 - [x] Tambahkan kategori vsat/nonvsat untuk semua perintah Telegram dan rincian layanan pada resume; 12 pengujian lulus, kedua kategori teruji dengan data asli dan pesan terkirim ke chat pengguna.
