@@ -51,6 +51,8 @@ const DEFAULT_BUSINESS_MEMBERS = [
   "Muhammad Dicky Chairudin",
   "Algyan Gufaira",
 ];
+const NON_VSAT_NIKS = ["99210193", "1230315", "9215020", "2230414", "94210128", "93210167", "92210124"];
+
 export function initializeBusiness(saved?: BusinessData, previous?: BusinessData, previousPeriod?: string, targetPeriod?: string): BusinessData {
   if (saved?.rosterVersion === 2 && Array.isArray(saved.members) && saved.cells) {
     const result = structuredClone(saved);
