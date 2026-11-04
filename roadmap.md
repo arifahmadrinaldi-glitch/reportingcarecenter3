@@ -1,4 +1,5 @@
 # Roadmap
+- [x] Pulihkan respons bot grup: pengaman penerimaan disamakan, tiga pesan tertunda diproses (200), empat balasan diterima Telegram, antrean nol; 12 tes Telegram/kategori lulus dan build OK. Tes jadwal lama masih mengharapkan Non-Vsat tidak berotasi, berbeda dari implementasi saat ini; tidak diubah dalam perbaikan bot.
 - [x] Otomatiskan rotasi bulanan identitas Vsat (nama/NIK), termasuk jadwal tersimpan; 22 tes lulus, pergantian November–Desember, muat ulang dan Excel terverifikasi tanpa mengubah perhitungan shift.
 - [x] Sesuaikan tim Jadwal ke Vsat/Non-Vsat masing-masing 7 personel dan pola PPSSMLL sesuai gambar tanpa mengubah perhitungan; 16 tes lulus, tampilan/Excel teruji, roster November disimpan dan terverifikasi setelah muat ulang.
 - [x] Gunakan koneksi @CC3Notif_bot untuk OTP login tanpa token di browser; identitas bot terkonfirmasi dan pengiriman OTP dengan sesi asli berhasil (200).

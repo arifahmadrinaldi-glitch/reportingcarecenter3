@@ -167,7 +167,7 @@ function rotateIdentities(data: ScheduleData, sourcePeriod: string | undefined, 
     const existing = data.phones?.[i];
     if (existing && !existing.includes("0813-8257-3869")) return existing;
     const defIdx = DEFAULT_MEMBERS.indexOf(name);
-    return defIdx >= 0 ? VSAT_PHONES[defIdx] : "";
+    return defIdx >= 0 ? (VSAT_PHONES[defIdx] ?? "") : "";
   });
   const anchor = periodIndex("2026-11");
   if (anchor === undefined) return;
@@ -206,7 +206,7 @@ function rotateBusinessIdentities(data: BusinessData, sourcePeriod: string | und
     const existing = data.phones?.[i];
     if (existing && !existing.includes("0811-1666-727")) return existing;
     const defIdx = DEFAULT_BUSINESS_MEMBERS.indexOf(name);
-    return defIdx >= 0 ? NON_VSAT_PHONES[defIdx] : "";
+    return defIdx >= 0 ? (NON_VSAT_PHONES[defIdx] ?? "") : "";
   });
 
   const anchor = periodIndex("2026-11");
