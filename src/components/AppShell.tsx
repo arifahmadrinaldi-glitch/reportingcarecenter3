@@ -55,7 +55,7 @@ export function AppShell({
           </span>
           {expanded ? (
             <span className="min-w-0 leading-tight">
-              <span className="block truncate text-sm font-bold text-sidebar-accent-foreground">Reporting CC 3</span>
+              <span className="block truncate text-sm font-bold text-sidebar-accent-foreground">Reporting Care Center</span>
               <span className="block truncate text-[11px] text-sidebar-foreground/70">Operations Dashboard</span>
             </span>
           ) : null}
