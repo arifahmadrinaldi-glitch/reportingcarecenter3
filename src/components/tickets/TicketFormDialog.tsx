@@ -220,7 +220,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, category, onSubmi
               <DateTimePicker value={openAt} onChange={setOpenAt} />
             </div>
             <div className="space-y-1.5">
-              {fieldLabel("Tanggal Close", false)}
+              {fieldLabel("Tanggal Tech Close", false)}
               <DateTimePicker value={closeAt} onChange={setCloseAt} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
