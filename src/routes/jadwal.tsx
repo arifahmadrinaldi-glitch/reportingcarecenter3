@@ -267,7 +267,7 @@ function JadwalPage() {
                 <th className="px-2 text-center">Hari Kerja</th>
                 <th className="px-2 text-center">CT</th>
                 <th className="px-2 text-center">Backup</th>
-                <th className="px-2 text-center">Buffer</th>
+                <th className="px-2 text-center">Overtime</th>
               </tr>
             </thead>
             <tbody>
