@@ -14,7 +14,6 @@ const navItems: any[] = [
   { to: "/tickets", label: "Daftar Ticket", icon: Ticket },
   { to: "/daily-activity", label: "Daily Activity", icon: ClipboardList },
   { to: "/jadwal", label: "Jadwal", icon: CalendarDays },
-  { to: "/monitoring-starlink", label: "Monitoring Starlink", icon: Satellite },
 ];
 
 export function AppShell({
