@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DailyActivityRouteImport } from './routes/daily-activity'
 import { Route as JadwalRouteImport } from './routes/jadwal'
+import { Route as MonitoringStarlinkRouteImport } from './routes/monitoring-starlink'
 import { Route as PrtgRouteImport } from './routes/prtg'
 import { Route as TicketsRouteImport } from './routes/tickets'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
@@ -29,6 +30,11 @@ const DailyActivityRoute = DailyActivityRouteImport.update({
 const JadwalRoute = JadwalRouteImport.update({
   id: '/jadwal',
   path: '/jadwal',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonitoringStarlinkRoute = MonitoringStarlinkRouteImport.update({
+  id: '/monitoring-starlink',
+  path: '/monitoring-starlink',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrtgRoute = PrtgRouteImport.update({
@@ -52,6 +58,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/daily-activity': typeof DailyActivityRoute
   '/jadwal': typeof JadwalRoute
+  '/monitoring-starlink': typeof MonitoringStarlinkRoute
   '/prtg': typeof PrtgRoute
   '/tickets': typeof TicketsRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -60,6 +67,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/daily-activity': typeof DailyActivityRoute
   '/jadwal': typeof JadwalRoute
+  '/monitoring-starlink': typeof MonitoringStarlinkRoute
   '/prtg': typeof PrtgRoute
   '/tickets': typeof TicketsRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -69,6 +77,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/daily-activity': typeof DailyActivityRoute
   '/jadwal': typeof JadwalRoute
+  '/monitoring-starlink': typeof MonitoringStarlinkRoute
   '/prtg': typeof PrtgRoute
   '/tickets': typeof TicketsRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
@@ -79,6 +88,7 @@ export interface FileRouteTypes {
     | '/'
     | '/daily-activity'
     | '/jadwal'
+    | '/monitoring-starlink'
     | '/prtg'
     | '/tickets'
     | '/api/public/telegram/webhook'
@@ -87,6 +97,7 @@ export interface FileRouteTypes {
     | '/'
     | '/daily-activity'
     | '/jadwal'
+    | '/monitoring-starlink'
     | '/prtg'
     | '/tickets'
     | '/api/public/telegram/webhook'
@@ -95,6 +106,7 @@ export interface FileRouteTypes {
     | '/'
     | '/daily-activity'
     | '/jadwal'
+    | '/monitoring-starlink'
     | '/prtg'
     | '/tickets'
     | '/api/public/telegram/webhook'
@@ -104,6 +116,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DailyActivityRoute: typeof DailyActivityRoute
   JadwalRoute: typeof JadwalRoute
+  MonitoringStarlinkRoute: typeof MonitoringStarlinkRoute
   PrtgRoute: typeof PrtgRoute
   TicketsRoute: typeof TicketsRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
@@ -130,6 +143,13 @@ declare module '@tanstack/react-router' {
       path: '/jadwal'
       fullPath: '/jadwal'
       preLoaderRoute: typeof JadwalRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monitoring-starlink': {
+      id: '/monitoring-starlink'
+      path: '/monitoring-starlink'
+      fullPath: '/monitoring-starlink'
+      preLoaderRoute: typeof MonitoringStarlinkRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/prtg': {
@@ -160,6 +180,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DailyActivityRoute: DailyActivityRoute,
   JadwalRoute: JadwalRoute,
+  MonitoringStarlinkRoute: MonitoringStarlinkRoute,
   PrtgRoute: PrtgRoute,
   TicketsRoute: TicketsRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,

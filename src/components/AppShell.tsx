@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { CalendarDays, ClipboardList, LayoutGrid, LogOut, Radio, Ticket } from "lucide-react";
+import { CalendarDays, ClipboardList, LayoutGrid, LogOut, Radio, Satellite, Ticket } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { AccessControls } from "@/components/AccessControls";
@@ -14,6 +14,7 @@ const navItems: any[] = [
   { to: "/tickets", label: "Daftar Ticket", icon: Ticket },
   { to: "/daily-activity", label: "Daily Activity", icon: ClipboardList },
   { to: "/jadwal", label: "Jadwal", icon: CalendarDays },
+  { to: "/monitoring-starlink", label: "Monitoring Starlink", icon: Satellite },
 ];
 
 export function AppShell({
@@ -86,22 +87,24 @@ export function AppShell({
       </aside>
 
       <div className="flex min-w-0 flex-1 flex-col">
-        <header className="flex items-center justify-between gap-4 border-b border-border bg-surface px-5 py-3.5">
+        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-border bg-surface px-5 py-3.5">
           <div className="min-w-0">
             <h1 className="truncate text-base font-bold text-foreground">{title}</h1>
             <p className="truncate text-[10px] text-muted-foreground">{subtitle}</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
             {actions}
             <nav className="flex gap-1 lg:hidden">
-              {navItems.map(({ to, label }) => (
+              {navItems.map(({ to, label, icon: Icon }) => (
                 <Link
                   key={to}
                   to={to}
+                  aria-label={label}
+                  title={label}
                   activeOptions={{ exact: to === "/" }}
                   className="rounded-md px-2.5 py-1.5 text-xs font-medium text-muted-foreground data-[status=active]:bg-accent data-[status=active]:text-accent-foreground"
                 >
-                  {label}
+                  <Icon className="size-4" />
                 </Link>
               ))}
             </nav>

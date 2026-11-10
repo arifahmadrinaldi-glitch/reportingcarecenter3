@@ -36,7 +36,7 @@ const fields: { label: string; get: (t: TicketRow) => string }[] = [
   { label: "Team SEM", get: (t) => t.team_sem ?? "-" },
   { label: "Open By", get: (t) => t.open_by ?? "-" },
   { label: "Tanggal Open", get: (t) => formatDateTime(t.tanggal_open) },
-  { label: "Tanggal Tech Close", get: (t) => formatDateTime(t.tanggal_techclose) },
+  { label: "Tanggal Tech Close", get: (t) => formatDateTime(t.tanggal_close) },
   { label: "Teknisi", get: (t) => t.teknisi ?? "-" },
 ];
 

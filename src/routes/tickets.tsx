@@ -103,7 +103,7 @@ const columns: { key: keyof TicketRow; label: string; align: Align }[] = [
   { key: "team_sem", label: "Team SEM", align: "center" },
   { key: "open_by", label: "Open By", align: "center" },
   { key: "tanggal_open", label: "Tanggal Open", align: "center" },
-  { key: "tanggal_tech close", label: "Tanggal Tech Close", align: "center" },
+  { key: "tanggal_close", label: "Tanggal Tech Close", align: "center" },
   { key: "durasi", label: "Durasi", align: "center" },
   { key: "teknisi", label: "Teknisi", align: "center" },
 ];

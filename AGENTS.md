@@ -18,3 +18,4 @@
 - Version roster configuration in schedule JSON and adapt legacy team data only in the editable draft until explicitly saved; derive table and export rows from team membership, and anchor staggered cycles to the reference date to keep both teams aligned across months.
 - Keep Indonesian national holiday dates in a browser-safe calendar module with explicit yearly coverage; unverified religious dates must remain manually editable rather than guessed.
 - Use shared browser-safe schedule statistics for both tables and Excel exports so combined shifts, backup coverage and regular-relative totals stay consistent.
+- Keep Starlink filtering/status counts browser-safe and service-account adapters server-only behind authenticated sync; label demo snapshots explicitly and never substitute demo data after a live provider failure.
