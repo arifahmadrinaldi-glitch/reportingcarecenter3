@@ -62,8 +62,7 @@ export function TopAgingTickets({ tickets }: { tickets: TicketRow[] }) {
                     <Clock className="size-3.5" />
                     <span>{durasiStr}</span>
                   </div>
-                </di
-                  v>
+                </div>
               );
             })}
           </div>
