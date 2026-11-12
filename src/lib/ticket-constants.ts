@@ -243,3 +243,27 @@ export const computeDurasi = (open: string | null, close: string | null) => {
   const base = `${days} Hari ${hours} Jam ${minutes} Menit`;
   return close ? base : `${base} (berjalan)`;
 };
+export const parsePendingDeadline = (keterangan: string | null): Date | null => {
+  if (!keterangan) return null;
+  const m1 = keterangan.match(/(\d{4})[-/](\d{1,2})[-/](\d{1,2})(?:[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (m1) {
+    const [, y, m, d, hh, mm, ss] = m1;
+    return new Date(Number(y), Number(m) - 1, Number(d), Number(hh ?? 0), Number(mm ?? 0), Number(ss ?? 0));
+  }
+  const m2 = keterangan.match(/(\d{1,2})[-/](\d{1,2})[-/](\d{4})(?:[ T]+(\d{1,2}):(\d{2})(?::(\d{2}))?)?/);
+  if (m2) {
+    const [, d, m, y, hh, mm, ss] = m2;
+    return new Date(Number(y), Number(m) - 1, Number(d), Number(hh ?? 0), Number(mm ?? 0), Number(ss ?? 0));
+  }
+  return null;
+};
+
+export const formatTimeDiff = (ms: number): string => {
+  const totalMin = Math.floor(Math.abs(ms) / 60000);
+  const days = Math.floor(totalMin / 1440);
+  const hours = Math.floor((totalMin % 1440) / 60);
+  const minutes = totalMin % 60;
+  if (days > 0) return `${days}h ${hours}j`;
+  if (hours > 0) return `${hours}j ${minutes}m`;
+  return `${minutes}m`;
+};
