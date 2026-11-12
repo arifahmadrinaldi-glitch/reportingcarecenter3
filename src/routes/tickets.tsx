@@ -897,6 +897,8 @@ function TicketsPage() {
                         openedAt={ticket.tanggal_open}
                         closedAt={ticket.tanggal_close}
                         fallback={ticket.durasi}
+                        keterangan={ticket.keterangan}
+                        status={ticket.status}
                       />
                       <Subline label="Open" value={formatDateTime(ticket.tanggal_open)} />
                       <Subline label="Close" value={formatDateTime(ticket.tanggal_close)} />
