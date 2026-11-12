@@ -50,7 +50,7 @@ export function HandoverDialog({ open, onOpenChange, tickets, category }: {
   const copy = async () => { await navigator.clipboard.writeText(text); toast.success("Teks handover disalin"); };
   const send = async () => {
     setSending(true);
-    try { await sendHandover({ data: { text } }); toast.success("Handover terkirim ke Telegram"); }
+    try { await sendHandover({ data: { text } }); toast.success("Handover terkirim ke Telegram"); setNotes(""); onOpenChange(false); }
     catch (e) { toast.error("Gagal kirim ke Telegram", { description: e instanceof Error ? e.message : String(e) }); }
     finally { setSending(false); }
   };
