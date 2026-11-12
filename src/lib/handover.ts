@@ -41,8 +41,13 @@ export function officersOn(data: ScheduleData | BusinessData | undefined, slot: 
   data.members.forEach((name, m) => {
     const cell: Cell = data.cells?.[m]?.[d] ?? { code: rosterCode(m, y, mo, d, data) };
     if (cell.code === "CT" || !cell.code.includes(slot.shift)) return;
-    const own = cell.originalCode ?? "";
-    const isCover = Boolean(cell.backupFor && cell.covered?.includes(slot.shift) && !own.includes(slot.shift));
+
+    // Cek shift asli dari jadwal dasar (roster)
+    const normalShift = cell.originalCode || rosterCode(m, y, mo, d, data);
+
+    // Keterangan backup hanya muncul jika shift ini BUKAN shift aslinya
+    const isCover = Boolean(cell.backupFor && !normalShift.includes(slot.shift));
+
     out.push(isCover ? `${name} (backup ${cell.backupFor})` : name);
   });
   return out;
