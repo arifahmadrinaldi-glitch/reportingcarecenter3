@@ -37,14 +37,15 @@ export const periodOf = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)
 export function officersOn(data: ScheduleData | BusinessData | undefined, slot: ShiftSlot): string[] {
   if (!data?.members?.length) return [];
   const y = slot.date.getFullYear(), mo = slot.date.getMonth(), d = slot.date.getDate();
-  return data.members.filter((_, m) => {
+  const out: string[] = [];
+  data.members.forEach((name, m) => {
     const cell: Cell = data.cells?.[m]?.[d] ?? { code: rosterCode(m, y, mo, d, data) };
-    return cell.code !== "CT" && cell.code.includes(slot.shift);
-  }).map((name, i) => {
-    const m = data.members.indexOf(name);
-    const cell = data.cells?.[m]?.[d];
-    return cell?.backupFor ? `${name} (backup ${cell.backupFor})` : name;
-  }).filter((_, i) => i >= 0);
+    if (cell.code === "CT" || !cell.code.includes(slot.shift)) return;
+    const own = cell.originalCode ?? "";
+    const isCover = Boolean(cell.backupFor && cell.covered?.includes(slot.shift) && !own.includes(slot.shift));
+    out.push(isCover ? `${name} (backup ${cell.backupFor})` : name);
+  });
+  return out;
 }
 
 const isClosed = (s: string) => s === "Close" || s === "Technical Close";

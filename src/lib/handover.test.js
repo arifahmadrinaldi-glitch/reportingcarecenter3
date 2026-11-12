@@ -17,6 +17,7 @@ describe("handover", () => {
     const data = { members: ["A", "B"], cells: { 0: { 12: { code: "CT", originalCode: "P" } }, 1: { 12: { code: "PS", backupFor: "A", originalCode: "S", covered: "P" } } } };
     const slot = currentShift(new Date(2026, 10, 12, 10));
     expect(officersOn(data, slot)).toEqual(["B (backup A)"]);
+    expect(officersOn(data, nextShift(slot))).toEqual(["B"]);
   });
   test("report counts only selected category", () => {
     const t = (layanan, status) => ({ layanan, status, jenis_ticket: "Corrective Maintenance", nama_lokasi: "X", created_at: "2026-11-01" });
