@@ -32,20 +32,14 @@ export function LiveDuration({
   return (
     <div className="flex flex-col gap-0.5">
       <span>{duration || fallback || "-"}</span>
-      {deadline && remainingMs !== null ? (
-        isOverdue ? (
-          <span className="inline-flex w-fit items-center gap-1 rounded bg-destructive/15 px-1.5 py-0.5 text-[9px] font-bold text-destructive border border-destructive/30 animate-pulse">
-            ⚠️ Overdue ({formatTimeDiff(remainingMs)})
-          </span>
-        ) : isNearLimit ? (
-          <span className="inline-flex w-fit items-center gap-1 rounded bg-destructive/15 px-1.5 py-0.5 text-[9px] font-bold text-destructive border border-destructive/30 animate-pulse">
-            ⚠️ Kritis (Sisa {formatTimeDiff(remainingMs)})
-          </span>
-        ) : (
-          <span className="inline-flex w-fit items-center gap-1 rounded bg-amber-500/15 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:text-amber-400 border border-amber-500/30">
-            ⏳ Sisa {formatTimeDiff(remainingMs)}
-          </span>
-        )
+      {isOverdue ? (
+        <span className="inline-flex w-fit items-center gap-1 rounded bg-destructive/15 px-1.5 py-0.5 text-[9px] font-bold text-destructive border border-destructive/30 animate-pulse">
+          ⚠️ Overdue ({formatTimeDiff(remainingMs)})
+        </span>
+      ) : isNearLimit ? (
+        <span className="inline-flex w-fit items-center gap-1 rounded bg-destructive/15 px-1.5 py-0.5 text-[9px] font-bold text-destructive border border-destructive/30 animate-pulse">
+          ⚠️ Kritis (Sisa {formatTimeDiff(remainingMs)})
+        </span>
       ) : null}
     </div>
   );
