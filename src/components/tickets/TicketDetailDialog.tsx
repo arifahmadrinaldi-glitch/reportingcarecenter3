@@ -149,6 +149,8 @@ export function TicketDetailDialog({
                     openedAt={ticket.tanggal_open}
                     closedAt={ticket.tanggal_close}
                     fallback={ticket.durasi}
+                    keterangan={ticket.keterangan}
+                    status={ticket.status}
                   />
                 </dd>
               </div>
