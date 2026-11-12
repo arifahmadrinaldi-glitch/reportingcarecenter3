@@ -22,6 +22,9 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { CareCenterFilter } from "@/components/CareCenterFilter";
 import { DailyActivityDashboard } from "@/components/daily/DailyActivityDashboard";
+import { KpiCards } from "@/components/dashboard/KpiCards";
+import { DailyTrendChart } from "@/components/dashboard/DailyTrendChart";
+import { TopAgingTickets } from "@/components/dashboard/TopAgingTickets";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
@@ -294,6 +297,13 @@ function Index() {
         </Button>
         </div>
       </div>
+      <KpiCards tickets={filtered} />
+
+      <div className="mt-4 grid gap-4 xl:grid-cols-2">
+        <DailyTrendChart tickets={filtered} />
+        <TopAgingTickets tickets={filtered} />
+
+        <Panel title="Jumlah Ticket per Customer" subtitle="Urut dari terbanyak, mengikuti filter bulan & tahun">
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         <Panel title="Jumlah Ticket per Customer" subtitle="Urut dari terbanyak, mengikuti filter bulan & tahun">
