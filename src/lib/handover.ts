@@ -42,11 +42,11 @@ export function officersOn(data: ScheduleData | BusinessData | undefined, slot: 
     const cell: Cell = data.cells?.[m]?.[d] ?? { code: rosterCode(m, y, mo, d, data) };
     if (cell.code === "CT" || !cell.code.includes(slot.shift)) return;
 
-    // Cek shift asli dari jadwal dasar (roster)
-    const normalShift = cell.originalCode || rosterCode(m, y, mo, d, data);
+    // Shift asli petugas berdasarkan urutan siklus roster PPSSM
+    const baseShift = rosterCode(m, y, mo, d, data);
 
-    // Keterangan backup hanya muncul jika shift ini BUKAN shift aslinya
-    const isCover = Boolean(cell.backupFor && !normalShift.includes(slot.shift));
+    // Keterangan backup hanya muncul jika shift yang dicek berbeda dari shift aslinya
+    const isCover = Boolean(cell.backupFor && slot.shift !== baseShift);
 
     out.push(isCover ? `${name} (backup ${cell.backupFor})` : name);
   });
