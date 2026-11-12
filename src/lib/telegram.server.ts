@@ -150,3 +150,25 @@ export async function telegramRequest(method: string, body: Record<string, unkno
   if (!result.ok) throw new Error(`Telegram: ${result.description ?? "gagal kirim"}`);
   return result;
 }
+
+export async function sendTelegramHandover(text: string): Promise<{ sent: number }> {
+  const chatIds = await listChatIds();
+  if (!chatIds.length) throw new Error("Belum ada chat Telegram terdaftar");
+  const esc = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const chunks: string[] = [];
+  let buf = "";
+  for (const line of esc.split("\n")) {
+    if (buf.length + line.length > 3500) { chunks.push(buf); buf = ""; }
+    buf += (buf ? "\n" : "") + line;
+  }
+  if (buf) chunks.push(buf);
+  let sent = 0;
+  for (const chatId of chatIds) {
+    try {
+      for (const c of chunks) await telegramRequest("sendMessage", { chat_id: chatId, text: mono(c), parse_mode: "HTML" });
+      sent++;
+    } catch (e) { console.error(e); }
+  }
+  if (!sent) throw new Error("Gagal kirim ke Telegram");
+  return { sent };
+}

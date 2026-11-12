@@ -28,6 +28,7 @@ import { StatusBadge } from "@/components/tickets/StatusBadge";
 import { TicketDetailDialog } from "@/components/tickets/TicketDetailDialog";
 import { TicketFormDialog, type SaveMeta } from "@/components/tickets/TicketFormDialog";
 import { LiveDuration } from "@/components/tickets/LiveDuration";
+import { HandoverDialog } from "@/components/handover/HandoverDialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -214,6 +215,7 @@ function TicketsPage() {
   const [editing, setEditing] = useState<TicketRow | null>(null);
   const [detail, setDetail] = useState<TicketRow | null>(null);
   const [rollbackOpen, setRollbackOpen] = useState(false);
+  const [handoverOpen, setHandoverOpen] = useState(false);
   const [filtersReady, setFiltersReady] = useState(false);
   const importInputRef = useRef<HTMLInputElement>(null);
 
@@ -692,6 +694,9 @@ function TicketsPage() {
               >
                 <Plus className="size-4" /> Tambah Ticket
               </Button>
+              <Button variant="outline" onClick={() => setHandoverOpen(true)}>
+                Handover Shift
+              </Button>
               {isAdmin ? (
                 <>
                   <Button variant="outline" size="icon" onClick={exportExcel} title="Export">
@@ -965,6 +970,7 @@ function TicketsPage() {
         category={tab}
         onSubmit={saveTicket}
       />
+      <HandoverDialog open={handoverOpen} onOpenChange={setHandoverOpen} tickets={tickets} category={tab} />
       <TicketDetailDialog ticket={detail} onOpenChange={() => setDetail(null)} />
       <RollbackDialog
         open={rollbackOpen}
