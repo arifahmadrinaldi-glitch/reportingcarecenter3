@@ -323,7 +323,7 @@ function Index() {
             <ResponsiveContainer width="100%" height="100%">
               <LineChart data={perOpenBy} margin={{ left: 8, right: 16, top: 8 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" />
-                <XAxis dataKey="name" {...axisProps} />
+                <XAxis dataKey="name" interval={0} angle={-35} textAnchor="end" height={60} {...axisProps} />
                 <YAxis allowDecimals={false} {...axisProps} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Line
