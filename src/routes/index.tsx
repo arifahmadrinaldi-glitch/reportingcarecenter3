@@ -22,11 +22,13 @@ import {
 import { AppShell } from "@/components/AppShell";
 import { CareCenterFilter } from "@/components/CareCenterFilter";
 import { DailyActivityDashboard } from "@/components/daily/DailyActivityDashboard";
+import { DashboardPerformance } from "@/components/DashboardPerformance";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { BULAN_OPTIONS, type TicketRow } from "@/lib/ticket-constants";
 import { filterCareCenterRows, type CareCenterSelection } from "@/lib/care-center-filter";
+import { matchesDashboardPeriod } from "@/lib/dashboard-metrics";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,12 +36,12 @@ export const Route = createFileRoute("/")({
       { title: "Dashboard — Reporting CC 3" },
       {
         name: "description",
-        content: "Ringkasan ticket gangguan: jumlah open, progress, pending dan close beserta ticket terbaru.",
+        content: "Dashboard Reporting CC 3: MTTR, tingkat penyelesaian, tiket overdue, tren harian Open vs Close dan tiket aktif terlama.",
       },
       { property: "og:title", content: "Dashboard — Reporting CC 3" },
       {
         property: "og:description",
-        content: "Ringkasan status ticket gangguan dan aktivitas terbaru dalam satu halaman.",
+        content: "Pantau performa Care Center Vsat dan Non-Vsat, tren tiket harian dan lima tiket aktif terlama sesuai periode.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
@@ -51,12 +53,12 @@ export const Route = createFileRoute("/")({
 const ALL = "__all__";
 
 const CHART_COLORS = [
-  "oklch(0.55 0.19 258)",
-  "oklch(0.68 0.13 210)",
-  "oklch(0.62 0.14 155)",
-  "oklch(0.75 0.15 75)",
-  "oklch(0.62 0.18 300)",
-  "oklch(0.6 0.17 25)",
+  "var(--primary)",
+  "var(--chart-2)",
+  "var(--success)",
+  "var(--warning)",
+  "var(--status-purple)",
+  "var(--destructive)",
 ];
 
 function Panel({ title, subtitle, children }: { title: string; subtitle: string; children: React.ReactNode }) {
@@ -145,16 +147,19 @@ function Index() {
   const [bulan, setBulan] = useState(ALL);
   const [tahun, setTahun] = useState(ALL);
 
-  const { data: tickets = [] } = useQuery({
+  const { data: tickets = [], isPending, isError } = useQuery({
     queryKey: ["tickets", "active"],
+    refetchInterval: 30_000,
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("tickets")
-        .select("*")
-        .is("deleted_at", null)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as TicketRow[];
+      const rows: TicketRow[] = [];
+      const pageSize = 1000;
+      for (let offset = 0; ; offset += pageSize) {
+        const { data, error } = await supabase.from("tickets").select("*").is("deleted_at", null)
+          .order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + pageSize - 1);
+        if (error) throw error;
+        rows.push(...((data ?? []) as TicketRow[]));
+        if (!data || data.length < pageSize) return rows;
+      }
     },
   });
 
@@ -165,7 +170,7 @@ function Index() {
       Array.from(
         new Set(
           categoryTickets
-            .map((t) => (t.tanggal_open ? new Date(t.tanggal_open).getFullYear() : null))
+            .flatMap((t) => [t.tanggal_open, t.tanggal_close].map((date) => date ? new Date(date).getFullYear() : null))
             .filter(Boolean) as number[],
         ),
       )
@@ -178,11 +183,7 @@ function Index() {
     () =>
       categoryTickets.filter((t) => {
         if (bulan === ALL && tahun === ALL) return true;
-        if (!t.tanggal_open) return false;
-        const date = new Date(t.tanggal_open);
-        if (bulan !== ALL && BULAN_OPTIONS[date.getMonth()] !== bulan) return false;
-        if (tahun !== ALL && String(date.getFullYear()) !== tahun) return false;
-        return true;
+        return matchesDashboardPeriod(t.tanggal_open, bulan, tahun);
       }),
     [categoryTickets, bulan, tahun],
   );
@@ -294,6 +295,8 @@ function Index() {
         </Button>
         </div>
       </div>
+
+      {isError ? <p role="alert" className="mt-4 text-xs text-destructive">Data tiket gagal dimuat. Silakan coba kembali.</p> : isPending ? <p role="status" className="mt-4 text-xs text-muted-foreground">Memuat performa tiket…</p> : <DashboardPerformance tickets={filtered} categoryTickets={categoryTickets} month={bulan} year={tahun} />}
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
         <Panel title="Jumlah Ticket per Customer" subtitle="Urut dari terbanyak, mengikuti filter bulan & tahun">

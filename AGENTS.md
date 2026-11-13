@@ -20,3 +20,4 @@
 - Use shared browser-safe schedule statistics for both tables and Excel exports so combined shifts, backup coverage and regular-relative totals stay consistent.
 - Keep Starlink filtering/status counts browser-safe and service-account adapters server-only behind authenticated sync; label demo snapshots explicitly and never substitute demo data after a live provider failure.
 - Build shift handover text in the browser-safe handover module (shift windows, roster-based officers incl. CT backups); send via authenticated server function using the shared Telegram helper.
+- Keep dashboard KPI, overdue and daily event aggregation in a browser-safe metrics module; use opening-date cohorts for KPI/oldest lists and each event's own date for trends, so cross-month closes are not lost. Completion rate is closed/all, not an unconfigured contractual SLA.
