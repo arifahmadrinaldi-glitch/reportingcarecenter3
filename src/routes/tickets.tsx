@@ -254,7 +254,7 @@ function TicketsPage() {
       "tickets-filters",
       JSON.stringify({
         search,
-        starDate,
+        startDate,
         endDate,
         status,
         regional,
@@ -265,7 +265,7 @@ function TicketsPage() {
         perPage,
       }),
     );
-  }, [search, bulan, tahun, status, regional, customer, jenis, layanan, tab, perPage, filtersReady]);
+  }, [search, startDate, endDate, status, regional, customer, jenis, layanan, tab, perPage, filtersReady]);
 
   const activeQuery = useQuery({
     queryKey: ["tickets", "active"],
