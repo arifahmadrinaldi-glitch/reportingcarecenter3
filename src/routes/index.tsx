@@ -1,8 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import {
-  Ticket as TicketIcon,
-} from "lucide-react";
+import { Ticket as TicketIcon } from "lucide-react";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -24,11 +22,11 @@ import { CareCenterFilter } from "@/components/CareCenterFilter";
 import { DailyActivityDashboard } from "@/components/daily/DailyActivityDashboard";
 import { DashboardPerformance } from "@/components/DashboardPerformance";
 import { Button } from "@/components/ui/button";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { BULAN_OPTIONS, type TicketRow } from "@/lib/ticket-constants";
+import { type TicketRow } from "@/lib/ticket-constants";
 import { filterCareCenterRows, type CareCenterSelection } from "@/lib/care-center-filter";
-import { matchesDashboardPeriod } from "@/lib/dashboard-metrics";
+import { matchesDateRange } from "@/lib/dashboard-metrics";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -49,8 +47,6 @@ export const Route = createFileRoute("/")({
   }),
   component: Index,
 });
-
-const ALL = "__all__";
 
 const CHART_COLORS = [
   "var(--primary)",
@@ -144,8 +140,8 @@ function Donut({
 
 function Index() {
   const [category, setCategory] = useState<CareCenterSelection>("non-vsat");
-  const [bulan, setBulan] = useState(ALL);
-  const [tahun, setTahun] = useState(ALL);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
 
   const { data: tickets = [], isPending, isError } = useQuery({
     queryKey: ["tickets", "active"],
@@ -154,8 +150,13 @@ function Index() {
       const rows: TicketRow[] = [];
       const pageSize = 1000;
       for (let offset = 0; ; offset += pageSize) {
-        const { data, error } = await supabase.from("tickets").select("*").is("deleted_at", null)
-          .order("created_at", { ascending: false }).order("id", { ascending: false }).range(offset, offset + pageSize - 1);
+        const { data, error } = await supabase
+          .from("tickets")
+          .select("*")
+          .is("deleted_at", null)
+          .order("created_at", { ascending: false })
+          .order("id", { ascending: false })
+          .range(offset, offset + pageSize - 1);
         if (error) throw error;
         rows.push(...((data ?? []) as TicketRow[]));
         if (!data || data.length < pageSize) return rows;
@@ -163,29 +164,17 @@ function Index() {
     },
   });
 
-  const categoryTickets = useMemo(() => filterCareCenterRows(tickets, category, (ticket) => ticket.layanan), [tickets, category]);
-
-  const tahunOptions = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          categoryTickets
-            .flatMap((t) => [t.tanggal_open, t.tanggal_close].map((date) => date ? new Date(date).getFullYear() : null))
-            .filter(Boolean) as number[],
-        ),
-      )
-        .sort((a, b) => b - a)
-        .map(String),
-    [categoryTickets],
+  const categoryTickets = useMemo(
+    () => filterCareCenterRows(tickets, category, (ticket) => ticket.layanan),
+    [tickets, category],
   );
 
   const filtered = useMemo(
     () =>
-      categoryTickets.filter((t) => {
-        if (bulan === ALL && tahun === ALL) return true;
-        return matchesDashboardPeriod(t.tanggal_open, bulan, tahun);
-      }),
-    [categoryTickets, bulan, tahun],
+      categoryTickets.filter((t) =>
+        matchesDateRange(t.tanggal_open, startDate, endDate),
+      ),
+    [categoryTickets, startDate, endDate],
   );
 
   const count = (predicate: (t: TicketRow) => boolean) => filtered.filter(predicate).length;
@@ -206,7 +195,7 @@ function Index() {
   const jenisData = [
     {
       name: "Corrective Maintenance",
-      value: count((t) => t.jenis_ticket === "Corrective Maintenance"),
+          value: count((t) => t.jenis_ticket === "Corrective Maintenance"),
     },
     {
       name: "Preventive Maintenance",
@@ -239,72 +228,77 @@ function Index() {
       }
     >
       <div className="panel p-4">
-        <CareCenterFilter id="ticket-care-center" value={category} onChange={(next) => {
-          setCategory(next);
-          setBulan(ALL);
-          setTahun(ALL);
-        }} />
-        <div className="grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
-        <label className="block">
-          <span className="text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">Filter Bulan</span>
-          <Select value={bulan} onValueChange={setBulan}>
-            <SelectTrigger className="mt-1.5 w-full bg-surface text-[11px]">
-              <SelectValue>
-                <span className="text-muted-foreground">Bulan: </span>
-                <span className="font-medium">{bulan === ALL ? "Semua" : bulan}</span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>Semua</SelectItem>
-              {BULAN_OPTIONS.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </label>
-        <label className="block">
-          <span className="text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">Filter Tahun</span>
-          <Select value={tahun} onValueChange={setTahun}>
-            <SelectTrigger className="mt-1.5 w-full bg-surface text-[11px]">
-              <SelectValue>
-                <span className="text-muted-foreground">Tahun: </span>
-                <span className="font-medium">{tahun === ALL ? "Semua" : tahun}</span>
-              </SelectValue>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={ALL}>Semua</SelectItem>
-              {tahunOptions.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {option}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </label>
-        <Button
-          variant="link"
-          onClick={() => {
-            setBulan(ALL);
-            setTahun(ALL);
+        <CareCenterFilter
+          id="ticket-care-center"
+          value={category}
+          onChange={(next) => {
+            setCategory(next);
+            setStartDate("");
+            setEndDate("");
           }}
-          className="text-[11px] font-semibold"
-        >
-          Reset filter
-        </Button>
+        />
+        <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+          <label className="block">
+            <span className="text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">
+              Dari Tanggal
+            </span>
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="mt-1.5 w-full bg-surface text-xs"
+            />
+          </label>
+          <label className="block">
+            <span className="text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">
+              Sampai Tanggal
+            </span>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="mt-1.5 w-full bg-surface text-xs"
+            />
+          </label>
+          <Button
+            variant="link"
+            disabled={!startDate && !endDate}
+            onClick={() => {
+              setStartDate("");
+              setEndDate("");
+            }}
+            className="text-[11px] font-semibold"
+          >
+            Reset filter
+          </Button>
         </div>
       </div>
 
-      {isError ? <p role="alert" className="mt-4 text-xs text-destructive">Data tiket gagal dimuat. Silakan coba kembali.</p> : isPending ? <p role="status" className="mt-4 text-xs text-muted-foreground">Memuat performa tiket…</p> : <DashboardPerformance tickets={filtered} categoryTickets={categoryTickets} month={bulan} year={tahun} />}
+      {isError ? (
+        <p role="alert" className="mt-4 text-xs text-destructive">
+          Data tiket gagal dimuat. Silakan coba kembali.
+        </p>
+      ) : isPending ? (
+        <p role="status" className="mt-4 text-xs text-muted-foreground">
+          Memuat performa tiket…
+        </p>
+      ) : (
+        <DashboardPerformance
+          tickets={filtered}
+          categoryTickets={categoryTickets}
+          startDate={startDate}
+          endDate={endDate}
+        />
+      )}
 
       <div className="mt-4 grid gap-4 xl:grid-cols-2">
-        <Panel title="Jumlah Ticket per Customer" subtitle="Urut dari terbanyak, mengikuti filter bulan & tahun">
+        <Panel title="Jumlah Ticket per Customer" subtitle="Urut dari terbanyak, mengikuti filter tanggal">
           <div className="h-[260px]">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={perCustomer} layout="vertical" margin={{ left: 8, right: 16 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-                <XAxis type="number" allowDecimals={false} {...axisProps} />
+                <XAxis type="number" allowDecimals={false} {...axisProps} /
+                >
                 <YAxis type="category" dataKey="name" width={110} {...axisProps} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={14}>
