@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { BULAN_LIST } from "@/lib/daily-activity-constants";
+import { useAccess } from "@/lib/app-access";
 import { CODES, WORK, isLeave, initializeSchedule, rosterCode, shiftCount, scheduleStats, workExcelFormula, type Cell, type ScheduleData } from "@/lib/schedule";
 import { regularCode, isNationalHoliday } from "@/lib/indonesia-holidays";
 import { BusinessScheduleTable, businessCell, businessStats } from "@/components/schedule/BusinessScheduleTable";
@@ -45,6 +46,8 @@ const toneFor = (code: string) =>
   codeTone[code] ?? "bg-success text-success-foreground font-bold hover:bg-success/90";
 
 function JadwalPage() {
+  const { isAdmin } = useAccess();
+  const now = new Date();
   const now = new Date();
   const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
@@ -225,6 +228,7 @@ function JadwalPage() {
               <SelectTrigger className="h-8 w-24 text-xs"><SelectValue /></SelectTrigger>
               <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
             </Select>
+            {isAdmin && (
             <Button variant="outline" size="sm" onClick={resetRoster}><RotateCcw className="size-3.5" />Reset roster</Button>
             <Button variant="outline" size="sm" onClick={exportExcel}><FileSpreadsheet className="size-3.5" />Export Excel</Button>
             <Button size="sm" onClick={save} disabled={query.isFetching || !dirty}><Save className="size-3.5" />Simpan</Button>
