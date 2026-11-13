@@ -166,7 +166,7 @@ function JadwalPage() {
     const dayHeads = Array.from({ length: days }, (_, i) => String(i + 1));
     const rows: unknown[][] = [
       [`Care Center Vsat ${BULAN_LIST[month]} ${year}`],
-      ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Overtime", "Jam Kerja"],
+      ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Total Lembur", "Jam Kerja"],
     ];
     [-1, ...data.members.map((_, i) => i)].forEach((m) => {
       const name = m === -1 ? data.regular?.name ?? "Reguler" : data.members[m];
