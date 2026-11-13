@@ -28,6 +28,7 @@ import { StatusBadge } from "@/components/tickets/StatusBadge";
 import { TicketDetailDialog } from "@/components/tickets/TicketDetailDialog";
 import { TicketFormDialog, type SaveMeta } from "@/components/tickets/TicketFormDialog";
 import { LiveDuration } from "@/components/tickets/LiveDuration";
+import { matchesDateRange } from "@/lib/dashboard-metrics";
 import { HandoverDialog } from "@/components/handover/HandoverDialog";
 import {
   AlertDialog,
@@ -199,8 +200,8 @@ function TicketsPage() {
   const queryClient = useQueryClient();
   const { isAdmin } = useAccess();
   const [search, setSearch] = useState("");
-  const [bulan, setBulan] = useState<string[]>([]);
-  const [tahun, setTahun] = useState<string[]>([]);
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [status, setStatus] = useState<string[]>([]);
   const [regional, setRegional] = useState<string[]>([]);
   const [customer, setCustomer] = useState<string[]>([]);
@@ -230,8 +231,8 @@ function TicketsPage() {
           Array.isArray(arr) ? arr.filter((v) => options.includes(String(v))) : [];
 
         setSearch(String(saved.search ?? ""));
-        setBulan(valid(saved.bulan, BULAN_OPTIONS));
-        setTahun(Array.isArray(saved.tahun) ? saved.tahun.map(String) : []);
+        setStartDate(String(saved.startDate ?? ""));
+        setEndDate(String(saved.endDate ?? ""));
         setStatus(valid(saved.status, STATUS_OPTIONS));
         setRegional(valid(saved.regional, REGIONAL_OPTIONS));
         setCustomer(Array.isArray(saved.customer) ? saved.customer.map(String) : []);
@@ -253,8 +254,8 @@ function TicketsPage() {
       "tickets-filters",
       JSON.stringify({
         search,
-        bulan,
-        tahun,
+        starDate,
+        endDate,
         status,
         regional,
         customer,
@@ -336,11 +337,8 @@ function TicketsPage() {
       if (customer.length && !customer.includes(t.customer ?? "")) return false;
       if (jenis.length && !jenis.includes(t.jenis_ticket ?? "")) return false;
       if (layanan.length && !layanan.includes(t.layanan ?? "")) return false;
-      if (bulan.length || tahun.length) {
-        if (!t.tanggal_open) return false;
-        const date = new Date(t.tanggal_open);
-        if (bulan.length && !bulan.includes(BULAN_OPTIONS[date.getMonth()] as string)) return false;
-        if (tahun.length && !tahun.includes(String(date.getFullYear()))) return false;
+      if (startDate || endDate) {
+        if (!matchesDateRange(t.tanggal_open, startDate, endDate)) return false;
       }
       if (!term) return true;
       return columns.some((col) =>
@@ -349,7 +347,7 @@ function TicketsPage() {
           .includes(term),
       );
     });
-  }, [tickets, tab, search, status, regional, customer, jenis, layanan, bulan, tahun]);
+  }, [tickets, tab, search, status, regional, customer, jenis, layanan, startDate, endDate]);
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
   const currentPage = Math.min(page, totalPages);
@@ -357,8 +355,8 @@ function TicketsPage() {
 
   const resetFilters = () => {
     setSearch("");
-    setBulan([]);
-    setTahun([]);
+    setStartDate("");
+    setEndDate("");
     setStatus([]);
     setRegional([]);
     setCustomer([]);
@@ -589,11 +587,8 @@ function TicketsPage() {
                 if (customer.length && !customer.includes(t.customer ?? "")) return false;
                 if (jenis.length && !jenis.includes(t.jenis_ticket ?? "")) return false;
                 if (layanan.length && !layanan.includes(t.layanan ?? "")) return false;
-                if (bulan.length || tahun.length) {
-                  if (!t.tanggal_open) return false;
-                  const d = new Date(t.tanggal_open);
-                  if (bulan.length && !bulan.includes(BULAN_OPTIONS[d.getMonth()] as string)) return false;
-                  if (tahun.length && !tahun.includes(String(d.getFullYear()))) return false;
+                if (startDate || endDate) {
+                  if (!matchesDateRange(t.tanggal_open, startDate, endDate)) return false;
                 }
                 return true;
               })
@@ -749,8 +744,30 @@ function TicketsPage() {
           </div>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
-            {filterSelect("Bulan", bulan, setBulan, BULAN_OPTIONS)}
-            {filterSelect("Tahun", tahun, setTahun, tahunOptions)}
+                        <div className="flex h-10 items-center gap-1.5 rounded-full border border-input bg-surface px-3.5 text-xs">
+              <span className="text-[11px] font-medium text-muted-foreground whitespace-nowrap">Dari:</span>
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => {
+                  setStartDate(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full bg-transparent text-xs text-foreground focus:outline-none"
+              />
+            </div>
+            <div className="flex h-10 items-center gap-1.5 rounded-full border border-input bg-surface px-3.5 text-xs">
+              <span className="text-[11px] font-medium text-muted-foreground whitespace-nowrap">Sampai:</span>
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => {
+                  setEndDate(e.target.value);
+                  setPage(1);
+                }}
+                className="w-full bg-transparent text-xs text-foreground focus:outline-none"
+              />
+            </div>
             {filterSelect("Status", status, setStatus, STATUS_OPTIONS)}
             {filterSelect("Regional", regional, setRegional, REGIONAL_OPTIONS)}
             {filterSelect("Customer", customer, setCustomer, customerOptions)}
