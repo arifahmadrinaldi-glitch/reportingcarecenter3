@@ -241,8 +241,8 @@ function JadwalPage() {
           {query.isFetching ? <p className="p-4 text-xs text-muted-foreground">Memuat jadwal…</p> : <>
           <table className="w-full min-w-[1400px] table-fixed border-collapse text-[10px]">
   <colgroup>
-    <col className="w-[72px]" />
-    <col className="w-[170px]" />
+    <col className="w-[100px]" />
+    <col className="w-[240px]" />
     <col className="w-[104px]" />
     {Array.from({ length: days }, (_, i) => (
       <col key={i} />
@@ -257,7 +257,6 @@ function JadwalPage() {
               <tr className="bg-ops-navy text-primary-foreground dark:bg-ops-mist dark:text-foreground">
                 <th className="px-2 py-1.5 text-left">NIK</th>
                 <th className="px-2 py-1.5 text-left">Nama</th>
-                <th className="px-2 py-1.5 text-left">No. Tlp</th>
                 {Array.from({ length: days }, (_, i) => {
   const dow = new Date(year, month, i + 1).getDay();
   const isHoliday = dow === 0 || dow === 6 || isNationalHoliday(year, month, i + 1);
