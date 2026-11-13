@@ -193,7 +193,7 @@ function JadwalPage() {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Care Center Vsat");
     const b = data.business ?? initializeBusiness();
-    const brows: unknown[][] = [[`Care Center Non-Vsat ${BULAN_LIST[month]} ${year}`], ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Overtime", "Jam Kerja"]];
+    const brows: unknown[][] = [[`Care Center Non-Vsat ${BULAN_LIST[month]} ${year}`], ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Total Lembur", "Jam Kerja"]];
     [-1, ...b.members.map((_, i) => i)].forEach((m) => {
       const st = businessStats(b, m, days, year, month);
       brows.push([m === -1 ? b.regular.nik : b.niks[m], m === -1 ? b.regular.name : b.members[m], m === -1 ? b.regular.phone : b.phones[m],
