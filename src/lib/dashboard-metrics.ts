@@ -30,7 +30,16 @@ export function matchesDashboardPeriod(value: string | null, month: string, year
     && (year === "__all__" || String(date.getFullYear()) === year);
 }
 
-export function dailyTicketTrend(tickets: TicketRow[], month: string, year: string) {
+export function matchesDateRange(value: string | null, startDate?: string, endDate?: string) {
+  if (!value) return false;
+  if (!startDate && !endDate) return true;
+  const datePart = value.slice(0, 10);
+  if (startDate && datePart < startDate) return false;
+  if (endDate && datePart > endDate) return false;
+  return true;
+}
+
+export function dailyTicketTrend(tickets: TicketRow[], startDate?: string, endDate?: string) {
   const days = new Map<string, { date: string; label: string; open: number; close: number }>();
   const dayKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
   const ensureDay = (date: Date) => {
@@ -42,16 +51,29 @@ export function dailyTicketTrend(tickets: TicketRow[], month: string, year: stri
     }
     return row;
   };
-  // Closing events use their own date, including tickets opened before this period.
+
   for (const ticket of tickets) {
-    if (matchesDashboardPeriod(ticket.tanggal_open, month, year)) ensureDay(new Date(ticket.tanggal_open ?? "")).open++;
-    if (closedTicket(ticket) && matchesDashboardPeriod(ticket.tanggal_close, month, year)) ensureDay(new Date(ticket.tanggal_close ?? "")).close++;
+    if (matchesDateRange(ticket.tanggal_open, startDate, endDate)) {
+      ensureDay(new Date(ticket.tanggal_open ?? "")).open++;
+    }
+    if (closedTicket(ticket) && matchesDateRange(ticket.tanggal_close, startDate, endDate)) {
+      ensureDay(new Date(ticket.tanggal_close ?? "")).close++;
+    }
   }
-  const monthIndex = BULAN_OPTIONS.findIndex((option) => option === month);
-  if (monthIndex >= 0 && year !== "__all__") {
-    const selectedYear = Number(year);
-    for (let day = 1; day <= new Date(selectedYear, monthIndex + 1, 0).getDate(); day++) ensureDay(new Date(selectedYear, monthIndex, day));
+
+  if (startDate && endDate) {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    if (Number.isFinite(start.getTime()) && Number.isFinite(end.getTime()) && start <= end) {
+      const diff = Math.round((end.getTime() - start.getTime()) / 86400000);
+      if (diff <= 365) {
+        for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+          ensureDay(new Date(d));
+        }
+      }
+    }
   }
+
   return [...days.values()].sort((a, b) => a.date.localeCompare(b.date));
 }
 
