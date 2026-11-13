@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { BULAN_LIST } from "@/lib/daily-activity-constants";
-import { CODES, WORK, initializeSchedule, rosterCode, shiftCount, scheduleStats, workExcelFormula, type Cell, type ScheduleData } from "@/lib/schedule";
+import { CODES, WORK, isLeave, initializeSchedule, rosterCode, shiftCount, scheduleStats, workExcelFormula, type Cell, type ScheduleData } from "@/lib/schedule";
 import { regularCode, isNationalHoliday } from "@/lib/indonesia-holidays";
 import { BusinessScheduleTable, businessCell, businessStats } from "@/components/schedule/BusinessScheduleTable";
 import { initializeBusiness } from "@/lib/schedule";
@@ -32,6 +32,7 @@ export const Route = createFileRoute("/jadwal")({
 });
 
 const codeTone: Record<string, string> = {
+  I: "bg-warning text-warning-foreground hover:bg-warning/90",
   P: "bg-shift-morning text-shift-light font-bold hover:bg-shift-morning/90",
   S: "bg-shift-day text-shift-ink font-bold hover:bg-shift-day/90",
   M: "bg-shift-night text-shift-ink font-bold hover:bg-shift-night/90",
@@ -117,14 +118,14 @@ function JadwalPage() {
     const { m, d } = editing;
     const original = getCell(m, d).code;
     update((draft) => {
-      const normal = draft.normalCells?.[m]?.[d]?.code ?? getCell(m, d).originalCode ?? (original !== "CT" && !getCell(m, d).backupFor ? original : rosterCode(m, year, month, d, data));
-      setCell(draft, m, d, { code: pendingCode, ...(pendingCode === "CT" ? { originalCode: normal } : {}) });
-      if (pendingCode !== "CT") {
+      const normal = draft.normalCells?.[m]?.[d]?.code ?? getCell(m, d).originalCode ?? (!isLeave(original) && !getCell(m, d).backupFor ? original : rosterCode(m, year, month, d, data));
+      setCell(draft, m, d, { code: pendingCode, ...(isLeave(pendingCode) ? { originalCode: normal } : {}) });
+      if (!isLeave(pendingCode)) {
         draft.normalCells ??= {};
         draft.normalCells[m] ??= {};
         draft.normalCells[m][d] = { code: pendingCode };
       }
-      if (pendingCode === "CT" && backup !== "none") {
+      if (isLeave(pendingCode) && backup !== "none") {
         const b = Number(backup);
         const shift = shiftCount(normal) ? normal : "P";
         const ownCell = getCell(b, d);
@@ -163,7 +164,7 @@ function JadwalPage() {
     const dayHeads = Array.from({ length: days }, (_, i) => String(i + 1));
     const rows: unknown[][] = [
       [`Care Center Vsat ${BULAN_LIST[month]} ${year}`],
-      ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Overtime"],
+      ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Overtime", "Jam Kerja"],
     ];
     [-1, ...data.members.map((_, i) => i)].forEach((m) => {
       const name = m === -1 ? data.regular?.name ?? "Reguler" : data.members[m];
@@ -176,28 +177,28 @@ function JadwalPage() {
       const r = rows.length + 1;
       const range = `${XLSX.utils.encode_col(3)}${r}:${XLSX.utils.encode_col(2 + days)}${r}`;
       const st = scheduleStats((d) => getCell(m, d), days, regularStats.work);
-      const displayedWork = Array.from({ length: days }, (_, i) => shiftCount(getCell(m, i + 1).code)).reduce((sum, n) => sum + n, 0);
       rows.push([nik, name, phone, ...cells,
-        { t: "n", v: st.work, f: workExcelFormula(range, st.work - displayedWork) },
+        st.work,
         { t: "n", v: st.ct, f: `COUNTIF(${range},"CT")` },
         { t: "n", v: st.bk, f: `COUNTIF(${range},"*BK*")` },
         m === -1 ? "-" : { t: "n", v: st.buffer, f: `${XLSX.utils.encode_col(3 + days)}${r}-$${XLSX.utils.encode_col(3 + days)}$3` },
+        st.hours,
       ]);
     });
-    rows.push([], ["Keterangan: P = Pagi, S = Siang, M = Malam, L = Libur, CT = Cuti, BK = Backup"]);
+    rows.push([], ["Keterangan: P = Pagi, S = Siang, M = Malam, L = Libur, CT = Cuti, I = Izin/Sakit (tidak mengurangi hari kerja), BK = Backup"]);
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"] = [{ wch: 16 }, { wch: 20 }, { wch: 18 }, ...dayHeads.map(() => ({ wch: 5 })), { wch: 12 }, { wch: 6 }, { wch: 8 }, { wch: 8 }];
+    ws["!cols"] = [{ wch: 16 }, { wch: 20 }, { wch: 18 }, ...dayHeads.map(() => ({ wch: 5 })), { wch: 12 }, { wch: 6 }, { wch: 8 }, { wch: 8 }, { wch: 9 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Care Center Vsat");
     const b = data.business ?? initializeBusiness();
-    const brows: unknown[][] = [[`Care Center Non-Vsat ${BULAN_LIST[month]} ${year}`], ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Overtime"]];
+    const brows: unknown[][] = [[`Care Center Non-Vsat ${BULAN_LIST[month]} ${year}`], ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Overtime", "Jam Kerja"]];
     [-1, ...b.members.map((_, i) => i)].forEach((m) => {
       const st = businessStats(b, m, days, year, month);
       brows.push([m === -1 ? b.regular.nik : b.niks[m], m === -1 ? b.regular.name : b.members[m], m === -1 ? b.regular.phone : b.phones[m],
         ...dayHeads.map((_, i) => { const c = businessCell(b, m, i + 1, year, month); return c.backupFor ? `${c.code} (BK ${c.backupFor})` : c.code; }),
-        st.work, st.ct, st.bk, m === -1 ? "-" : st.buffer]);
+        st.work, st.ct, st.bk, m === -1 ? "-" : st.buffer, st.hours]);
     });
-    brows.push([], ["Keterangan: P/S/M = 1 shift, PS/SM/MP/PM = 2 shift, PSM = 3 shift, L = Libur, CT = Cuti, BK = Backup"]);
+    brows.push([], ["Keterangan: P/S/M = 1 shift, PS/SM/MP/PM = 2 shift, PSM = 3 shift, L = Libur, CT = Cuti, I = Izin/Sakit (tidak mengurangi hari kerja), BK = Backup"]);
     const bws = XLSX.utils.aoa_to_sheet(brows);
     bws["!cols"] = ws["!cols"];
     XLSX.utils.book_append_sheet(wb, bws, "Care Center Non-Vsat");
@@ -234,18 +235,19 @@ function JadwalPage() {
         <h2 className="font-display text-base font-semibold">Care Center Vsat</h2>
         <div className="overflow-x-auto rounded-lg border bg-card" aria-busy={query.isFetching}>
           {query.isFetching ? <p className="p-4 text-xs text-muted-foreground">Memuat jadwal…</p> : <>
-          <table className="w-full min-w-[1500px] table-fixed border-collapse text-[10px]">
+          <table className="w-full min-w-[1400px] table-fixed border-collapse text-[10px]">
   <colgroup>
-    <col className="w-[90px]" />
-    <col className="w-[220px]" />
-    <col className="w-[140px]" />
+    <col className="w-[72px]" />
+    <col className="w-[170px]" />
+    <col className="w-[104px]" />
     {Array.from({ length: days }, (_, i) => (
       <col key={i} />
     ))}
     <col className="w-14" />
-    <col className="w-8" />
-    <col className="w-12" />
-    <col className="w-12" />
+    <col className="w-10" />
+    <col className="w-14" />
+    <col className="w-16" />
+    <col className="w-16" />
   </colgroup>
             <thead>
               <tr className="bg-ops-navy text-primary-foreground dark:bg-ops-mist dark:text-foreground">
@@ -267,7 +269,7 @@ function JadwalPage() {
                 <th className="px-2 text-center">Hari Kerja</th>
                 <th className="px-2 text-center">CT</th>
                 <th className="px-2 text-center">Backup</th>
-                <th className="px-2 text-center">Overtime</th>
+                <th className="px-2 text-center">Overtime</th><th className="px-2 text-center">Jam Kerja</th>
               </tr>
             </thead>
             <tbody>
@@ -302,6 +304,7 @@ function JadwalPage() {
                 <td className="text-center font-semibold text-destructive">{regularStats.ct}</td>
                 <td className="text-center font-semibold text-muted-foreground">-</td>
                 <td className="text-center font-semibold text-muted-foreground">-</td>
+                <td className="text-center font-semibold">{regularStats.hours}</td>
               </tr>
               {data.members.map((name, m) => (
                 <tr key={m} className="border-t">
@@ -328,6 +331,7 @@ function JadwalPage() {
                   <td className="text-center font-semibold text-destructive">{stats[m]?.ct}</td>
                   <td className="text-center font-semibold text-success">{stats[m]?.bk}</td>
                   <td className="text-center font-semibold text-foreground">{stats[m]?.buffer}</td>
+                  <td className="text-center font-semibold">{stats[m]?.hours}</td>
                 </tr>
               ))}
             </tbody>
@@ -356,7 +360,7 @@ function JadwalPage() {
                 <Button key={c} size="sm" variant={pendingCode === c ? "default" : "outline"} onClick={() => setPendingCode(c)}>{c}</Button>
               ))}
             </div>
-            {pendingCode === "CT" && editing && (
+            {isLeave(pendingCode) && editing && (
               <div className="space-y-1">
                 <p className="text-xs font-medium">Backup oleh</p>
                 <Select value={backup} onValueChange={setBackup}>

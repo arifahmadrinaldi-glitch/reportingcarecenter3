@@ -13,7 +13,7 @@ describe('schedule shift accounting', () => {
     expect(scheduleStats(() => ({ code: 'P' }), 10, 15).buffer).toBe(-5);
   });
   test('leave removes work and backup adds covered shifts even when codes overlap', () => {
-    expect(scheduleStats(() => ({ code: 'CT' }), 1).work).toBe(0);
+    expect(scheduleStats(() => ({ code: "CT", originalCode: "P" }), 1).work).toBe(1);
     expect(scheduleStats(() => ({ code: 'PS', originalCode: 'PS', covered: 'P', backupFor: 'Team' }), 1).work).toBe(3);
   });
   test('legacy combined backup cells still count combined shifts', () => {
@@ -49,7 +49,7 @@ describe('Care Center PPSSMLL roster', () => {
     expect(draft.members[0]).toBe('Opi Ul Umam');
     expect(draft.niks[0]).toBe('91210131');
     expect(draft.cells).toEqual(saved.cells);
-    expect(scheduleStats(d => draft.cells[0][d], 2, 1)).toEqual({ work: 3, ct: 1, bk: 0, buffer: 2 });
+    expect(scheduleStats(d => draft.cells[0][d], 2, 1)).toEqual({ work: 3, ct: 1, bk: 0, buffer: 2, hours: 24 });
     expect(saved).toEqual(before);
     expect(initializeSchedule(draft, undefined, '2026-12')).toEqual(draft);
   });
@@ -125,7 +125,13 @@ describe('Care Center PPSSMLL roster', () => {
     }
   });
   test('new roster retains work, leave, backup and buffer accounting', () => {
-    expect(scheduleStats(d => ({ code: rosterCode(0, 2026, 10, d) }), 7, 5)).toEqual({ work: 5, ct: 0, bk: 0, buffer: 0 });
-    expect(scheduleStats(d => d === 1 ? { code: 'CT' } : { code: rosterCode(0, 2026, 10, d) }, 7, 5)).toEqual({ work: 4, ct: 1, bk: 0, buffer: -1 });
+    expect(scheduleStats(d => ({ code: rosterCode(0, 2026, 10, d) }), 7, 5)).toEqual({ work: 5, ct: 0, bk: 0, buffer: 0, hours: 40 });
+    expect(scheduleStats(d => d === 1 ? { code: 'CT' } : { code: rosterCode(0, 2026, 10, d) }, 7, 5)).toEqual({ work: 4, ct: 1, bk: 0, buffer: -1, hours: 32 });
+  });
+});
+
+describe('leave, overtime and hours', () => {
+  test('cuti and izin keep the original shift as work days', () => {
+    expect(scheduleStats(d => d === 1 ? { code: 'CT', originalCode: 'P' } : d === 2 ? { code: 'I', originalCode: 'S' } : { code: 'P' }, 22, 21)).toEqual({ work: 22, ct: 1, bk: 0, buffer: 1, hours: 176 });
   });
 });

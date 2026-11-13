@@ -1,5 +1,5 @@
 export const CYCLE = ["P", "P", "S", "S", "M", "L", "L"] as const;
-export const CODES = ["P", "S", "M", "L", "CT", "R", "PS", "SM", "MP", "PM", "PSM"] as const;
+export const CODES = ["P", "S", "M", "L", "CT", "I", "R", "PS", "SM", "MP", "PM", "PSM"] as const;
 export const WORK = new Set<string>(["P", "S", "M", "R"]);
 export const DEFAULT_MEMBERS = ["Ahmad Hidayah", "Opi Ul Umam", "Andriansyah", "Avian Dwi Nofyanto", "Muhammad Faishal Rayyan", "Ferdi Arsy Bahtiariyanza", "Rachmat Dwi Ramdani"];
 const VSAT_NIKS = ["9818001", "91210131", "9416031", "9119008", "02250398", "94210087", "9717053"];
@@ -17,19 +17,24 @@ const ANCHOR = Date.UTC(2026, 10, 1);
 const DAY = 86400000;
 export type Cell = { code: string; backupFor?: string; originalCode?: string | undefined; covered?: string };
 export const BUSINESS_CYCLE = CYCLE;
-export const BUSINESS_CODES = ["P", "S", "M", "L", "CT", "PS", "SM", "MP", "PM", "PSM"] as const;
-export const shiftCount = (code: string) => (code === "CT" ? 0 : code.split("").filter((c) => WORK.has(c)).length);
+export const BUSINESS_CODES = ["P", "S", "M", "L", "CT", "I", "PS", "SM", "MP", "PM", "PSM"] as const;
+export const LEAVE = new Set<string>(["CT", "I"]);
+export const isLeave = (code: string) => LEAVE.has(code);
+export const HOURS_PER_DAY = 8;
+export const shiftCount = (code: string) => (LEAVE.has(code) ? 0 : code.split("").filter((c) => WORK.has(c)).length);
 export function scheduleStats(getCell: (day: number) => Cell, days: number, regularWork = 0) {
   let work = 0, ct = 0, bk = 0;
   for (let day = 1; day <= days; day++) {
     const cell = getCell(day);
     if (cell.code === "CT") ct++;
     if (cell.backupFor) bk++;
-    work += cell.backupFor && cell.covered
+    work += LEAVE.has(cell.code)
+      ? shiftCount(cell.originalCode ?? "")
+      : cell.backupFor && cell.covered
       ? shiftCount(cell.originalCode ?? "") + shiftCount(cell.covered)
       : shiftCount(cell.code);
   }
-  return { work, ct, bk, buffer: work - regularWork };
+  return { work, ct, bk, buffer: work - regularWork, hours: work * HOURS_PER_DAY };
 }
 
 export function workExcelFormula(range: string, backupAdjustment = 0) {

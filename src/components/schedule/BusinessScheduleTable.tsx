@@ -6,9 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { BULAN_LIST } from "@/lib/daily-activity-constants";
 import { isNationalHoliday, regularCode } from "@/lib/indonesia-holidays";
-import { BUSINESS_CODES, businessCode, shiftCount, scheduleStats, type BusinessData, type Cell } from "@/lib/schedule";
+import { BUSINESS_CODES, isLeave, businessCode, shiftCount, scheduleStats, type BusinessData, type Cell } from "@/lib/schedule";
 
 const tone: Record<string, string> = {
+  I: "bg-warning text-warning-foreground hover:bg-warning/90",
   P: "bg-shift-morning text-shift-light hover:bg-shift-morning/90",
   S: "bg-shift-day text-shift-ink hover:bg-shift-day/90",
   PS: "bg-shift-day text-shift-ink hover:bg-shift-day/90",
@@ -42,16 +43,16 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
     if (!editing) return;
     const { m, d } = editing;
     const cur = get(m, d);
-    const normal = cur.originalCode ?? (cur.code !== "CT" && !cur.backupFor ? cur.code : m === -1 ? regularCode(year, month, d) : businessCode(m, year, month, d, data));
+    const normal = cur.originalCode ?? (!isLeave(cur.code) && !cur.backupFor ? cur.code : m === -1 ? regularCode(year, month, d) : businessCode(m, year, month, d, data));
     onChange((b) => {
       b.cells[m] ??= {};
-      b.cells[m][d] = { code: pending, ...(pending === "CT" ? { originalCode: normal } : {}) };
-      if (pending !== "CT") {
+      b.cells[m][d] = { code: pending, ...(isLeave(pending) ? { originalCode: normal } : {}) };
+      if (!isLeave(pending)) {
         b.normalCells ??= {};
         b.normalCells[m] ??= {};
         b.normalCells[m][d] = { code: pending };
       }
-      if (pending === "CT" && backup !== "none") {
+      if (isLeave(pending) && backup !== "none") {
         const i = Number(backup);
         const oc = get(i, d);
         const own = oc.originalCode ?? (oc.backupFor ? "" : oc.code);
@@ -112,6 +113,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
         <td className="text-center font-semibold text-destructive">{s.ct}</td>
         <td className="text-center font-semibold text-success">{m === -1 ? "-" : s.bk}</td>
         <td className="text-center font-semibold text-foreground">{m === -1 ? "-" : s.buffer}</td>
+        <td className="text-center font-semibold">{s.hours}</td>
       </tr>
     );
   };
@@ -120,16 +122,17 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
     <div className="space-y-2">
       <h2 className="font-display text-base font-semibold">Care Center Non-Vsat</h2>
       <div className="overflow-x-auto rounded-lg border bg-card">
-        <table className="w-full min-w-[1500px] table-fixed border-collapse text-[10px]">
+        <table className="w-full min-w-[1400px] table-fixed border-collapse text-[10px]">
   <colgroup>
-    <col className="w-[90px]" />
-    <col className="w-[220px]" />
-    <col className="w-[140px]" />
+    <col className="w-[72px]" />
+    <col className="w-[170px]" />
+    <col className="w-[104px]" />
     {Array.from({ length: days }, (_, i) => <col key={i} />)}
     <col className="w-14" />
-    <col className="w-8" />
-    <col className="w-12" />
-    <col className="w-12" />
+    <col className="w-10" />
+    <col className="w-14" />
+    <col className="w-16" />
+    <col className="w-16" />
   </colgroup>
           <thead>
             <tr className="bg-ops-navy text-primary-foreground dark:bg-ops-mist dark:text-foreground">
@@ -144,7 +147,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
                     </th>
                   );
                 })}
-              <th className="px-2 text-center">Hari Kerja</th><th className="px-2 text-center">CT</th><th className="px-2 text-center">Backup</th><th className="px-2 text-center">Overtime</th>
+              <th className="px-2 text-center">Hari Kerja</th><th className="px-2 text-center">CT</th><th className="px-2 text-center">Backup</th><th className="px-2 text-center">Overtime</th><th className="px-2 text-center">Jam Kerja</th>
             </tr>
           </thead>
           <tbody>{[-1, ...data.members.map((_, i) => i)].map(row)}</tbody>
@@ -162,7 +165,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
             <div className="grid grid-cols-5 gap-1">
               {BUSINESS_CODES.map((c) => <Button key={c} size="sm" variant={pending === c ? "default" : "outline"} onClick={() => setPending(c)}>{c}</Button>)}
             </div>
-            {pending === "CT" && editing && (
+            {isLeave(pending) && editing && (
               <Select value={backup} onValueChange={setBackup}>
                 <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                 <SelectContent>
