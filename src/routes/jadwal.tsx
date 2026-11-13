@@ -277,7 +277,7 @@ function JadwalPage() {
             </thead>
             <tbody>
               <tr className="border-t bg-muted/20 font-medium">
-                {(["nik", "name", "phone"] as const).map((field) => (
+                {(["nik", "name"] as const).map((field) => (
                   <td key={field} className="bg-card px-1 py-1">
                     <Input aria-label={`Reguler ${field === "nik" ? "NIK" : field === "name" ? "Nama" : "No. Tlp"}`}
                       value={data.regular?.[field] ?? (field === "name" ? "Reguler" : "")}
@@ -313,7 +313,6 @@ function JadwalPage() {
                 <tr key={m} className="border-t">
                   <td className="px-1 py-1"><Input aria-label={`NIK anggota ${m + 1}`} value={data.niks?.[m] ?? ""} onChange={(e) => update((draft) => { draft.niks ??= ["", "", "", ""]; draft.niks[m] = e.target.value; })} className="h-7 text-[11px]" /></td>
                   <td className="px-1 py-1"><Input aria-label={`Nama anggota ${m + 1}`} value={name} onChange={(e) => update((draft) => { draft.members[m] = e.target.value; })} className="h-7 text-[11px]" /></td>
-                  <td className="px-1 py-1"><Input aria-label={`No. Tlp anggota ${m + 1}`} value={data.phones?.[m] ?? ""} onChange={(e) => update((draft) => { draft.phones ??= ["", "", "", ""]; draft.phones[m] = e.target.value; })} className="h-7 text-[11px]" /></td>
                   {Array.from({ length: days }, (_, i) => {
                     const c = getCell(m, i + 1);
                     return (
