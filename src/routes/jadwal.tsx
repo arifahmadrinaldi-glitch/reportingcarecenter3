@@ -232,6 +232,7 @@ function JadwalPage() {
             )}
             <Button variant="outline" size="sm" onClick={exportExcel}><FileSpreadsheet className="size-3.5" />Export Excel</Button>
             <Button size="sm" onClick={save} disabled={query.isFetching || !dirty}><Save className="size-3.5" />Simpan</Button>
+          </div>
         </div>
 
         {query.error && <p role="alert" className="text-xs text-destructive">Jadwal gagal dimuat. Silakan coba lagi.</p>}
