@@ -48,7 +48,6 @@ const toneFor = (code: string) =>
 function JadwalPage() {
   const { isAdmin } = useAccess();
   const now = new Date();
-  const now = new Date();
   const [month, setMonth] = useState(now.getMonth());
   const [year, setYear] = useState(now.getFullYear());
   const period = `${year}-${String(month + 1).padStart(2, "0")}`;
@@ -229,10 +228,10 @@ function JadwalPage() {
               <SelectContent>{years.map((y) => <SelectItem key={y} value={String(y)}>{y}</SelectItem>)}</SelectContent>
             </Select>
             {isAdmin && (
-            <Button variant="outline" size="sm" onClick={resetRoster}><RotateCcw className="size-3.5" />Reset roster</Button>
+              <Button variant="outline" size="sm" onClick={resetRoster}><RotateCcw className="size-3.5" />Reset roster</Button>
+            )}
             <Button variant="outline" size="sm" onClick={exportExcel}><FileSpreadsheet className="size-3.5" />Export Excel</Button>
             <Button size="sm" onClick={save} disabled={query.isFetching || !dirty}><Save className="size-3.5" />Simpan</Button>
-          </div>
         </div>
 
         {query.error && <p role="alert" className="text-xs text-destructive">Jadwal gagal dimuat. Silakan coba lagi.</p>}
