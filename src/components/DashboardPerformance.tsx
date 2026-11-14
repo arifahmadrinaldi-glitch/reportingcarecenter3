@@ -26,8 +26,12 @@ export function DashboardPerformance({
   }, []);
 
   const metrics = useMemo(() => dashboardMetrics(tickets, now ?? 0), [tickets, now]);
-  const trend = useMemo(
-    () => dailyTicketTrend(categoryTickets, startDate, endDate),
+    const trend = useMemo(
+    () =>
+      dailyTicketTrend(categoryTickets, startDate, endDate).map((item) => ({
+        ...item,
+        total: item.open + item.close,
+      })),
     [categoryTickets, startDate, endDate],
   );
 
@@ -113,29 +117,17 @@ export function DashboardPerformance({
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar name="Open" dataKey="open" fill="var(--primary)" fillOpacity={0.35} radius={[3, 3, 0, 0]} maxBarSize={18} />
-                <Bar name="Close" dataKey="close" fill="var(--success)" fillOpacity={0.35} radius={[3, 3, 0, 0]} maxBarSize={18} />
+                <Bar name="Open" dataKey="open" fill="var(--primary)" radius={[3, 3, 0, 0]} maxBarSize={18} />
+                <Bar name="Close" dataKey="close" fill="var(--success)" radius={[3, 3, 0, 0]} maxBarSize={18} />
                 <Line
-                  name="Open"
-                  dataKey="open"
-                  type="linear"
-                  stroke="var(--primary)"
-                  strokeWidth={2}
-                  dot={{ r: 2.5, fill: "var(--primary)", strokeWidth: 0 }}
-                  activeDot={{ r: 5, stroke: "var(--background)", strokeWidth: 2 }}
-                  legendType="none"
-                  tooltipType="none"
-                />
-                <Line
-                  name="Close"
-                  dataKey="close"
-                  type="linear"
-                  stroke="var(--success)"
-                  strokeWidth={2}
-                  dot={{ r: 2.5, fill: "var(--success)", strokeWidth: 0 }}
-                  activeDot={{ r: 5, stroke: "var(--background)", strokeWidth: 2 }}
-                  legendType="none"
-                  tooltipType="none"
+                name="Total Tiket"
+                dataKey="total"
+                type="monotone"
+                stroke="#ef4444"
+                strokeWidth={2}
+                strokeDasharray="3 3"
+                dot={{ r: 3.5, fill: "#ef4444", strokeWidth: 0 }}
+                activeDot={{ r: 5.5, stroke: "var(--background)", strokeWidth: 2 }}
                 />
               </ComposedChart>
             </ResponsiveContainer>
