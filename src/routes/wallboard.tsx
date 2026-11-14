@@ -154,16 +154,92 @@ export function WallboardPage() {
           </div>
         </div>
 
-        {/* Jam Digital Realtime & Actions */}
+                {/* Jam Digital Realtime & Actions */}
         <div className="flex items-center gap-3">
           <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-4 py-2 text-right">
             <div className="font-mono text-xl font-bold tracking-wider text-emerald-400 lg:text-2xl">
               {time.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} WIB
             </div>
             <div className="text-[11px] text-slate-400">
-              {time.toLocaleDateString("id-ID", truncate text-xs font-semibold text-emerald-300">
+              {time.toLocaleDateString("id-ID", { weekday: "long", day: "numeric", month: "long", year: "numeric" })}
+            </div>
+          </div>
+
+          <button
+            onClick={() => refetch()}
+            className="flex size-10 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 transition hover:bg-slate-800 hover:text-white"
+            title="Refresh manual"
+          >
+            <RefreshCw className={`size-4 ${isFetching ? "animate-spin text-cyan-400" : ""}`} />
+          </button>
+
+          <button
+            onClick={toggleFullscreen}
+            className="flex size-10 items-center justify-center rounded-lg border border-slate-800 bg-slate-900 text-slate-300 transition hover:bg-slate-800 hover:text-white"
+            title={isFullscreen ? "Keluar Fullscreen" : "Fullscreen TV"}
+          >
+            {isFullscreen ? <Minimize2 className="size-4" /> : <Maximize2 className="size-4" />}
+          </button>
+
+          <Link
+            to="/tickets"
+            className="flex items-center gap-1.5 rounded-lg border border-slate-800 bg-slate-900 px-3 py-2 text-xs font-medium text-slate-300 transition hover:bg-slate-800 hover:text-white"
+          >
+            <ArrowLeft className="size-4" />
+            <span>Kembali</span>
+          </Link>
+        </div>
+      </header>
+
+      {/* Row KPI Cards */}
+      <div className="mb-4 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span>Total Aktif</span>
+            <Ticket className="size-4 text-cyan-400" />
+          </div>
+          <div className="mt-1 text-2xl font-black text-white">{tickets.length}</div>
+          <div className="text-[10px] text-slate-500">Tiket berstatus Open/Progress</div>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span>VSAT Aktif</span>
+            <span className="size-2 rounded-full bg-cyan-400" />
+          </div>
+          <div className="mt-1 text-2xl font-black text-cyan-300">{vsatTickets.length}</div>
+          <div className="text-[10px] text-slate-500">Care Center VSAT</div>
+        </div>
+
+        <div className="rounde d-xl border border-slate-800 bg-slate-900/60 p-3">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span>Non-VSAT Aktif</span>
+            <span className="size-2 rounded-full bg-indigo-400" />
+          </div>
+          <div className="mt-1 text-2xl font-black text-indigo-300">{nonVsatTickets.length}</div>
+          <div className="text-[10px] text-slate-500">Care Center Non-VSAT</div>
+        </div>
+
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span>SLA Kritis / Overdue</span>
+            <AlertTriangle className={`size-4 ${criticalCount > 0 ? "text-red-400 animate-pulse" : "text-slate-500"}`} />
+          </div>
+          <div className={`mt-1 text-2xl font-black ${criticalCount > 0 ? "text-red-400" : "text-slate-300"}`}>
+            {criticalCount}
+          </div>
+          <div className="text-[10px] text-slate-500">Sisa waktu &le; 10 menit</div>
+        </div>
+
+        <div className="col-span-2 rounded-xl border border-slate-800 bg-slate-900/60 p-3 sm:col-span-1 lg:col-span-1">
+          <div className="flex items-center justify-between text-xs text-slate-400">
+            <span>On-Duty ({SHIFT_INFO[shiftSlot]?.label || shiftSlot})</span>
+            <Users className="size-4 text-emerald-400" />
+          </div>
+          <div className="mt-1 truncate text-xs font-semibold text-emerald-300">
             {onDutyOfficers.length > 0 ? onDutyOfficers.join(", ") : "Belum terdata"}
           </div>
+          <div className="text-[10px] text-slate-500">Shift saat ini</div>
         </div>
       </div>
 
@@ -175,12 +251,14 @@ export function WallboardPage() {
             <div className="flex items-center gap-2">
               <span className="size-2 rounded-full bg-cyan-400" />
               <h2 className="text-sm font-bold tracking-wide uppercase text-cyan-300">
-
+                Care Center VSAT
+              </h2>
             </div>
             <span className="rounded-full bg-cyan-950 px-2 py-0.5 text-xs font-bold text-cyan-300">
               {vsatTickets.length} Tiket
             </span>
           </div>
+
 
           <div className="flex flex-1 flex-col gap-2.5 overflow-y-auto">
             {vsatTickets.length === 0 ? (
