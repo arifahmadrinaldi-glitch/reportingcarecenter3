@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Activity, CheckCircle2, Clock3, TriangleAlert } from "lucide-react";
-import { Bar, BarChart, CartesianGrid, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, ComposedChart, CartesianGrid, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { dashboardMetrics, dailyTicketTrend, formatMttr, ticketOverdue } from "@/lib/dashboard-metrics";
 import type { TicketRow } from "@/lib/ticket-constants";
 import { LiveDuration } from "@/components/tickets/LiveDuration";
@@ -88,7 +88,7 @@ export function DashboardPerformance({
         <div className="mt-4 h-[280px] min-w-0">
           {trend.length ? (
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={trend} margin={{ top: 8, right: 8, bottom: 12, left: -20 }}>
+              <ComposedChart data={trend} margin={{ top: 8, right: 8, bottom: 12, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
                 <XAxis
                   dataKey="label"
@@ -102,6 +102,8 @@ export function DashboardPerformance({
                   stroke="var(--border)"
                 />
                 <Tooltip
+                  formatter={(value, name) => [`${value} tiket`, name]}
+                  labelFormatter={(label) => `Tanggal ${label}`}
                   contentStyle={{
                     background: "var(--popover)",
                     color: "var(--popover-foreground)",
@@ -111,9 +113,31 @@ export function DashboardPerformance({
                   }}
                 />
                 <Legend wrapperStyle={{ fontSize: 11 }} />
-                <Bar name="Open" dataKey="open" fill="var(--primary)" radius={[3, 3, 0, 0]} maxBarSize={18} />
-                <Bar name="Close" dataKey="close" fill="var(--success)" radius={[3, 3, 0, 0]} maxBarSize={18} />
-              </BarChart>
+                <Bar name="Open" dataKey="open" fill="var(--primary)" fillOpacity={0.35} radius={[3, 3, 0, 0]} maxBarSize={18} />
+                <Bar name="Close" dataKey="close" fill="var(--success)" fillOpacity={0.35} radius={[3, 3, 0, 0]} maxBarSize={18} />
+                <Line
+                  name="Open"
+                  dataKey="open"
+                  type="linear"
+                  stroke="var(--primary)"
+                  strokeWidth={2}
+                  dot={{ r: 2.5, fill: "var(--primary)", strokeWidth: 0 }}
+                  activeDot={{ r: 5, stroke: "var(--background)", strokeWidth: 2 }}
+                  legendType="none"
+                  tooltipType="none"
+                />
+                <Line
+                  name="Close"
+                  dataKey="close"
+                  type="linear"
+                  stroke="var(--success)"
+                  strokeWidth={2}
+                  dot={{ r: 2.5, fill: "var(--success)", strokeWidth: 0 }}
+                  activeDot={{ r: 5, stroke: "var(--background)", strokeWidth: 2 }}
+                  legendType="none"
+                  tooltipType="none"
+                />
+              </ComposedChart>
             </ResponsiveContainer>
           ) : (
             <div className="flex h-full items-center justify-center text-xs text-muted-foreground">
