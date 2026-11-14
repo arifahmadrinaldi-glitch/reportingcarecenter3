@@ -15,6 +15,7 @@ import { Route as JadwalRouteImport } from './routes/jadwal'
 import { Route as MonitoringStarlinkRouteImport } from './routes/monitoring-starlink'
 import { Route as PrtgRouteImport } from './routes/prtg'
 import { Route as TicketsRouteImport } from './routes/tickets'
+import { Route as WallboardRouteImport } from './routes/wallboard'
 import { Route as ApiPublicTelegramWebhookRouteImport } from './routes/api/public/telegram/webhook'
 
 const IndexRoute = IndexRouteImport.update({
@@ -46,6 +47,10 @@ const TicketsRoute = TicketsRouteImport.update({
   id: '/tickets',
   path: '/tickets',
   getParentRoute: () => rootRouteImport,
+  const WallboardRoute = WallboardRouteImport.update({
+  id: '/wallboard',
+  path: '/wallboard',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicTelegramWebhookRoute =
   ApiPublicTelegramWebhookRouteImport.update({
@@ -61,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/monitoring-starlink': typeof MonitoringStarlinkRoute
   '/prtg': typeof PrtgRoute
   '/tickets': typeof TicketsRoute
+  '/wallboard': typeof WallboardRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesByTo {
@@ -70,6 +76,7 @@ export interface FileRoutesByTo {
   '/monitoring-starlink': typeof MonitoringStarlinkRoute
   '/prtg': typeof PrtgRoute
   '/tickets': typeof TicketsRoute
+  '/wallboard': typeof WallboardRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRoutesById {
@@ -80,6 +87,7 @@ export interface FileRoutesById {
   '/monitoring-starlink': typeof MonitoringStarlinkRoute
   '/prtg': typeof PrtgRoute
   '/tickets': typeof TicketsRoute
+  '/wallboard': typeof WallboardRoute
   '/api/public/telegram/webhook': typeof ApiPublicTelegramWebhookRoute
 }
 export interface FileRouteTypes {
@@ -91,6 +99,7 @@ export interface FileRouteTypes {
     | '/monitoring-starlink'
     | '/prtg'
     | '/tickets'
+    | '/wallboard'
     | '/api/public/telegram/webhook'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/monitoring-starlink'
     | '/prtg'
     | '/tickets'
+    | '/wallboard'
     | '/api/public/telegram/webhook'
   id:
     | '__root__'
@@ -109,6 +119,7 @@ export interface FileRouteTypes {
     | '/monitoring-starlink'
     | '/prtg'
     | '/tickets'
+    | '/wallboard'
     | '/api/public/telegram/webhook'
   fileRoutesById: FileRoutesById
 }
@@ -119,6 +130,7 @@ export interface RootRouteChildren {
   MonitoringStarlinkRoute: typeof MonitoringStarlinkRoute
   PrtgRoute: typeof PrtgRoute
   TicketsRoute: typeof TicketsRoute
+  WallboardRoute: typeof WallboardRoute
   ApiPublicTelegramWebhookRoute: typeof ApiPublicTelegramWebhookRoute
 }
 
@@ -166,6 +178,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TicketsRouteImport
       parentRoute: typeof rootRouteImport
     }
+      '/wallboard': {
+      id: '/wallboard'
+      path: '/wallboard'
+      fullPath: '/wallboard'
+      preLoaderRoute: typeof WallboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/telegram/webhook': {
       id: '/api/public/telegram/webhook'
       path: '/api/public/telegram/webhook'
@@ -183,6 +202,7 @@ const rootRouteChildren: RootRouteChildren = {
   MonitoringStarlinkRoute: MonitoringStarlinkRoute,
   PrtgRoute: PrtgRoute,
   TicketsRoute: TicketsRoute,
+  WallboardRoute: WallboardRoute,
   ApiPublicTelegramWebhookRoute: ApiPublicTelegramWebhookRoute,
 }
 export const routeTree = rootRouteImport
