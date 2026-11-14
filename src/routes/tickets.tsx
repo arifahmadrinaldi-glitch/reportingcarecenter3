@@ -192,7 +192,7 @@ const summaryCards = [
     label: "Engineer Troubleshoot",
     status: "Engineer Troubleshoot",
     icon: Wrench,
-    tone: "blue",
+    tone: "orange",
     note: "Sedang Troubleshoot",
   },
   {
@@ -631,6 +631,8 @@ function TicketsPage() {
                     ? "border-amber-700/35 bg-amber-700/5 text-amber-700"
                     : card.tone === "teal"
                       ? "border-teal-500/35 text-teal-600"
+                      : card.tone === "orange"
+                        ? "border-orange-500/35 text-blue-600"
                       : card.tone === "blue"
                         ? "border-blue-500/35 text-blue-600"
                         : "border-ops-blue/35 bg-ops-blue/5 text-ops-blue";
