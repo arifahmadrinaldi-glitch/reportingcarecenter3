@@ -17,6 +17,7 @@ import {
   UserRound,
   Truck,
   Building2,
+  Wrench,
 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
@@ -186,6 +187,13 @@ const summaryCards = [
     icon: Truck,
     tone: "blue",
     note: "Dalam Perjalanan",
+  },
+  {
+    label: "Engineer Troubleshoot",
+    status: "Engineer Troubleshoot",
+    icon: Wrench,
+    tone: "blue",
+    note: "Sedang Troubleshoot",
   },
   {
     label: "Close",
@@ -572,7 +580,7 @@ function TicketsPage() {
           </button>
         ))}
       </div>
-      <section className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-7" aria-label="Ringkasan ticket">
+      <section className="mb-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-8" aria-label="Ringkasan ticket">
                 {summaryCards.map((card) => {
                     const activeStatuses = STATUS_OPTIONS.filter((s) => s !== "Close");
           const isSelected = card.status
