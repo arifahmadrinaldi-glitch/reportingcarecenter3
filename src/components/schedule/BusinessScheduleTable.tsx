@@ -65,9 +65,9 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
     setEditing(null);
   };
 
-  const idInputs = (m: number) => (["nik", "name", "phone"] as const).map((f) => {
-    const label = f === "nik" ? "NIK" : f === "name" ? "Nama" : "No. Tlp";
-    const value = m === -1 ? data.regular[f] : f === "nik" ? data.niks[m] : f === "name" ? data.members[m] : data.phones[m];
+  const idInputs = (m: number) => (["nik", "name"] as const).map((f) => {
+    const label = f === "nik" ? "NIK" : "Nama";
+    const value = m === -1 ? data.regular[f] : f === "nik" ? data.niks[m] : data.members[m];
     return (
       <td key={f} className="px-1 py-1">
         <Input aria-label={`Business ${m === -1 ? "Reguler" : `anggota ${m + 1}`} ${label}`} value={value ?? ""} className="h-7 text-[11px]"
@@ -75,8 +75,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
             const v = e.target.value;
             if (m === -1) b.regular[f] = v;
             else if (f === "nik") b.niks[m] = v;
-            else if (f === "name") b.members[m] = v;
-            else b.phones[m] = v;
+            else b.members[m] = v;
           })} />
       </td>
     );
@@ -124,9 +123,8 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
       <div className="overflow-x-auto rounded-lg border bg-card">
         <table className="w-full min-w-[1400px] table-fixed border-collapse text-[10px]">
   <colgroup>
-    <col className="w-[72px]" />
-    <col className="w-[170px]" />
-    <col className="w-[104px]" />
+    <col className="w-[112px]" />
+    <col className="w-[300px]" />
     {Array.from({ length: days }, (_, i) => <col key={i} />)}
     <col className="w-14" />
     <col className="w-10" />
@@ -136,7 +134,7 @@ export function BusinessScheduleTable({ data, onChange, year, month, days }: {
   </colgroup>
           <thead>
             <tr className="bg-ops-navy text-primary-foreground dark:bg-ops-mist dark:text-foreground">
-              <th className="px-2 py-1.5 text-left">NIK</th><th className="px-2 py-1.5 text-left">Nama</th><th className="px-2 py-1.5 text-left">No. Tlp</th>
+              <th className="px-2 py-1.5 text-left">NIK</th><th className="px-2 py-1.5 text-left">Nama</th>
                 {Array.from({ length: days }, (_, i) => {
                   const dow = new Date(year, month, i + 1).getDay();
                   const isOff = dow === 0 || dow === 6 || isNationalHoliday(year, month, i + 1);

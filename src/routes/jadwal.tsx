@@ -166,37 +166,36 @@ function JadwalPage() {
     const dayHeads = Array.from({ length: days }, (_, i) => String(i + 1));
     const rows: unknown[][] = [
       [`Care Center Vsat ${BULAN_LIST[month]} ${year}`],
-      ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Total Lembur", "Jam Kerja"],
+      ["NIK", "Nama", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Total Lembur", "Jam Kerja"],
     ];
     [-1, ...data.members.map((_, i) => i)].forEach((m) => {
       const name = m === -1 ? data.regular?.name ?? "Reguler" : data.members[m];
       const nik = m === -1 ? data.regular?.nik ?? "" : data.niks?.[m] ?? "";
-      const phone = m === -1 ? data.regular?.phone ?? "" : data.phones?.[m] ?? "";
       const cells = dayHeads.map((_, i) => {
         const c = getCell(m, i + 1);
         return c.backupFor ? `${c.code} (BK ${c.backupFor})` : c.code;
       });
       const r = rows.length + 1;
-      const range = `${XLSX.utils.encode_col(3)}${r}:${XLSX.utils.encode_col(2 + days)}${r}`;
+      const range = `${XLSX.utils.encode_col(2)}${r}:${XLSX.utils.encode_col(1 + days)}${r}`;
       const st = scheduleStats((d) => getCell(m, d), days, regularStats.work);
-      rows.push([nik, name, phone, ...cells,
+      rows.push([nik, name, ...cells,
         st.work,
         { t: "n", v: st.ct, f: `COUNTIF(${range},"CT")` },
         { t: "n", v: st.bk, f: `COUNTIF(${range},"*BK*")` },
-        m === -1 ? "-" : { t: "n", v: st.buffer, f: `${XLSX.utils.encode_col(3 + days)}${r}-$${XLSX.utils.encode_col(3 + days)}$3` },
+        m === -1 ? "-" : { t: "n", v: st.buffer, f: `${XLSX.utils.encode_col(2 + days)}${r}-$${XLSX.utils.encode_col(2 + days)}$3` },
         st.hours,
       ]);
     });
     rows.push([], ["Keterangan: P = Pagi, S = Siang, M = Malam, L = Libur, CT = Cuti, I = Izin/Sakit (tidak mengurangi hari kerja), BK = Backup"]);
     const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws["!cols"] = [{ wch: 16 }, { wch: 20 }, { wch: 18 }, ...dayHeads.map(() => ({ wch: 5 })), { wch: 12 }, { wch: 6 }, { wch: 8 }, { wch: 8 }, { wch: 9 }];
+    ws["!cols"] = [{ wch: 16 }, { wch: 38 }, ...dayHeads.map(() => ({ wch: 5 })), { wch: 12 }, { wch: 6 }, { wch: 8 }, { wch: 8 }, { wch: 9 }];
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Care Center Vsat");
     const b = data.business ?? initializeBusiness();
-    const brows: unknown[][] = [[`Care Center Non-Vsat ${BULAN_LIST[month]} ${year}`], ["NIK", "Nama", "No. Tlp", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Total Lembur", "Jam Kerja"]];
+    const brows: unknown[][] = [[`Care Center Non-Vsat ${BULAN_LIST[month]} ${year}`], ["NIK", "Nama", ...dayHeads, "Hari Kerja", "Cuti", "Backup", "Total Lembur", "Jam Kerja"]];
     [-1, ...b.members.map((_, i) => i)].forEach((m) => {
       const st = businessStats(b, m, days, year, month);
-      brows.push([m === -1 ? b.regular.nik : b.niks[m], m === -1 ? b.regular.name : b.members[m], m === -1 ? b.regular.phone : b.phones[m],
+      brows.push([m === -1 ? b.regular.nik : b.niks[m], m === -1 ? b.regular.name : b.members[m],
         ...dayHeads.map((_, i) => { const c = businessCell(b, m, i + 1, year, month); return c.backupFor ? `${c.code} (BK ${c.backupFor})` : c.code; }),
         st.work, st.ct, st.bk, m === -1 ? "-" : st.buffer, st.hours]);
     });
@@ -241,9 +240,8 @@ function JadwalPage() {
           {query.isFetching ? <p className="p-4 text-xs text-muted-foreground">Memuat jadwal…</p> : <>
           <table className="w-full min-w-[1400px] table-fixed border-collapse text-[10px]">
   <colgroup>
-    <col className="w-[100px]" />
-    <col className="w-[240px]" />
-    <col className="w-[104px]" />
+    <col className="w-[112px]" />
+    <col className="w-[300px]" />
     {Array.from({ length: days }, (_, i) => (
       <col key={i} />
     ))}
@@ -279,7 +277,7 @@ function JadwalPage() {
               <tr className="border-t bg-muted/20 font-medium">
                 {(["nik", "name"] as const).map((field) => (
                   <td key={field} className="bg-card px-1 py-1">
-                    <Input aria-label={`Reguler ${field === "nik" ? "NIK" : field === "name" ? "Nama" : "No. Tlp"}`}
+                    <Input aria-label={`Reguler ${field === "nik" ? "NIK" : "Nama"}`}
                       value={data.regular?.[field] ?? (field === "name" ? "Reguler" : "")}
                       onChange={(e) => update((draft) => { draft.regular ??= { nik: "", name: "Reguler", phone: "" }; draft.regular[field] = e.target.value; })}
                       className="h-7 text-[11px]" />
