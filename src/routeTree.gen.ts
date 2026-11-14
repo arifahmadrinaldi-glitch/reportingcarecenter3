@@ -47,7 +47,8 @@ const TicketsRoute = TicketsRouteImport.update({
   id: '/tickets',
   path: '/tickets',
   getParentRoute: () => rootRouteImport,
-  const WallboardRoute = WallboardRouteImport.update({
+} as any)
+const WallboardRoute = WallboardRouteImport.update({
   id: '/wallboard',
   path: '/wallboard',
   getParentRoute: () => rootRouteImport,
