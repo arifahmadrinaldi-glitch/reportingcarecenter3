@@ -100,12 +100,82 @@ export function WallboardPage() {
     [scheduleData, shiftSlot]
   );
 
-  // Pisahkan VSAT dan Non-VSAT
+    // Pisahkan VSAT dan Non-VSAT
   const vsatTickets = useMemo(
-    () => tickets.filter((t) =>
-      ">
-                Care Center VSAT
-              </h2>
+    () => tickets.filter((t) => ticketCategory(t.layanan) === "vsat"),
+    [tickets]
+  );
+  const nonVsatTickets = useMemo(
+    () => tickets.filter((t) => ticketCategory(t.layanan) === "non-vsat"),
+    [tickets]
+  );
+
+  // Deteksi tiket kritis / overdue
+  const criticalCount = useMemo(() => {
+    const nowMs = time.getTime();
+    return tickets.filter((t) => {
+      const deadline = parsePendingDeadline(t.keterangan);
+      if (!deadline) return false;
+      const diff = deadline.getTime() - nowMs;
+      return diff <= 10 * 60 * 1000;
+    }).length;
+  }, [tickets, time]);
+
+  const toneBadge = (status: string) => {
+    const tone = statusTone(status);
+    if (tone === "danger") return "border-red-500/40 bg-red-500/20 text-red-300";
+    if (tone === "warning") return "border-amber-500/40 bg-amber-500/20 text-amber-300";
+    if (tone === "orange") return "border-orange-500/40 bg-orange-500/20 text-orange-300";
+    if (tone === "purple") return "border-purple-500/40 bg-purple-500/20 text-purple-300";
+    if (tone === "teal") return "border-teal-500/40 bg-teal-500/20 text-teal-300";
+    return "border-blue-500/40 bg-blue-500/20 text-blue-300";
+  };
+
+  return (
+    <div className="flex min-h-screen flex-col bg-slate-950 p-4 text-slate-100 lg:p-6">
+      {/* Top Header */}
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-4 rounded-xl border border-slate-800 bg-slate-900/80 p-4 backdrop-blur">
+        <div className="flex items-center gap-3">
+          <div className="flex size-11 items-center justify-center rounded-xl bg-red-600 text-white shadow-lg shadow-red-600/30">
+            <Radio className="size-6 animate-pulse" />
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-lg font-bold tracking-tight text-white lg:text-xl">
+                CARE CENTER TELKOMSAT
+              </h1>
+              <span className="rounded-md border border-emerald-500/40 bg-emerald-500/20 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                LIVE NOC
+              </span>
+            </div>
+            <p className="text-xs text-slate-400">
+              Command Center Wallboard • Auto-refresh 30s
+            </p>
+          </div>
+        </div>
+
+        {/* Jam Digital Realtime & Actions */}
+        <div className="flex items-center gap-3">
+          <div className="rounded-lg border border-slate-800 bg-slate-950/70 px-4 py-2 text-right">
+            <div className="font-mono text-xl font-bold tracking-wider text-emerald-400 lg:text-2xl">
+              {time.toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit", second: "2-digit" })} WIB
+            </div>
+            <div className="text-[11px] text-slate-400">
+              {time.toLocaleDateString("id-ID", truncate text-xs font-semibold text-emerald-300">
+            {onDutyOfficers.length > 0 ? onDutyOfficers.join(", ") : "Belum terdata"}
+          </div>
+        </div>
+      </div>
+
+      {/* Main 2-Column Split */}
+      <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* Kolom VSAT */}
+        <section className="flex flex-col rounded-xl border border-slate-800 bg-slate-900/50 p-4">
+          <div className="mb-3 flex items-center justify-between border-b border-slate-800 pb-2">
+            <div className="flex items-center gap-2">
+              <span className="size-2 rounded-full bg-cyan-400" />
+              <h2 className="text-sm font-bold tracking-wide uppercase text-cyan-300">
+
             </div>
             <span className="rounded-full bg-cyan-950 px-2 py-0.5 text-xs font-bold text-cyan-300">
               {vsatTickets.length} Tiket
