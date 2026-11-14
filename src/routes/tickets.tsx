@@ -632,7 +632,7 @@ function TicketsPage() {
                     : card.tone === "teal"
                       ? "border-teal-500/35 text-teal-600"
                       : card.tone === "orange"
-                        ? "border-orange-500/35 text-blue-600"
+                        ? "border-orange-500/35 text-orange-600"
                       : card.tone === "blue"
                         ? "border-blue-500/35 text-blue-600"
                         : "border-ops-blue/35 bg-ops-blue/5 text-ops-blue";
