@@ -297,8 +297,7 @@ function Index() {
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={perCustomer} layout="vertical" margin={{ left: 8, right: 16 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" horizontal={false} />
-                <XAxis type="number" allowDecimals={false} {...axisProps} /
-                >
+                <XAxis type="number" allowDecimals={false} {...axisProps} />
                 <YAxis type="category" dataKey="name" width={110} {...axisProps} />
                 <Tooltip contentStyle={tooltipStyle} />
                 <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={14}>
