@@ -211,7 +211,7 @@ export function WallboardPage() {
           <div className="text-[10px] text-slate-500">Care Center VSAT</div>
         </div>
 
-        <div className="rounde d-xl border border-slate-800 bg-slate-900/60 p-3">
+        <div className="rounded-xl border border-slate-800 bg-slate-900/60 p-3">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span>Non-VSAT Aktif</span>
             <span className="size-2 rounded-full bg-indigo-400" />
