@@ -3,7 +3,6 @@ import { Activity, CheckCircle2, Clock3, TriangleAlert } from "lucide-react";
 import { Bar, ComposedChart, CartesianGrid, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { dashboardMetrics, dailyTicketTrend, formatMttr, ticketOverdue } from "@/lib/dashboard-metrics";
 import { formatDateTime, type TicketRow } from "@/lib/ticket-constants";
-import type { TicketRow } from "@/lib/ticket-constants";
 import { LiveDuration } from "@/components/tickets/LiveDuration";
 import { StatusBadge } from "@/components/tickets/StatusBadge";
 
@@ -274,44 +273,72 @@ export function DashboardPerformance({
           )}
         </div>
         <div className="mt-3 overflow-x-auto rounded-lg border border-border">
-          <table className="w-full min-w-[760px] text-[10px]">
+                    <table className="w-full min-w-[820px] text-[10px]">
             <thead className="bg-muted text-muted-foreground">
               <tr>
-                {["No.", "Nama Lokasi / Site", "Customer & Layanan", "Frekuensi Gangguan", "Indikasi / Keterangan Terakhir", "Status Terkini"].map(
-                  (label) => (
-                    <th key={label} className="px-3 py-3 text-left font-semibold">
-                      {label}
-                    </th>
-                  ),
-                )}
+                {[
+                  "No.",
+                  "Nama Lokasi / Site",
+                  "Customer & Layanan",
+                  "Nomor Tiket",
+                  "Tanggal Gangguan",
+                  "Frekuensi Gangguan",
+                  "Indikasi / Keterangan Terakhir",
+                  "Status Terkini",
+                ].map((label) => (
+                  <th key={label} className="px-3 py-3 text-left font-semibold">
+                    {label}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {repeatTroubles.map((item, index) => (
                 <tr key={item.location} className="bg-card align-top even:bg-muted/30">
                   <td className="px-3 py-3 text-center tabular-nums">{index + 1}</td>
-                  <td className="max-w-48 break-words px-3 py-3 font-semibold text-foreground">
+                  <td className="max-w-44 break-words px-3 py-3 font-semibold text-foreground">
                     {item.location}
                   </td>
-                  <td className="max-w-48 break-words px-3 py-3">
+                  <td className="max-w-44 break-words px-3 py-3">
                     <p className="font-medium text-foreground">{item.customer}</p>
                     <p className="text-[9px] text-muted-foreground">{item.layanan}</p>
+                  </td>
+                  <td className="max-w-40 px-3 py-3">
+                    <div className="flex flex-col gap-1">
+                      {item.tickets.map((t, idx) => (
+                        <div key={idx} className="text-[9px]">
+                          <span className="font-semibold text-muted-foreground">Tiket {idx + 1}: </span>
+                          <span className="rounded bg-muted px-1.5 py-0.5 font-mono font-semibold text-foreground">
+                            {t.no}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="max-w-44 px-3 py-3 text-[9px]">
+                    <div className="flex flex-col gap-1">
+                      {item.tickets.map((t, idx) => (
+                        <div key={idx} className="tabular-nums">
+                          <span className="font-semibold text-foreground">Ke-{idx + 1}: </span>
+                          <span className="text-muted-foreground">{formatDateTime(t.openAt)}</span>
+                        </div>
+                      ))}
+                    </div>
                   </td>
                   <td className="px-3 py-3">
                     <span className="inline-flex items-center rounded-md border border-destructive/30 bg-destructive/10 px-2 py-0.5 text-[10px] font-bold text-destructive">
                       {item.count}x Gangguan
                     </span>
                   </td>
-                  <td className="max-w-64 px-3 py-3">
+                  <td className="max-w-60 px-3 py-3">
                     {item.latestIndikasi && (
                       <p className="font-medium text-foreground">{item.latestIndikasi}</p>
                     )}
                     <p className="mt-0.5 whitespace-pre-wrap break-words text-muted-foreground">
                       {item.latestKeterangan || "—"}
                     </p>
-                    {item.latestOpen && (
-                      <p className="mt-1 text-[9px] text-muted-foreground">
-                        Terakhir open: {item.latestOpen}
+                    {item.latestOpen && (                 <p className="mt-1 text-[9px] text-muted-foreground">
+                        Terakhir open: {formatDateTime(item.latestOpen)}
                       </p>
                     )}
                   </td>
@@ -322,14 +349,13 @@ export function DashboardPerformance({
               ))}
               {!repeatTroubles.length ? (
                 <tr>
-                  <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                    Tidak ada site yang mengalami gangguan berulang pada periode ini.
+                  <td colSpan={8} className="py-8 text-center text-muted-foreground">
+                    Tidak ada tiket gaul CM (gangguan berulang ≥ 2x) pada periode ini.
                   </td>
                 </tr>
               ) : null}
             </tbody>
           </table>
-        </div>
       </div>
     </section>
   );
