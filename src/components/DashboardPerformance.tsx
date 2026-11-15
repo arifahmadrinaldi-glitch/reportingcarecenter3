@@ -356,7 +356,7 @@ export function DashboardPerformance({
               ) : null}
             </tbody>
           </table>
+        </div>
       </div>
     </section>
-  );
 }
