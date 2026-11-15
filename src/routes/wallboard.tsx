@@ -15,7 +15,7 @@ import { useEffect, useMemo, useState } from "react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { currentShift, officersOn, SHIFT_INFO } from "@/lib/handover";
-import { type ScheduleData } from "@/lib/schedule";
+import { initializeSchedule, type ScheduleData } from "@/lib/schedule";
 import {
   formatDateTime,
   formatTimeDiff,
@@ -95,9 +95,18 @@ export function WallboardPage() {
   });
 
   const shiftSlot = useMemo(() => currentShift(time), [time]);
-  const onDutyOfficers = useMemo(
-    () => officersOn(scheduleData, shiftSlot),
-    [scheduleData, shiftSlot]
+  const fullSchedule = useMemo(() => {
+    if (!scheduleData) return undefined;
+    return initializeSchedule(scheduleData, undefined, period);
+  }, [scheduleData, period]);
+
+  const vsatOfficers = useMemo(
+    () => officersOn(fullSchedule, shiftSlot),
+    [fullSchedule, shiftSlot]
+  );
+  const nonVsatOfficers = useMemo(
+    () => officersOn(fullSchedule?.business, shiftSlot),
+    [fullSchedule, shiftSlot]
   );
 
     // Pisahkan VSAT dan Non-VSAT
@@ -231,17 +240,26 @@ export function WallboardPage() {
           <div className="text-[10px] text-slate-500">Sisa waktu &le; 10 menit</div>
         </div>
 
-        <div className="col-span-2 rounded-xl border border-slate-800 bg-slate-900/60 p-3 sm:col-span-1 lg:col-span-1">
+          <div className="col-span-2 rounded-xl border border-slate-800 bg-slate-900/60 p-3 sm:col-span-1 lg:col-span-1">
           <div className="flex items-center justify-between text-xs text-slate-400">
             <span>On-Duty ({SHIFT_INFO[shiftSlot.shift]?.label || shiftSlot.shift})</span>
             <Users className="size-4 text-emerald-400" />
           </div>
-          <div className="mt-1 truncate text-xs font-semibold text-emerald-300">
-            {onDutyOfficers.length > 0 ? onDutyOfficers.join(", ") : "Belum terdata"}
+          <div className="mt-1.5 flex flex-col gap-1 text-[11px]">
+            <div className="flex items-center gap-1.5 truncate">
+              <span className="shrink-0 rounded bg-cyan-950 px-1 py-0.5 text-[9px] font-bold text-cyan-300">VSAT</span>
+              <span className="truncate font-semibold text-cyan-200">
+                {vsatOfficers.length > 0 ? vsatOfficers.join(", ") : "-"}
+              </span>
+            </div>
+            <div className="flex items-center gap-1.5 truncate">
+              <span className="shrink-0 rounded bg-indigo-950 px-1 py-0.5 text-[9px] font-bold text-indigo-300">Non-VSAT</span>
+              <span className="truncate font-semibold text-indigo-200">
+                {nonVsatOfficers.length > 0 ? nonVsatOfficers.join(", ") : "-"}
+              </span>
+            </div>
           </div>
-          <div className="text-[10px] text-slate-500">Shift saat ini</div>
         </div>
-      </div>
 
       {/* Main 2-Column Split */}
       <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
