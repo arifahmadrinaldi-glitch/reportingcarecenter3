@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Activity, CheckCircle2, Clock3, TriangleAlert } from "lucide-react";
 import { Bar, ComposedChart, CartesianGrid, Legend, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { dashboardMetrics, dailyTicketTrend, formatMttr, ticketOverdue } from "@/lib/dashboard-metrics";
+import { formatDateTime, type TicketRow } from "@/lib/ticket-constants";
 import type { TicketRow } from "@/lib/ticket-constants";
 import { LiveDuration } from "@/components/tickets/LiveDuration";
 import { StatusBadge } from "@/components/tickets/StatusBadge";
@@ -34,7 +35,7 @@ export function DashboardPerformance({
       })),
     [categoryTickets, startDate, endDate],
   );
-    const repeatTroubles = useMemo(() => {
+      const repeatTroubles = useMemo(() => {
     const map = new Map<
       string,
       {
@@ -42,6 +43,7 @@ export function DashboardPerformance({
         customer: string;
         layanan: string;
         count: number;
+        tickets: Array<{ no: string; openAt: string | null; rawDate: string }>;
         latestStatus: string;
         latestOpen: string;
         latestIndikasi: string;
@@ -50,9 +52,16 @@ export function DashboardPerformance({
     >();
 
     for (const t of tickets) {
+      // Hanya tiket CM (Corrective Maintenance)
+      const jenis = (t.jenis_ticket || "").trim().toLowerCase();
+      if (!jenis.includes("corrective") && jenis !== "cm") continue;
+
       const loc = (t.nama_lokasi || "").trim();
       if (!loc || loc === "-" || loc.toLowerCase() === "null") continue;
       const key = loc.toLowerCase();
+
+      const ticketNo = [t.tiket_mantools, t.tiket_noxis, t.tiket_epicor].filter(Boolean).join(" / ") || "—";
+      const rawDate = t.tanggal_open || t.created_at || "";
 
       const existing = map.get(key);
       if (!existing) {
@@ -61,6 +70,7 @@ export function DashboardPerformance({
           customer: t.customer || "—",
           layanan: t.layanan || "—",
           count: 1,
+          tickets: [{ no: ticketNo, openAt: t.tanggal_open, rawDate }],
           latestStatus: t.status || "—",
           latestOpen: t.tanggal_open || "",
           latestIndikasi: t.indikasi_gangguan || "",
@@ -68,6 +78,7 @@ export function DashboardPerformance({
         });
       } else {
         existing.count += 1;
+        existing.tickets.push({ no: ticketNo, openAt: t.tanggal_open, rawDate });
         if (existing.customer === "—" && t.customer) existing.customer = t.customer;
         if (existing.layanan === "—" && t.layanan) existing.layanan = t.layanan;
 
@@ -82,6 +93,11 @@ export function DashboardPerformance({
 
     return Array.from(map.values())
       .filter((item) => item.count >= 2)
+      .map((item) => ({
+        ...item,
+        // Urutkan gangguan dari pertama (terlama) ke kedua (terbaru)
+        tickets: item.tickets.sort((a, b) => a.rawDate.localeCompare(b.rawDate)),
+      }))
       .sort((a, b) => b.count - a.count || a.location.localeCompare(b.location));
   }, [tickets]);
   
