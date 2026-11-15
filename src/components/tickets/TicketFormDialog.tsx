@@ -95,7 +95,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, category, onSubmi
     const submit = async () => {
     const isClosed = values.status === "Close" || values.status === "Technical Close";
     if (isClosed && !closeAt.trim()) {
-      toast.error("Isi tanggal (Samakan dengan waktu tech close pada Mantools)");
+      toast.error("Isi tanggal Tech Close (Samakan dengan waktu Tech Close pada Mantools)");
       return;
     }
 
