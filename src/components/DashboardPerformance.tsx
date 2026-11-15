@@ -246,9 +246,9 @@ export function DashboardPerformance({
           <div className="border-t border-border pt-5 pb-1">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <h2 className="text-xs font-semibold text-primary">Deteksi Site Sering Gangguan (Repeat Trouble)</h2>
+            <h2 className="text-xs font-semibold text-primary">Tiket Gangguan Berulang (Gaul)</h2>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
-              Site/Lokasi dengan frekuensi gangguan minimal 2 kali pada periode yang dipilih
+              Site/Lokasi dengan gangguan berulang pada periode yang dipilih
             </p>
           </div>
           {repeatTroubles.length > 0 && (
@@ -307,7 +307,7 @@ export function DashboardPerformance({
               {!repeatTroubles.length ? (
                 <tr>
                   <td colSpan={6} className="py-8 text-center text-muted-foreground">
-                    Tidak ada site yang mengalami gangguan berulang (≥ 2x) pada periode ini.
+                    Tidak ada site yang mengalami gangguan berulang pada periode ini.
                   </td>
                 </tr>
               ) : null}
