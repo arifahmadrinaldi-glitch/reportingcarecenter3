@@ -7,6 +7,18 @@ import { sendLoginOtp } from "./telegram-otp.functions";
 
 export const APPROVED_EMAIL = "ahmadarifrinaldi@gmail.com";
 
+const OTP_SESSION_KEY = "otp_verified_at";
+const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 jam
+
+function isOtpSessionValid(): boolean {
+  if (typeof window === "undefined") return false;
+  const raw = localStorage.getItem(OTP_SESSION_KEY);
+  if (!raw) return false;
+  const timestamp = parseInt(raw, 10);
+  if (isNaN(timestamp)) return false;
+  return Date.now() - timestamp < SESSION_DURATION_MS;
+}
+
 type AuthContextValue = {
   user: User | null;
   loading: boolean;
@@ -18,7 +30,6 @@ type AuthContextValue = {
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
-
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
@@ -33,8 +44,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const nextUser = data.user?.email?.toLowerCase() === APPROVED_EMAIL ? data.user : null;
       if (data.user && !nextUser) await supabase.auth.signOut();
       if (active) {
-        const otpVerified = sessionStorage.getItem("otp_verified") === "true";
+        const otpVerified = isOtpSessionValid();
         if (nextUser && !otpVerified) {
+          localStorage.removeItem(OTP_SESSION_KEY);
           await supabase.auth.signOut();
           setUser(null);
         } else {
@@ -49,7 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(null);
         return;
       }
-      const otpVerified = sessionStorage.getItem("otp_verified") === "true";
+      const otpVerified = isOtpSessionValid();
       if (!otpVerified) {
         setUser(null);
         return;
@@ -60,8 +72,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (session?.user && !nextUser) void supabase.auth.signOut();
     });
 
+    // Pengecekan berkala tiap 1 menit: jika sesi 24 jam habis saat tab terbuka, langsung auto-logout
+    const interval = setInterval(async () => {
+      if (!isOtpSessionValid()) {
+        const raw = localStorage.getItem(OTP_SESSION_KEY);
+        if (raw) {
+          localStorage.removeItem(OTP_SESSION_KEY);
+          await supabase.auth.signOut();
+          setUser(null);
+        }
+      }
+    }, 60 * 1000);
+
     return () => {
       active = false;
+      clearInterval(interval);
       listener.subscription.unsubscribe();
     };
   }, []);
@@ -91,12 +116,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signIn = useCallback(async (email: string, password: string) => {
-    const normalizedEmail = email.trim().toLowerCase();
+  const normalizedEmail = email.trim().toLowerCase();
     if (normalizedEmail !== APPROVED_EMAIL) return "email-not-approved";
 
     suppressSession.current = true;
     setUser(null);
-    sessionStorage.removeItem("otp_verified");
+    localStorage.removeItem(OTP_SESSION_KEY);
 
     const { error } = await supabase.auth.signInWithPassword({ email: normalizedEmail, password });
     if (error) {
@@ -151,7 +176,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     await (supabase as any).from("telegram_otp").delete().eq("email", normalizedEmail);
 
-    sessionStorage.setItem("otp_verified", "true");
+    localStorage.setItem(OTP_SESSION_KEY, Date.now().toString());
     suppressSession.current = false;
 
     const { data: userData } = await supabase.auth.getUser();
@@ -168,7 +193,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const signOut = useCallback(async () => {
-    sessionStorage.removeItem("otp_verified");
+    localStorage.removeItem(OTP_SESSION_KEY);
     await supabase.auth.signOut();
     setUser(null);
   }, []);
