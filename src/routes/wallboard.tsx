@@ -260,6 +260,7 @@ export function WallboardPage() {
             </div>
           </div>
         </div>
+      </div>
 
       {/* Main 2-Column Split */}
       <div className="grid flex-1 grid-cols-1 gap-4 lg:grid-cols-2">
