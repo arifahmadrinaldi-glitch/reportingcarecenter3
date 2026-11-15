@@ -359,4 +359,5 @@ export function DashboardPerformance({
         </div>
       </div>
     </section>
+  );
 }
