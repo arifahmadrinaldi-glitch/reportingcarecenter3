@@ -246,7 +246,7 @@ export function DashboardPerformance({
           <div className="border-t border-border pt-5 pb-1">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <h2 className="text-xs font-semibold text-primary">Tiket Gangguan Berulang (Gaul)</h2>
+            <h2 className="text-xs font-semibold text-primary">Tiket Gangguan Berulang</h2>
             <p className="mt-0.5 text-[10px] text-muted-foreground">
               Site/Lokasi dengan gangguan berulang pada periode yang dipilih
             </p>
