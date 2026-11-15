@@ -1,6 +1,6 @@
 import { Save } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
-
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { DateTimePicker } from "@/components/tickets/DateTimePicker";
 import {
@@ -92,7 +92,13 @@ export function TicketFormDialog({ open, onOpenChange, ticket, category, onSubmi
 
   const durasiAuto = useMemo(() => computeDurasi(toIso(openAt), toIso(closeAt)), [openAt, closeAt]);
 
-  const submit = async () => {
+    const submit = async () => {
+    const isClosed = values.status === "Close" || values.status === "Technical Close";
+    if (isClosed && !closeAt.trim()) {
+      toast.error("Isi tanggal (Samakan dengan waktu tech close pada Mantools)");
+      return;
+    }
+
     setSaving(true);
     try {
       const tanggalOpen = toIso(openAt);
@@ -220,7 +226,7 @@ export function TicketFormDialog({ open, onOpenChange, ticket, category, onSubmi
               <DateTimePicker value={openAt} onChange={setOpenAt} />
             </div>
             <div className="space-y-1.5">
-              {fieldLabel("Tanggal Tech Close", false)}
+              {fieldLabel("Tanggal Tech Close", values.status === "Close" || values.status === "Technical Close")}
               <DateTimePicker value={closeAt} onChange={setCloseAt} />
             </div>
             <div className="space-y-1.5 sm:col-span-2">
