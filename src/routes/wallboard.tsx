@@ -233,7 +233,7 @@ export function WallboardPage() {
 
         <div className="col-span-2 rounded-xl border border-slate-800 bg-slate-900/60 p-3 sm:col-span-1 lg:col-span-1">
           <div className="flex items-center justify-between text-xs text-slate-400">
-            <span>On-Duty ({SHIFT_INFO[shiftSlot]?.label || shiftSlot})</span>
+            <span>On-Duty ({SHIFT_INFO[shiftSlot.shift]?.label || shiftSlot.shift})</span>
             <Users className="size-4 text-emerald-400" />
           </div>
           <div className="mt-1 truncate text-xs font-semibold text-emerald-300">
