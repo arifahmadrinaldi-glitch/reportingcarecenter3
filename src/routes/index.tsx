@@ -173,7 +173,6 @@ function Index() {
     }
     return base;
   }, [tickets, category, jenisTicket]);
-  );
 
   const filtered = useMemo(
     () =>
@@ -294,6 +293,7 @@ function Index() {
             Reset filter
           </Button>
         </div>
+      </div>
 
       {isError ? (
         <p role="alert" className="mt-4 text-xs text-destructive">
