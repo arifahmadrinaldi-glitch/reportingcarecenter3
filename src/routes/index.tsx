@@ -23,6 +23,7 @@ import { DailyActivityDashboard } from "@/components/daily/DailyActivityDashboar
 import { DashboardPerformance } from "@/components/DashboardPerformance";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { type TicketRow } from "@/lib/ticket-constants";
 import { filterCareCenterRows, type CareCenterSelection } from "@/lib/care-center-filter";
@@ -142,6 +143,7 @@ function Index() {
   const [category, setCategory] = useState<CareCenterSelection>("non-vsat");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [jenisTicket, setJenisTicket] = useState<string>("all");
 
   const { data: tickets = [], isPending, isError } = useQuery({
     queryKey: ["tickets", "active"],
@@ -164,9 +166,13 @@ function Index() {
     },
   });
 
-  const categoryTickets = useMemo(
-    () => filterCareCenterRows(tickets, category, (ticket) => ticket.layanan),
-    [tickets, category],
+  const categoryTickets = useMemo(() => {
+    const base = filterCareCenterRows(tickets, category, (ticket) => ticket.layanan);
+    if (jenisTicket !== "all") {
+      return base.filter((t) => t.jenis_ticket === jenisTicket);
+    }
+    return base;
+  }, [tickets, category, jenisTicket]);
   );
 
   const filtered = useMemo(
@@ -237,7 +243,22 @@ function Index() {
             setEndDate("");
           }}
         />
-        <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_auto] md:items-end">
+                <div className="mt-4 grid gap-4 md:grid-cols-[1fr_1fr_1fr_auto] md:items-end">
+          <div className="block">
+            <span className="text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">
+              Jenis Tiket
+            </span>
+            <Select value={jenisTicket} onValueChange={setJenisTicket}>
+              <SelectTrigger aria-label="Jenis Tiket" className="mt-1.5 w-full bg-surface text-xs">
+                <SelectValue placeholder="Pilih Jenis" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Semua Jenis</SelectItem>
+                <SelectItem value="Corrective Maintenance">Corrective Maintenance</SelectItem>
+                <SelectItem value="Preventive Maintenance">Preventive Maintenance</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <label className="block">
             <span className="text-[9px] font-semibold tracking-widest text-muted-foreground uppercase">
               Dari Tanggal
@@ -262,17 +283,17 @@ function Index() {
           </label>
           <Button
             variant="link"
-            disabled={!startDate && !endDate}
+            disabled={!startDate && !endDate && jenisTicket === "all"}
             onClick={() => {
               setStartDate("");
               setEndDate("");
+              setJenisTicket("all");
             }}
             className="text-[11px] font-semibold"
           >
             Reset filter
           </Button>
         </div>
-      </div>
 
       {isError ? (
         <p role="alert" className="mt-4 text-xs text-destructive">
