@@ -221,13 +221,15 @@ export function TicketFormDialog({ open, onOpenChange, ticket, category, onSubmi
             </div>
             {selectField("Team SEM", "team_sem", TEAM_SEM_OPTIONS)}
             {selectField("Open By", "open_by", openByOptions)}
-            <div className="space-y-1.5">
+                        <div className="space-y-1.5">
               {fieldLabel("Tanggal Open")}
               <DateTimePicker value={openAt} onChange={setOpenAt} />
+              <p className="text-xs text-destructive">Samakan dengan Tgl Open Mantools</p>
             </div>
             <div className="space-y-1.5">
               {fieldLabel("Tanggal Tech Close", values.status === "Close" || values.status === "Technical Close")}
               <DateTimePicker value={closeAt} onChange={setCloseAt} />
+              <p className="text-xs text-destructive">Samakan dengan Tgl Tech Close Mantools</p>
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               {fieldLabel("Durasi (Otomatis)", false)}
