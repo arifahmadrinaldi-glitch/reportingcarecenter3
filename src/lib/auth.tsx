@@ -10,12 +10,46 @@ export const APPROVED_EMAIL = "ahmadarifrinaldi@gmail.com";
 const OTP_SESSION_KEY = "otp_verified_at";
 const SESSION_DURATION_MS = 24 * 60 * 60 * 1000; // 24 jam
 
+function isApkEnvironment(): boolean {
+  if (typeof window === "undefined") return false;
+  if (localStorage.getItem("app_platform") === "apk") return true;
+
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("apk") === "1" || params.get("app") === "apk") {
+    localStorage.setItem("app_platform", "apk");
+    return true;
+  }
+
+  const ua = window.navigator.userAgent || "";
+  const isWebView =
+    /\bwv\b/i.test(ua) ||
+    /Version\/[0-9.]+/i.test(ua) ||
+    Boolean((window as any).Android || (window as any).AndroidInterface || (window as any).Capacitor);
+  const isStandalone =
+    window.matchMedia?.("(display-mode: standalone)")?.matches ||
+    Boolean((window.navigator as any).standalone);
+
+  if (isWebView || isStandalone) {
+    localStorage.setItem("app_platform", "apk");
+    return true;
+  }
+
+  return false;
+}
+
 function isOtpSessionValid(): boolean {
   if (typeof window === "undefined") return false;
   const raw = localStorage.getItem(OTP_SESSION_KEY);
   if (!raw) return false;
   const timestamp = parseInt(raw, 10);
   if (isNaN(timestamp)) return false;
+
+  // Jika dibuka di APK / WebView, sesi berlaku selamanya
+  if (isApkEnvironment()) {
+    return true;
+  }
+
+  // Jika via browser web, tetap auto-logout 24 jam
   return Date.now() - timestamp < SESSION_DURATION_MS;
 }
 
