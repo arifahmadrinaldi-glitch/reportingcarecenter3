@@ -179,7 +179,7 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TicketsRouteImport
       parentRoute: typeof rootRouteImport
     }
-      '/wallboard': {
+    '/wallboard': {
       id: '/wallboard'
       path: '/wallboard'
       fullPath: '/wallboard'
