@@ -1,646 +1,257 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { FileSpreadsheet, History, Plus, RefreshCw, RotateCcw, Trash2, Upload } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { AlertTriangle, CheckCircle2, Copy, Plus, Save, Send, Trash2, XCircle } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
-import { DailyActivityDetailDialog, DailyActivityStatus } from "@/components/daily/DailyActivityDetailDialog";
-import { DailyActivityFilters } from "@/components/daily/DailyActivityFilters";
-import { DailyActivityFormDialog, type DailyActivityFormValues } from "@/components/daily/DailyActivityFormDialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
-import { useAccess } from "@/lib/app-access";
-import { parseSheetFile, pick } from "@/lib/import-sheet";
-import {
-  emptyDailyFilters,
-  filterDailyRows,
-  formatTanggal,
-  tahunOptionsFrom,
-  type DailyActivityRow,
-} from "@/lib/daily-activity-constants";
+import { currentShift, officersOn, SHIFT_INFO, type ShiftKey } from "@/lib/handover";
+import { initializeSchedule, type ScheduleData } from "@/lib/schedule";
+import { sendHandover } from "@/lib/telegram.functions";
 
 export const Route = createFileRoute("/daily-activity")({
-  head: () => ({
-    meta: [
-      { title: "Daily Activity — Reporting CC 3" },
-      {
-        name: "description",
-        content:
-          "Catat aktivitas harian tim: on duty, shift, kategori, sumber informasi, produk, RFO general hingga status penyelesaian.",
-      },
-      { property: "og:title", content: "Daily Activity — Reporting CC 3" },
-      {
-        property: "og:description",
-        content:
-          "Tabel Daily Activity ringkas dengan detail lengkap, filter dan analisis aktivitas tim Reporting CC 3.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
-    ],
-  }),
-  component: DailyActivityPage,
+  head: () => ({ meta: [{ title: "Daily Checklist — Care Center Telkomsat" }] }),
+  component: DailyChecklistPage,
 });
 
-type Field = keyof DailyActivityRow;
+type ToolStatus = "normal" | "warning" | "critical" | "uncheck";
+type Item = { id: string; name: string; cat: string; status: ToolStatus; notes: string; ticket: string };
 
-const headers: { key: Field; label: string; kind: "date" | "select" | "text" }[] = [
-  { key: "tanggal", label: "Date", kind: "date" },
-  { key: "on_duty", label: "On Duty", kind: "select" },
-  { key: "shift", label: "Shift", kind: "select" },
-  { key: "category", label: "Category", kind: "select" },
-  { key: "source_information", label: "Source Information", kind: "select" },
-  { key: "to_do", label: "To Do", kind: "select" },
-  { key: "product", label: "Product", kind: "select" },
-  { key: "customer", label: "Customer", kind: "text" },
-  { key: "nama_lokasi", label: "Nama Lokasi", kind: "text" },
-  { key: "kontak_pic", label: "Kontak PIC", kind: "text" },
-  { key: "rfo_general", label: "RFO General", kind: "select" },
-  { key: "type_modem_sn", label: "Type Modem & SN KIT", kind: "text" },
-  { key: "problem", label: "Problem", kind: "text" },
-  { key: "action", label: "Action", kind: "text" },
-  { key: "status", label: "Status", kind: "select" },
+const TOOLS: Item[] = [
+  { id: "prtg", name: "PRTG Network Monitor", cat: "NMS", status: "uncheck", notes: "", ticket: "" },
+  { id: "mantools", name: "Mantools OSS Telkom", cat: "Trouble Ticket", status: "uncheck", notes: "", ticket: "" },
+  { id: "noxis", name: "Noxis Monitoring", cat: "Alarm", status: "uncheck", notes: "", ticket: "" },
+  { id: "epicor", name: "Epicor Service Desk", cat: "Tiket", status: "uncheck", notes: "", ticket: "" },
+  { id: "starlink", name: "Starlink Portal", cat: "Portal", status: "uncheck", notes: "", ticket: "" },
+  { id: "nms_vsat", name: "NMS Hub VSAT", cat: "VSAT", status: "uncheck", notes: "", ticket: "" },
+  { id: "nms_ip", name: "NMS IP / Backbone", cat: "Core", status: "uncheck", notes: "", ticket: "" },
+  { id: "bot_telegram", name: "Bot Telegram (@CC3Notif_bot)", cat: "Alert", status: "uncheck", notes: "", ticket: "" },
+  { id: "carecenter_web", name: "Web Care Center Telkomsat", cat: "Web", status: "uncheck", notes: "", ticket: "" },
+  { id: "db_supabase", name: "Database & Server API", cat: "Infra", status: "uncheck", notes: "", ticket: "" },
 ];
 
-function DailyActivityPage() {
-  const queryClient = useQueryClient();
-  const { isAdmin } = useAccess();
-  const [selected, setSelected] = useState<string[]>([]);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [formOpen, setFormOpen] = useState(false);
-  const [detailId, setDetailId] = useState<string | null>(null);
-  const [editingRow, setEditingRow] = useState<DailyActivityRow | null>(null);
-  const editValues = useMemo(
-    () =>
-      editingRow
-        ? (Object.fromEntries(headers.map(({ key }) => [key, editingRow[key] ?? ""])) as DailyActivityFormValues)
-        : undefined,
-    [editingRow],
-  );
-  const openAddForm = () => {
-    setEditingRow(null);
-    setFormOpen(true);
-  };
-  const [rollbackOpen, setRollbackOpen] = useState(false);
-  const [permanentDeleteTarget, setPermanentDeleteTarget] = useState<DailyActivityRow | null>(null);
-  const [filters, setFilters] = useState(emptyDailyFilters);
-  const importInputRef = useRef<HTMLInputElement>(null);
+export function DailyChecklistPage() {
+  const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
+  const [shift, setShift] = useState<ShiftKey>(() => currentShift(new Date()).shift);
+  const [onDuty, setOnDuty] = useState("");
+  const [items, setItems] = useState<Item[]>(TOOLS);
+  const [recordId, setRecordId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [sending, setSending] = useState(false);
 
-  const { data: rows = [], isPending } = useQuery({
-    queryKey: ["daily-activities", "active"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("daily_activities")
-        .select("*")
-        .is("deleted_at", null)
-        .order("tanggal", { ascending: true })
-        .order("created_at", { ascending: true });
-      if (error) throw error;
-      return (data ?? []) as DailyActivityRow[];
-    },
+  const month = date.slice(0, 7);
+  const { data: sched } = useQuery({
+    queryKey: ["schedule", month],
+    queryFn: async () => (await supabase.from("schedules").select("data").eq("period", month).maybeSingle()).data?.data as ScheduleData | undefined,
   });
 
-  const { data: deleted = [], isPending: deletedPending } = useQuery({
-    queryKey: ["daily-activities", "deleted"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("daily_activities")
-        .select("*")
-        .not("deleted_at", "is", null)
-        .order("deleted_at", { ascending: false });
-      if (error) throw error;
-      return (data ?? []) as DailyActivityRow[];
-    },
+  const roster = useMemo(() => {
+    if (!sched) return [];
+    const full = initializeSchedule(sched, undefined, month);
+    const slot = currentShift(new Date(`${date}T${SHIFT_INFO[shift].start + 1}:00:00`));
+    return Array.from(new Set([...officersOn(full, slot), ...officersOn(full?.business, slot)]));
+  }, [sched, month, date, shift]);
+
+  useEffect(() => {
+    if (!onDuty && roster.length) setOnDuty(roster.join(", "));
+  }, [roster, onDuty]);
+
+  const periodKey = `checklist_${date}_${shift}`;
+  const { data: saved, isFetching: loading, refetch } = useQuery({
+    queryKey: ["daily-checklist", periodKey],
+    queryFn: async () => (await supabase.from("schedules").select("*").eq("title", "daily_checklist").eq("period", periodKey).maybeSingle()).data,
   });
 
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ["daily-activities"] });
-
-  const addRow = async (values: DailyActivityFormValues) => {
-    const payload = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value.trim() || null]));
-    const { error } = await supabase.from("daily_activities").insert({
-      ...payload,
-      status: values.status || "Open",
-    });
-    if (error) {
-      toast.error("Gagal menambah activity", { description: error.message });
-      return false;
+  useEffect(() => {
+    if (saved) {
+      setRecordId(saved.id);
+      const p = saved.data as { onDuty?: string; items?: Item[] };
+      if (p?.onDuty) setOnDuty(p.onDuty);
+      if (p?.items?.length) setItems(p.items);
+    } else {
+      setRecordId(null);
+      setItems(TOOLS);
     }
-    toast.success("Activity baru ditambahkan");
-    refresh();
-    return true;
-  };
+  }, [saved]);
 
-  const saveEdit = async (values: DailyActivityFormValues) => {
-    if (!editingRow) return false;
-    const payload = Object.fromEntries(Object.entries(values).map(([key, value]) => [key, value.trim() || null]));
-    const { error } = await supabase
-      .from("daily_activities")
-      .update({ ...payload, status: values.status || "Open" })
-      .eq("id", editingRow.id);
-    if (error) {
-      toast.error("Gagal menyimpan perubahan", { description: error.message });
-      return false;
-    }
-    toast.success("Activity diperbarui");
-    refresh();
-    return true;
-  };
+  const summary = useMemo(() => {
+    const total = items.length;
+    const normal = items.filter((i) => i.status === "normal").length;
+    const warning = items.filter((i) => i.status === "warning").length;
+    const critical = items.filter((i) => i.status === "critical").length;
+    const checked = normal + warning + critical;
+    return { total, normal, warning, critical, checked, percent: total ? Math.round((checked / total) * 100) : 0 };
+  }, [items]);
 
-  const deleteSelected = async () => {
-    const { error } = await supabase
-      .from("daily_activities")
-      .update({ deleted_at: new Date().toISOString() })
-      .in("id", selected);
-    if (error) {
-      toast.error("Gagal menghapus activity", { description: error.message });
-      return;
-    }
-    toast.success(`${selected.length} activity dihapus`, {
-      description: "Bisa dikembalikan lewat menu Rollback.",
-    });
-    setSelected([]);
-    setConfirmDelete(false);
-    refresh();
-  };
+  const setStatus = (id: string, s: ToolStatus) => setItems((p) => p.map((i) => (i.id === id ? { ...i, status: s } : i)));
+  const setField = (id: string, f: "notes" | "ticket", v: string) => setItems((p) => p.map((i) => (i.id === id ? { ...i, [f]: v } : i)));
 
-  const restore = async (ids: string[]) => {
-    const { error } = await supabase.from("daily_activities").update({ deleted_at: null }).in("id", ids);
-    if (error) {
-      toast.error("Gagal mengembalikan activity", { description: error.message });
-      return;
-    }
-    toast.success(`${ids.length} activity dikembalikan`);
-    refresh();
-  };
-
-  const permanentlyDelete = async (id: string) => {
-    const { error } = await supabase.from("daily_activities").delete().eq("id", id).not("deleted_at", "is", null);
-    if (error) {
-      toast.error("Gagal menghapus activity permanen", { description: error.message });
-      return;
-    }
-    toast.success("Activity dihapus permanen");
-    setPermanentDeleteTarget(null);
-    refresh();
-  };
-  const permanentlyDeleteAll = async () => {
-    if (deleted.length === 0) return;
-    const { error } = await supabase.from("daily_activities").delete().not("deleted_at", "is", null);
-    if (error) {
-      toast.error("Gagal menghapus semua activity permanen", { description: error.message });
-      return;
-    }
-    toast.success(`${deleted.length} activity dihapus permanen`);
-    refresh();
-  };
-
-  const tahunOptions = useMemo(() => tahunOptionsFrom(rows), [rows]);
-  const filtered = useMemo(() => filterDailyRows(rows, filters), [rows, filters]);
-  const [perPage, setPerPage] = useState(50);
-  const [currentPage, setCurrentPage] = useState(1);
-  const totalPages = Math.max(1, Math.ceil(filtered.length / perPage));
-  const pageRows = useMemo(() => {
-    const start = (currentPage - 1) * perPage;
-    return filtered.slice(start, start + perPage);
-  }, [filtered, currentPage, perPage]);
-
-  const allSelected = filtered.length > 0 && filtered.every((r) => selected.includes(r.id));
-
-  const parseImportDate = (value: string) => {
-    if (!value) return null;
-    const str = String(value).trim();
-    const pad = (n?: number | string | null) => String(n ?? "0").padStart(2, "0");
-
-    // Tangani format YYYY-MM-DD atau YYYY/MM/DD
-    const ymd = str.match(/^(\d{4})[/-](\d{1,2})[/-](\d{1,2})/);
-    if (ymd?.[1] && ymd[2] && ymd[3]) {
-      return `${ymd[1]}-${pad(ymd[2])}-${pad(ymd[3])}`;
-    }
-
-    // Tangani format DD/MM/YYYY atau DD-MM-YYYY
-    const dmy = str.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})/);
-    if (dmy?.[1] && dmy[2] && dmy[3]) {
-      return `${dmy[3]}-${pad(dmy[2])}-${pad(dmy[1])}`;
-    }
-
-    const parsed = new Date(str);
-    if (Number.isNaN(parsed.getTime())) return null;
-    // Menggunakan tanggal lokal tanpa konversi UTC agar tidak mundur 1 hari
-    return `${parsed.getFullYear()}-${pad(parsed.getMonth() + 1)}-${pad(parsed.getDate())}`;
-  };
-
-  const importFile = async (file: File) => {
+  const handleSave = async () => {
+    setSaving(true);
     try {
-      const parsed = await parseSheetFile(file);
-      const payload = parsed
-        .map((row) => ({
-          tanggal: parseImportDate(pick(row, "Date", "Tanggal")),
-          on_duty: pick(row, "On Duty") || null,
-          shift: pick(row, "Shift") || null,
-          category: pick(row, "Category") || null,
-          source_information: pick(row, "Source Information") || null,
-          to_do: pick(row, "To Do") || null,
-          product: pick(row, "Product") || null,
-          customer: pick(row, "Customer") || null,
-          nama_lokasi: pick(row, "Nama Lokasi") || null,
-          kontak_pic: pick(row, "Kontak PIC") || null,
-          rfo_general: pick(row, "RFO General") || null,
-          type_modem_sn: pick(row, "Type Modem & SN KIT", "Type Modem") || null,
-          problem: pick(row, "Problem") || null,
-          action: pick(row, "Action") || null,
-          status: pick(row, "Status") || "Open",
-        }))
-        .filter((row) => Object.values(row).some((value) => value && value !== "Open"));
-      if (payload.length === 0) {
-        toast.error("Tidak ada data yang bisa diimport", {
-          description: "Pastikan judul kolom sama seperti hasil export Excel.",
-        });
-        return;
+      const payload = { date, shift, onDuty, items, savedAt: new Date().toISOString() };
+      if (recordId) {
+        const { error } = await supabase.from("schedules").update({ data: payload, updated_at: new Date().toISOString() }).eq("id", recordId);
+        if (error) throw error;
+      } else {
+        const { data, error } = await supabase.from("schedules").insert({ title: "daily_checklist", period: periodKey, data: payload }).select("id").single();
+        if (error) throw error;
+        if (data) setRecordId(data.id);
       }
-      const { error } = await supabase.from("daily_activities").insert(payload);
-      if (error) {
-        toast.error("Gagal import activity", { description: error.message });
-        return;
-      }
-      toast.success(`${payload.length} activity berhasil diimport`);
-      refresh();
-    } catch {
-      toast.error("File tidak bisa dibaca", { description: "Gunakan file .xlsx, .xls atau .csv" });
+      await refetch();
+      toast.success("Checklist tersimpan!");
+    } catch (e) {
+      toast.error("Gagal simpan", { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setSaving(false);
     }
   };
+    const reportText = () => {
+    const lines = [
+      `📋 *DAILY CHECKLIST TOOLS MONITORING*`,
+      `🏢 Care Center Telkomsat`,
+      `📅 *Tanggal:* ${date} | *Shift:* ${SHIFT_INFO[shift]?.label || shift}`,
+      `👤 *Petugas:* ${onDuty || "-"}`,
+      `📊 *Status:* ${summary.checked}/${summary.total} Selesai (${summary.percent}%)`,
+      `✅ Normal: ${summary.normal} | ⚠️ Warning: ${summary.warning} | ❌ Down: ${summary.critical}`,
+      `━━━━━━━━━━━━━━━━━━━━`,
+    ];
+    items.forEach((i, idx) => {
+      const icon = i.status === "normal" ? "✅" : i.status === "warning" ? "⚠️" : i.status === "critical" ? "❌" : "⚪";
+      let t = `${idx + 1}. ${icon} *${i.name}*`;
+      if (i.notes) t += ` - ${i.notes}`;
+      if (i.ticket) t += ` [Tiket: ${i.ticket}]`;
+      lines.push(t);
+    });
+    lines.push(`━━━━━━━━━━━━━━━━━━━━\n_Dilaporkan via Reporting Care Center_`);
+    return lines.join("\n");
+  };
 
-  const exportExcel = () => {
-    const head = ["No", ...headers.map((h) => h.label)];
-    const body = filtered.map((row, index) => [
-      String(index + 1),
-      ...headers.map((h) =>
-        h.key === "tanggal" ? formatTanggal(row.tanggal) : ((row[h.key] as string | null) ?? "-"),
-      ),
-    ]);
-    const escape = (value: string) => value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-    const html = `<html><head><meta charset="utf-8" /></head><body><table border="1"><thead><tr>${head
-      .map((h) => `<th>${escape(h)}</th>`)
-      .join("")}</tr></thead><tbody>${body
-      .map((row) => `<tr>${row.map((cell) => `<td>${escape(cell)}</td>`).join("")}</tr>`)
-      .join("")}</tbody></table></body></html>`;
-    const blob = new Blob([html], { type: "application/vnd.ms-excel;charset=utf-8" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = `daily-activity-${new Date().toISOString().slice(0, 10)}.xls`;
-    link.click();
-    URL.revokeObjectURL(url);
-    toast.success("Export Excel dimulai");
+  const handleSendTelegram = async () => {
+    setSending(true);
+    try {
+      await handleSave();
+      await sendHandover({ data: { text: reportText() } });
+      toast.success("Terkirim ke Telegram!");
+    } catch (e) {
+      toast.error("Gagal kirim Telegram", { description: e instanceof Error ? e.message : String(e) });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
     <AppShell
-      title="Daily Activity"
-      subtitle="Pencatatan aktivitas harian Care Center"
+      title="Daily Checklist"
+      subtitle="Monitoring berkala kesehatan tools operasional per shift"
       actions={
-        <Button size="sm" onClick={openAddForm}>
-          <Plus className="size-4" /> Tambah Activity
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={async () => { await navigator.clipboard.writeText(reportText()); toast.success("Disalin!"); }}>
+            <Copy className="size-3.5 mr-1" /> Salin
+          </Button>
+          <Button variant="secondary" size="sm" onClick={handleSendTelegram} disabled={sending} className="border border-sky-500/30 bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 dark:text-sky-300">
+            <Send className="size-3.5 mr-1" /> {sending ? "Mengirim…" : "Kirim Telegram"}
+          </Button>
+          <Button size="sm" onClick={handleSave} disabled={saving}>
+            <Save className="size-3.5 mr-1" /> {saving ? "Menyimpan…" : "Simpan"}
+          </Button>
+        </div>
       }
     >
-      <div className="panel p-4 md:p-5">
-        <div className="flex flex-wrap items-center gap-3">
-          <Button size="sm" onClick={openAddForm}>
-            <Plus className="size-4" /> Tambah Activity
-          </Button>
-          <Button variant="outline" size="sm" onClick={refresh}>
-            <RefreshCw className="size-4" /> Refresh
-          </Button>
-          <Button variant="outline" size="sm" onClick={exportExcel}>
-            <FileSpreadsheet className="size-4" /> Excel
-          </Button>
-          <Button variant="outline" size="sm" onClick={() => importInputRef.current?.click()}>
-            <Upload className="size-4" /> Import
-          </Button>
-          <input
-            ref={importInputRef}
-            type="file"
-            accept=".xlsx,.xls,.csv"
-            className="hidden"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              e.target.value = "";
-              if (file) void importFile(file);
-            }}
-          />
-          {isAdmin ? (
-            <Button variant="outline" size="sm" onClick={() => setRollbackOpen(true)}>
-              <History className="size-4" /> Rollback
-              {deleted.length > 0 ? (
-                <span className="ml-1 rounded-full bg-primary px-1.5 text-[10px] font-bold text-primary-foreground">
-                  {deleted.length}
-                </span>
-              ) : null}
-            </Button>
-          ) : null}
-          <span className="text-xs text-muted-foreground">
-            Menampilkan {filtered.length} dari {rows.length} activity
-          </span>
-          {!isAdmin ? (
-            <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-semibold uppercase text-muted-foreground">
-              Mode user · hapus &amp; rollback khusus super user
-            </span>
-          ) : null}
-          {isAdmin && selected.length > 0 ? (
-            <Button variant="destructive" size="sm" className="h-7" onClick={() => setConfirmDelete(true)}>
-              <Trash2 className="size-3.5" /> Hapus terpilih ({selected.length})
-            </Button>
-          ) : null}
-        </div>
-
-        <div className="mt-4">
-          <DailyActivityFilters filters={filters} onChange={setFilters} tahunOptions={tahunOptions} />
-        </div>
-
-        <div className="mt-4 overflow-x-auto rounded-lg border border-border">
-          <table
-            aria-label="Daily Activity"
-            className="w-full min-w-[640px] table-fixed border-collapse text-[11px] leading-snug"
-          >
-            <thead>
-              <tr className="border-b border-border bg-muted/60 text-left text-[10px] font-bold uppercase text-muted-foreground">
-                {isAdmin && (
-                  <th scope="col" className="w-10 px-3 py-3">
-                    <Checkbox
-                      checked={allSelected}
-                      onCheckedChange={(checked) => setSelected(checked ? filtered.map((r) => r.id) : [])}
-                      aria-label="Pilih semua activity"
-                    />
-                  </th>
-                )}
-                <th scope="col" className="w-10 px-2 py-3 text-center">
-                  No
-                </th>
-                <th scope="col" className="w-[18%] px-3 py-3">
-                  Tanggal &amp; Shift
-                </th>
-                <th scope="col" className="w-[14%] px-3 py-3">
-                  On Duty / Source
-                </th>
-                <th scope="col" className="w-[30%] px-3 py-3">
-                  Nama Lokasi / Customer
-                </th>
-                <th scope="col" className="w-[26%] px-3 py-3">
-                  To Do / Product
-                </th>
-                <th scope="col" className="w-[14%] px-3 py-3 text-center">
-                  Status
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {isPending || filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={isAdmin ? 7 : 5} className="px-3 py-10 text-center text-muted-foreground">
-                    {isPending ? "Memuat data…" : "Belum ada activity."}
-                  </td>
-                </tr>
-              ) : (
-                pageRows.map((row, index) => (
-                  <tr
-                    key={row.id}
-                    onClick={() => setDetailId(row.id)}
-                    className="cursor-pointer border-b border-border align-middle transition-colors last:border-0 even:bg-muted/20 hover:bg-accent/50"
-                  >
-                    {isAdmin && (
-                      <td
-                        className="px-3 py-3"
-                        onClick={(event) => event.stopPropagation()}
-                        onKeyDown={(event) => event.stopPropagation()}
-                      >
-                        <Checkbox
-                          checked={selected.includes(row.id)}
-                          onCheckedChange={(checked) =>
-                            setSelected((prev) =>
-                              checked ? [...new Set([...prev, row.id])] : prev.filter((id) => id !== row.id),
-                            )
-                          }
-                          aria-label={`Pilih activity ${index + 1}`}
-                        />
-                      </td>
-                    )}
-                    <td className="px-2 py-3 text-center font-medium text-muted-foreground tabular-nums">
-                      {(currentPage - 1) * perPage + index + 1}
-                    </td>
-                    <td className="px-3 py-3">
-                      <span className="block font-medium tabular-nums">{formatTanggal(row.tanggal) || "—"}</span>
-                      <span className="mt-0.5 block text-[10px] text-muted-foreground">{row.shift || "—"}</span>
-                    </td>
-                    <td className="break-words px-3 py-3">
-                      <span className="block font-medium">{row.on_duty || "—"}</span>
-                      <span className="mt-0.5 block text-[10px] text-muted-foreground">
-                        {row.source_information || "—"}
-                      </span>
-                    </td>
-                    <td className="break-words px-3 py-3">
-                      <Button
-                        variant="link"
-                        className="h-auto max-w-full justify-start whitespace-normal p-0 text-left text-[11px] font-semibold"
-                        aria-label={`Detail activity ${index + 1}: ${row.nama_lokasi || row.customer || "Daily Activity"}`}
-                        onClick={(event) => {
-                          event.stopPropagation();
-                          setDetailId(row.id);
-                        }}
-                      >
-                        {row.nama_lokasi || "—"}
-                      </Button>
-                      <span className="mt-0.5 block text-[10px] text-muted-foreground">{row.customer || "—"}</span>
-                    </td>
-                    <td className="break-words px-3 py-3">
-                      <span className="block font-medium">{row.to_do || "—"}</span>
-                      <span className="mt-0.5 block text-[10px] text-muted-foreground">{row.product || "—"}</span>
-                    </td>
-                    <td className="px-3 py-3 text-center">
-                      <DailyActivityStatus status={row.status} />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Bar Pagination */}
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-muted/20 p-4">
-          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-            <span>Baris per halaman</span>
-            <Select
-              value={String(perPage)}
-              onValueChange={(v) => {
-                setPerPage(Number(v));
-                setCurrentPage(1);
-              }}
-            >
-              <SelectTrigger className="h-8 w-20">
-                <SelectValue />
-              </SelectTrigger>
+      <div className="space-y-4">
+        {/* Kontrol */}
+        <div className="panel p-3.5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:items-end">
+          <div>
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase">Tanggal</label>
+            <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1 h-8 text-xs bg-surface" />
+          </div>
+          <div>
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase">Shift</label>
+            <Select value={shift} onValueChange={(v) => setShift(v as ShiftKey)}>
+              <SelectTrigger className="mt-1 h-8 text-xs bg-surface"><SelectValue /></SelectTrigger>
               <SelectContent>
-                {[10, 25, 50, 100].map((n) => (
-                  <SelectItem key={n} value={String(n)}>
-                    {n}
-                  </SelectItem>
-                ))}
+                <SelectItem value="P">Pagi (07:00 - 15:00)</SelectItem>
+                <SelectItem value="S">Siang (15:00 - 23:00)</SelectItem>
+                <SelectItem value="M">Malam (23:00 - 07:00)</SelectItem>
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center gap-2 text-xs">
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage <= 1}
-              onClick={() => setCurrentPage((p) => p - 1)}
-            >
-              Sebelumnya
+                    <div className="sm:col-span-2">
+            <label className="text-[10px] font-semibold text-muted-foreground uppercase">Petugas On-Duty</label>
+            <div className="mt-1 flex gap-2">
+              <Input value={onDuty} onChange={(e) => setOnDuty(e.target.value)} placeholder="Nama petugas..." className="h-8 text-xs bg-surface flex-1" />
+              {roster.length > 0 && (
+                <Button type="button" variant="outline" size="sm" className="h-8 text-[11px] shrink-0" onClick={() => setOnDuty(roster.join(", "))}>
+                  Ikuti Jadwal
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Ringkasan */}
+        <div className="grid gap-2.5 grid-cols-2 sm:grid-cols-5">
+          <div className="panel p-3 col-span-2 sm:col-span-1">
+            <span className="text-[9px] font-semibold text-muted-foreground uppercase">Progres</span>
+            <div className="mt-0.5 flex items-baseline justify-between"><span className="text-lg font-bold">{summary.percent}%</span><span className="text-[10px] text-muted-foreground">{summary.checked}/{summary.total}</span></div>
+            <div className="mt-1.5 h-1.5 w-full rounded-full bg-muted overflow-hidden"><div className="h-full bg-primary" style={{ width: `${summary.percent}%` }} /></div>
+          </div>
+          <div className="panel p-3 border-l-4 border-l-emerald-500">
+            <span className="text-[9px] font-semibold text-muted-foreground uppercase">Normal</span>
+            <div className="mt-0.5 text-lg font-bold text-emerald-600 dark:text-emerald-400">{summary.normal}</div>
+          </div>
+          <div className="panel p-3 border-l-4 border-l-amber-500">
+            <span className="text-[9px] font-semibold text-muted-foreground uppercase">Warning</span>
+            <div className="mt-0.5 text-lg font-bold text-amber-600 dark:text-amber-400">{summary.warning}</div>
+          </div>
+          <div className="panel p-3 border-l-4 border-l-red-500">
+            <span className="text-[9px] font-semibold text-muted-foreground uppercase">Down</span>
+            <div className="mt-0.5 text-lg font-bold text-red-600 dark:text-red-400">{summary.critical}</div>
+          </div>
+          <div className="panel p-3 flex items-center justify-between col-span-2 sm:col-span-1">
+            <Button variant="outline" size="sm" className="h-7 text-[10px] flex-1 mr-1.5" onClick={() => { setItems((p) => p.map((i) => ({ ...i, status: "normal" }))); toast.success("Semua OK"); }}>
+              <CheckCircle2 className="size-3 mr-1 text-emerald-600" /> Semua OK
             </Button>
-            <span className="text-muted-foreground">
-              Halaman {currentPage} / {totalPages}
-            </span>
-            <Button
-              variant="outline"
-              size="sm"
-              disabled={currentPage >= totalPages}
-              onClick={() => setCurrentPage((p) => p + 1)}
-            >
-              Berikutnya
+            <Button variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => setItems((p) => [...p, { id: `custom_${Date.now()}`, name: "Tools Baru", cat: "Custom", status: "uncheck", notes: "", ticket: "" }])}>
+              <Plus className="size-3" />
             </Button>
           </div>
         </div>
-      </div>
+                {/* List Tools */}
+        <div className="panel overflow-hidden">
+          <div className="border-b border-border bg-muted/30 px-3.5 py-2.5 flex items-center justify-between">
+            <h2 className="text-xs font-bold uppercase">Daftar Tools Monitoring ({items.length})</h2>
+            {loading && <span className="text-[10px] text-muted-foreground animate-pulse">Memuat…</span>}
+          </div>
 
-      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Hapus {selected.length} activity?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Data activity yang dipilih akan dipindahkan ke Rollback dan bisa dikembalikan kapan saja.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction onClick={deleteSelected}>Ya, hapus</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <Dialog open={rollbackOpen} onOpenChange={setRollbackOpen}>
-        <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>Rollback Daily Activity Terhapus</DialogTitle>
-            <DialogDescription>
-              Activity yang dihapus tersimpan di sini dan bisa dikembalikan kapan saja.
-            </DialogDescription>
-          </DialogHeader>
-          {deletedPending ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Memuat data…</p>
-          ) : deleted.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">Belum ada activity yang dihapus.</p>
-          ) : (
-            <div className="space-y-2">
-              <div className="flex justify-end gap-2">
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => {
-                    if (window.confirm("Yakin ingin menghapus permanen SEMUA activity yang ada di rollback ini?")) {
-                      permanentlyDeleteAll();
-                    }
-                  }}
-                >
-                  <Trash2 className="size-4" /> Hapus semua
-                </Button>
-                <Button variant="outline" size="sm" onClick={() => restore(deleted.map((row) => row.id))}>
-                  <RotateCcw className="size-4" /> Kembalikan semua
-                </Button>
-              </div>
-              {deleted.map((row) => (
-                <div
-                  key={row.id}
-                  className="flex items-start justify-between gap-3 rounded-lg border border-border p-3"
-                >
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2 text-xs font-semibold">
-                      <span>{formatTanggal(row.tanggal) || "-"}</span>
-                      <span>{row.on_duty ?? "-"}</span>
-                      <span className="text-muted-foreground">{row.product ?? "-"}</span>
-                    </div>
-                    <p className="text-xs break-words text-muted-foreground">
-                      {row.customer ?? "-"} · {row.nama_lokasi ?? "-"}
-                    </p>
-                  </div>
-                  <div className="flex shrink-0 gap-2">
-                    <Button size="sm" onClick={() => restore([row.id])}>
-                      <RotateCcw className="size-4" /> Kembalikan
-                    </Button>
-                    <Button variant="destructive" size="sm" onClick={() => setPermanentDeleteTarget(row)}>
-                      <Trash2 className="size-4" /> Hapus
-                    </Button>
-                  </div>
+          <div className="divide-y divide-border">
+            {items.map((i, idx) => (
+              <div key={i.id} className={`p-3 grid gap-2.5 sm:grid-cols-[180px_1fr_auto] sm:items-center ${i.status === "critical" ? "bg-red-500/10" : i.status === "warning" ? "bg-amber-500/10" : "bg-surface"}`}>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5"><span className="text-[10px] font-bold text-muted-foreground">{idx + 1}.</span><span className="rounded bg-muted px-1 text-[9px] font-semibold text-muted-foreground uppercase">{i.cat}</span></div>
+                  <h3 className="text-xs font-semibold truncate mt-0.5">{i.name}</h3>
                 </div>
-              ))}
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
-
-      <DailyActivityDetailDialog
-        row={rows.find((row) => row.id === detailId) ?? null}
-        onClose={() => setDetailId(null)}
-        onEdit={(row) => {
-          setDetailId(null);
-          setEditingRow(row);
-          setFormOpen(true);
-        }}
-      />
-
-      <DailyActivityFormDialog
-        open={formOpen}
-        onOpenChange={setFormOpen}
-        initialValues={editValues}
-        onSubmit={editingRow ? saveEdit : addRow}
-      />
-
-      <AlertDialog
-        open={Boolean(permanentDeleteTarget)}
-        onOpenChange={(next) => !next && setPermanentDeleteTarget(null)}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Hapus activity secara permanen?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Activity {permanentDeleteTarget?.nama_lokasi ?? permanentDeleteTarget?.customer ?? "ini"} akan dihapus
-              selamanya dan tidak bisa dikembalikan.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Batal</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (permanentDeleteTarget) void permanentlyDelete(permanentDeleteTarget.id);
-              }}
-            >
-              Ya, hapus permanen
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+                <div className="grid gap-1.5 sm:grid-cols-[1fr_130px]">
+                  <Input value={i.notes} onChange={(e) => setField(i.id, "notes", e.target.value)} placeholder="Catatan temuan…" className="h-7 text-xs bg-background" />
+                  <Input value={i.ticket} onChange={(e) => setField(i.id, "ticket", e.target.value)} placeholder="No Tiket" className="h-7 text-xs bg-background" />
+                </div>
+                <div className="flex items-center gap-1 shrink-0">
+                  <button type="button" onClick={() => setStatus(i.id, "normal")} className={`px-2 py-1 text-[11px] font-semibold rounded ${i.status === "normal" ? "bg-emerald-600 text-white" : "border bg-background text-muted-foreground"}`}>OK</button>
+                  <button type="button" onClick={() => setStatus(i.id, "warning")} className={`px-2 py-1 text-[11px] font-semibold rounded ${i.status === "warning" ? "bg-amber-600 text-white" : "border bg-background text-muted-foreground"}`}>Warn</button>
+                  <button type="button" onClick={() => setStatus(i.id, "critical")} className={`px-2 py-1 text-[11px] font-semibold rounded ${i.status === "critical" ? "bg-red-600 text-white" : "border bg-background text-muted-foreground"}`}>Down</button>
+                  {i.id.startsWith("custom_") && (
+                    <button type="button" onClick={() => setItems((p) => p.filter((x) => x.id !== i.id))} className="p-1 text-muted-foreground hover:text-destructive"><Trash2 className="size-3" /></button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </AppShell>
   );
 }
