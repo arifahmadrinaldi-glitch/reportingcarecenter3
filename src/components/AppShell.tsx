@@ -12,7 +12,7 @@ import { useAuth } from "@/lib/auth";
 const navItems: any[] = [
   { to: "/", label: "Dashboard", icon: LayoutGrid },
   { to: "/tickets", label: "Daftar Ticket", icon: Ticket },
-  { to: "/daily-activity", label: "Daily Activity", icon: ClipboardList },
+  { to: "/daily-activity", label: "Daily Checklist", icon: ClipboardList },
   { to: "/jadwal", label: "Jadwal", icon: CalendarDays },
   { to: "/wallboard", label: "Wallboard TV", icon: Tv },
 ];
