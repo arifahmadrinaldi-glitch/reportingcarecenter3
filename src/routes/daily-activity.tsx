@@ -351,15 +351,17 @@ export function DailyChecklistPage() {
                       {catItems.filter((i) => i.status !== "uncheck").length}/{catItems.length}
                     </span>
                   </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                    onClick={() => handleOpenAdd(cat)}
-                  >
-                    <Plus className="size-3 mr-1" /> Tambah di {cat}
-                  </Button>
+                                    {isAdmin && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={() => handleOpenAdd(cat)}
+                    >
+                      <Plus className="size-3 mr-1" /> Tambah di {cat}
+                    </Button>
+                  )}
                 </div>
 
                 {catItems.length === 0 ? (
@@ -449,23 +451,26 @@ export function DailyChecklistPage() {
                             }`}
                           >
                             Down
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleOpenEdit(i)}
-                            className="p-1 text-muted-foreground hover:text-foreground ml-1"
-                            title="Edit nama/URL"
-                          >
-                            <Pencil className="size-3" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteItem(i.id)}
-                            className="p-1 text-muted-foreground hover:text-destructive"
-                            title="Hapus monitoring"
-                          >
-                            <Trash2 className="size-3" />
-                          </button>
+                                                    {isAdmin && (
+                            <>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEdit(i)}
+                                className="p-1 text-muted-foreground hover:text-foreground ml-1"
+                                title="Edit nama/URL"
+                              >
+                                <Pencil className="size-3" />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteItem(i.id)}
+                                className="p-1 text-muted-foreground hover:text-destructive"
+                                title="Hapus monitoring"
+                              >
+                                <Trash2 className="size-3" />
+                              </button>
+                            </>
+                          )}
                         </div>
                       </div>
                     ))}
