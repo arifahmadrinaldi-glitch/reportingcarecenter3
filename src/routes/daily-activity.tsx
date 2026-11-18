@@ -45,7 +45,7 @@ type Item = {
   ticket: string;
 };
 
-const DEFAULT_TOOLS: Item[] = []
+const DEFAULT_TOOLS: Item[] = [];
   // PRTG
   { id: "prtg_gov1", name: "GOV 1", cat: "PRTG", url: "http://prtg-gov1.telkomsat.net:9100/", status: "uncheck", notes: "", ticket: "" },
   { id: "prtg_gov2", name: "GOV 2", cat: "PRTG", url: "http://prtg-gov2.telkomsat.net:9200/", status: "uncheck", notes: "", ticket: "" },
@@ -152,7 +152,7 @@ export function DailyChecklistPage() {
       setRecordId(saved.id);
       const p = saved.data as { onDuty?: string; items?: Item[] };
       setOnDuty(p?.onDuty || roster.join(", "));
-      if (p?.items?.length) {
+      if (Array.isArray(p?.items)) {
         const savedMap = new Map(p.items.map((i) => [i.id, i]));
         const merged = masterTools.map((m) => {
           const prev = savedMap.get(m.id);
