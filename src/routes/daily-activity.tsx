@@ -451,7 +451,8 @@ export function DailyChecklistPage() {
                             }`}
                           >
                             Down
-                                                    {isAdmin && (
+                            </button>
+                            {isAdmin && (
                             <>
                               <button
                                 type="button"
