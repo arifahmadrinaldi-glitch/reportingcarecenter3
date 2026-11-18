@@ -94,8 +94,11 @@ export function buildHandover(opts: {
     `Per Status:`,
     ...tally(active, (r) => r.status).map(([k, v]) => `  • ${k}: ${v}`),
     ``,
-    `Per Layanan:`,
+        `Per Layanan:`,
     ...tally(active, (r) => r.layanan?.trim() || "-").map(([k, v]) => `  • ${k}: ${v}`),
+    ``,
+    `CHECKLIST TOOLS MONITORING`,
+    opts.checklistText?.trim() || "Belum ada checklist untuk shift ini",
     ``,
     `DETAIL TIKET PENDING / ESKALASI`,
     ...(pending.length ? pending.flatMap((r, i) => {
@@ -108,14 +111,9 @@ export function buildHandover(opts: {
         `├ Durasi: ${computeDurasi(r.tanggal_open, r.tanggal_close) || "-"}`,
         `└ Update: ${(r.last_update ?? "").trim() || "-"}`,
       ];
-        }) : ["-"]),
-    ``,
-    `CHECKLIST TOOLS MONITORING`,
-    opts.checklistText?.trim() || "Belum ada checklist untuk shift ini",
+    }) : ["-"]),
     ``,
     `CATATAN AKTIVITAS PENTING`,
-    opts.notes.trim() || "-",
-  ];
   void formatDateTime;
   return lines.join("\n");
 }
