@@ -98,6 +98,46 @@ export function DailyChecklistPage() {
     if (!onDuty && roster.length) setOnDuty(roster.join(", "));
   }, [roster, onDuty]);
 
+    // 1. Ambil Master Tools permanen
+  const { data: masterRow, refetch: refetchMaster } = useQuery({
+    queryKey: ["daily-checklist-master-tools"],
+    queryFn: async () => (await supabase.from("schedules").select("*").eq("title", "daily_checklist_tools").eq("period", "master").maybeSingle()).data,
+  });
+
+  const masterTools: Item[] = useMemo(() => {
+    const list = masterRow?.data as Item[] | undefined;
+    if (list && Array.isArray(list) && list.length > 0) return list;
+    try {
+      const local = localStorage.getItem("daily_checklist_master_tools");
+      if (local) {
+        const parsed = JSON.parse(local);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+    return DEFAULT_TOOLS;
+  }, [masterRow]);
+
+  const saveMasterTools = async (updatedTools: Item[]) => {
+    const stripped = updatedTools.map((t) => ({
+      id: t.id,
+      name: t.name,
+      cat: t.cat,
+      url: t.url || "",
+      status: "uncheck" as ToolStatus,
+      notes: "",
+      ticket: "",
+    }));
+    try {
+      localStorage.setItem("daily_checklist_master_tools", JSON.stringify(stripped));
+    } catch {}
+    if (masterRow?.id) {
+      await supabase.from("schedules").update({ data: stripped, updated_at: new Date().toISOString() }).eq("id", masterRow.id);
+    } else {
+      await supabase.from("schedules").insert({ title: "daily_checklist_tools", period: "master", data: stripped });
+    }
+    refetchMaster();
+  };
+
   const periodKey = `checklist_${date}_${shift}`;
   const { data: saved, isFetching: loading, refetch } = useQuery({
     queryKey: ["daily-checklist", periodKey],
@@ -109,12 +149,19 @@ export function DailyChecklistPage() {
       setRecordId(saved.id);
       const p = saved.data as { onDuty?: string; items?: Item[] };
       if (p?.onDuty) setOnDuty(p.onDuty);
-      if (p?.items?.length) setItems(p.items);
+      if (p?.items?.length) {
+        const savedIds = new Set(p.items.map((i) => i.id));
+        const missing = masterTools.filter((m) => !savedIds.has(m.id)).map((m) => ({ ...m, status: "uncheck" as ToolStatus, notes: "", ticket: "" }));
+        setItems([...p.items, ...missing]);
+      } else {
+        setItems(masterTools);
+      }
     } else {
       setRecordId(null);
-      setItems(DEFAULT_TOOLS);
+      // Ganti tanggal/shift baru: tetap gunakan daftar master tools yang sudah diinput
+      setItems(masterTools.map((m) => ({ ...m, status: "uncheck", notes: "", ticket: "" })));
     }
-  }, [saved]);
+  }, [saved, masterTools]);
 
   const summary = useMemo(() => {
     const total = items.length;
