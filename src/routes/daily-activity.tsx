@@ -376,11 +376,11 @@ export function DailyChecklistPage() {
           </div>
         </div>
                 {/* Monitoring per Kategori */}
-          <div className="grid gap-4 md:grid-cols-2 items-start">
+          <div className="columns-1 md:columns-2 gap-4">
           {CATEGORIES.map((cat) => {
             const catItems = items.filter((i) => i.cat === cat);
             return (
-              <div key={cat} className="panel overflow-hidden">
+              <div key={cat} className="panel mb-4 overflow-hidden break-inside-avoid">
                 <div className="border-b border-border bg-muted/40 px-3.5 py-2.5 flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <span className="inline-block size-2 rounded-full bg-primary" />
