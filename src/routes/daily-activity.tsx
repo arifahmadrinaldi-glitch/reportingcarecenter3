@@ -208,12 +208,17 @@ export function DailyChecklistPage() {
   };
 
   const setStatus = (id: string, s: ToolStatus) => {
-    setItems((p) => {
-      const updated = p.map((i) => (i.id === id ? { ...i, status: s } : i));
-      triggerAutoSave(updated, onDuty, 0);
-      return updated;
-    });
-  };
+  setItems((p) => {
+    const updated = p.map((i) =>
+      i.id === id
+        ? { ...i, status: i.status === s ? "uncheck" : s }
+        : i
+    );
+
+    triggerAutoSave(updated, onDuty, 0);
+    return updated;
+  });
+};
 
   const setField = (id: string, f: "notes" | "ticket", v: string) => {
     setItems((p) => {
