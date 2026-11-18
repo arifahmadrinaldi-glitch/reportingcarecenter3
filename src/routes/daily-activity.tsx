@@ -359,26 +359,31 @@ export function DailyChecklistPage() {
             <div className="mt-0.5 text-lg font-bold text-red-600 dark:text-red-400">{summary.critical}</div>
           </div>
           <div className="panel p-3 flex items-center justify-between col-span-2 sm:col-span-1">
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-[10px] flex-1 mr-1.5"
-              onClick={() => { setItems((p) => p.map((i) => ({ ...i, status: "normal" }))); toast.success("Semua OK"); }}
-            >
-              <CheckCircle2 className="size-3 mr-1 text-emerald-600" /> Semua OK
-            {isAdmin && (
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
-                onClick={() => handleOpenAdd(cat)}
-            >
-                <Plus className="size-3 mr-1" /> Tambah di {cat}
-              </Button>
-            )}
-          </div>
-        </div>
+  <Button
+    variant="outline"
+    size="sm"
+    className="h-7 text-[10px] flex-1 mr-1.5"
+    onClick={() => {
+      setItems((p) => p.map((i) => ({ ...i, status: "normal" })));
+      toast.success("Semua OK");
+    }}
+  >
+    <CheckCircle2 className="size-3 mr-1 text-emerald-600" /> Semua OK
+  </Button>
+
+  {isAdmin && (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      className="h-7 text-[10px]"
+      onClick={() => handleOpenAdd("PRTG")}
+      title="Tambah Monitoring Baru"
+    >
+      <Plus className="size-3 mr-1" /> Tambah
+    </Button>
+  )}
+</div>
                 {/* Monitoring per Kategori */}
           <div className="columns-1 md:columns-2 gap-4">
           {CATEGORIES.map((cat) => {
