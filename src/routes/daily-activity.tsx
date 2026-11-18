@@ -367,7 +367,7 @@ export function DailyChecklistPage() {
           </div>
         </div>
                 {/* Monitoring per Kategori */}
-        <div className="space-y-4">
+          <div className="grid gap-4 md:grid-cols-2 items-start">
           {CATEGORIES.map((cat) => {
             const catItems = items.filter((i) => i.cat === cat);
             return (
@@ -402,7 +402,7 @@ export function DailyChecklistPage() {
                     {catItems.map((i, idx) => (
                       <div
                         key={i.id}
-                        className={`p-3 grid gap-2.5 sm:grid-cols-[220px_1fr_auto] sm:items-center ${
+                        className={`p-3 grid gap-2.5 sm:grid-cols-[170px_1fr_auto] sm:items-center ${
                           i.status === "critical"
                             ? "bg-red-500/10"
                             : i.status === "warning"
@@ -433,7 +433,7 @@ export function DailyChecklistPage() {
                           )}
                         </div>
 
-                        <div className="grid gap-1.5 sm:grid-cols-[1fr_130px]">
+                        <div className="grid gap-1.5 sm:grid-cols-[1fr_90px]">
                           <Input                             value={i.notes}
                             onChange={(e) => setField(i.id, "notes", e.target.value)}
                             placeholder="Catatan temuan…"
