@@ -64,6 +64,7 @@ const tally = (rows: TicketRow[], key: (r: TicketRow) => string) => {
 export function buildHandover(opts: {
   tickets: TicketRow[]; category: TicketCategory; now: Date; current: ShiftSlot; next: ShiftSlot;
   outgoing: string[]; incoming: string[]; notes: string;
+  checklistText?: string;
 }) {
   const { now, current, next } = opts;
   const scoped = filterCareCenterRows(opts.tickets, opts.category, (r) => r.layanan);
@@ -107,7 +108,10 @@ export function buildHandover(opts: {
         `├ Durasi: ${computeDurasi(r.tanggal_open, r.tanggal_close) || "-"}`,
         `└ Update: ${(r.last_update ?? "").trim() || "-"}`,
       ];
-    }) : ["-"]),
+        }) : ["-"]),
+    ``,
+    `CHECKLIST TOOLS MONITORING`,
+    opts.checklistText?.trim() || "Belum ada checklist untuk shift ini",
     ``,
     `CATATAN AKTIVITAS PENTING`,
     opts.notes.trim() || "-",
