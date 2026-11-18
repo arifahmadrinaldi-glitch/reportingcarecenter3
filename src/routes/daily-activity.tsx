@@ -200,7 +200,10 @@ const handleItemDragOver = (event: DragEvent<HTMLDivElement>) => {
   event.dataTransfer.dropEffect = "move";
 };
 
-const handleItemDrop = async (event: DragEvent<HTMLDivElement>, targetId: string) => {
+const handleItemDrop = async (
+  event: DragEvent<HTMLDivElement>,
+  targetId: string
+) => {
   event.preventDefault();
 
   const sourceId =
@@ -211,23 +214,36 @@ const handleItemDrop = async (event: DragEvent<HTMLDivElement>, targetId: string
 
   const source = items.find((item) => item.id === sourceId);
   const target = items.find((item) => item.id === targetId);
+  if (!source || !target) return;
 
-  // Hanya izinkan pindah urutan dalam kategori asli yang sama.
-  if (!source || !target || source.cat !== target.cat) return;
+  const groupedCategories = ["STARMON", "NETFLOW", "LIBRE", "CACTI"];
+  const sourceInGroup = groupedCategories.includes(source.cat);
+  const targetInGroup = groupedCategories.includes(target.cat);
 
-  const categoryItems = items.filter((item) => item.cat === source.cat);
-  const fromIndex = categoryItems.findIndex((item) => item.id === sourceId);
-  const toIndex = categoryItems.findIndex((item) => item.id === targetId);
+  // Jangan izinkan item pindah masuk atau keluar dari kotak gabungan.
+  if (sourceInGroup !== targetInGroup) return;
+
+  // Kategori di luar kotak gabungan tetap hanya bisa diurutkan sesama kategori.
+  if (!sourceInGroup && source.cat !== target.cat) return;
+
+  const belongsToOrder = (item: Item) =>
+    sourceInGroup
+      ? groupedCategories.includes(item.cat)
+      : item.cat === source.cat;
+
+  const groupItems = items.filter(belongsToOrder);
+  const fromIndex = groupItems.findIndex((item) => item.id === sourceId);
+  const toIndex = groupItems.findIndex((item) => item.id === targetId);
 
   if (fromIndex < 0 || toIndex < 0) return;
 
-  const reorderedCategory = [...categoryItems];
-  const [movedItem] = reorderedCategory.splice(fromIndex, 1);
-  reorderedCategory.splice(toIndex, 0, movedItem);
+  const reordered = [...groupItems];
+  const [movedItem] = reordered.splice(fromIndex, 1);
+  reordered.splice(toIndex, 0, movedItem);
 
-  let categoryIndex = 0;
+  let index = 0;
   const updated = items.map((item) =>
-    item.cat === source.cat ? reorderedCategory[categoryIndex++] : item
+    belongsToOrder(item) ? reordered[index++] : item
   );
 
   setItems(updated);
