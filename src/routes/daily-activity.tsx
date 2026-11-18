@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { CheckCircle2, Copy, ExternalLink, Pencil, Plus, Save, Send, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
+import { CheckCircle2, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -74,8 +74,8 @@ export function DailyChecklistPage() {
   const [onDuty, setOnDuty] = useState("");
   const [items, setItems] = useState<Item[]>(DEFAULT_TOOLS);
   const [recordId, setRecordId] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-  const [sending, setSending] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<"idle" | "saving" | "saved">("idle");
+  const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
   // Dialog Tambah/Edit Tool
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -175,28 +175,49 @@ export function DailyChecklistPage() {
     return { total, normal, warning, critical, checked, percent: total ? Math.round((checked / total) * 100) : 0 };
   }, [items]);
 
-  const setStatus = (id: string, s: ToolStatus) => setItems((p) => p.map((i) => (i.id === id ? { ...i, status: s } : i)));
-  const setField = (id: string, f: "notes" | "ticket", v: string) => setItems((p) => p.map((i) => (i.id === id ? { ...i, [f]: v } : i)));
-
-  const handleSave = async () => {
-    setSaving(true);
+    const saveChecklistData = async (itemsToSave: Item[], dutyToSave: string) => {
+    setSaveStatus("saving");
     try {
-      const payload = { date, shift, onDuty, items, savedAt: new Date().toISOString() };
+      const payload = { date, shift, onDuty: dutyToSave, items: itemsToSave, savedAt: new Date().toISOString() };
       if (recordId) {
-        const { error } = await supabase.from("schedules").update({ data: payload, updated_at: new Date().toISOString() }).eq("id", recordId);
-        if (error) throw error;
+        await supabase.from("schedules").update({ data: payload, updated_at: new Date().toISOString() }).eq("id", recordId);
       } else {
-        const { data, error } = await supabase.from("schedules").insert({ title: "daily_checklist", period: periodKey, data: payload }).select("id").single();
-        if (error) throw error;
-        if (data) setRecordId(data.id);
+        const { data } = await supabase.from("schedules").insert({ title: "daily_checklist", period: periodKey, data: payload }).select("id").single();
+        if (data?.id) setRecordId(data.id);
       }
-      await saveMasterTools(items);
-      await refetch();
-      toast.success("Checklist tersimpan!");
+      setSaveStatus("saved");
     } catch (e) {
-      toast.error("Gagal simpan", { description: e instanceof Error ? e.message : String(e) });
-    } finally {      setSaving(false);
+      console.error("Auto-save error:", e);
+      setSaveStatus("idle");
     }
+  };
+
+  const triggerAutoSave = (itemsToSave: Item[], dutyToSave: string, debounceMs = 0) => {
+    if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current);
+    if (debounceMs > 0) {
+      setSaveStatus("saving");
+      autoSaveTimerRef.current = setTimeout(() => {
+        saveChecklistData(itemsToSave, dutyToSave);
+      }, debounceMs);
+    } else {
+      saveChecklistData(itemsToSave, dutyToSave);
+    }
+  };
+
+  const setStatus = (id: string, s: ToolStatus) => {
+    setItems((p) => {
+      const updated = p.map((i) => (i.id === id ? { ...i, status: s } : i));
+      triggerAutoSave(updated, onDuty, 0);
+      return updated;
+    });
+  };
+
+  const setField = (id: string, f: "notes" | "ticket", v: string) => {
+    setItems((p) => {
+      const updated = p.map((i) => (i.id === id ? { ...i, [f]: v } : i));
+      triggerAutoSave(updated, onDuty, 600);
+      return updated;
+    });
   };
 
   const handleOpenAdd = (defaultCat: string = "PRTG") => {
@@ -246,17 +267,6 @@ export function DailyChecklistPage() {
     await saveMasterTools(updated);
   };
 
-  const reportText = () => {
-    const lines = [
-      `📋 *DAILY CHECKLIST TOOLS MONITORING*`,
-      `🏢 Care Center Telkomsat`,
-      `📅 *Tanggal:* ${date} | *Shift:* ${SHIFT_INFO[shift]?.label || shift}`,
-      `👤 *Petugas:* ${onDuty || "-"}`,
-      `📊 *Status:* ${summary.checked}/${summary.total} Selesai (${summary.percent}%)`,
-      `✅ Normal: ${summary.normal} | ⚠️ Warning: ${summary.warning} | ❌ Down: ${summary.critical}`,
-      `━━━━━━━━━━━━━━━━━━━━`,
-    ];
-
     CATEGORIES.forEach((cat) => {
       const catItems = items.filter((i) => i.cat === cat);
       if (catItems.length === 0) return;
@@ -302,17 +312,21 @@ export function DailyChecklistPage() {
     <AppShell
       title="Daily Checklist"
       subtitle="Monitoring berkala kesehatan tools operasional per shift"
-      actions={
-        <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={async () => { await navigator.clipboard.writeText(reportText()); toast.success("Disalin!"); }}>
-            <Copy className="size-3.5 mr-1" /> Salin
-          </Button>
-          <Button variant="secondary" size="sm" onClick={handleSendTelegram} disabled={sending} className="border border-sky-500/30 bg-sky-500/10 text-sky-700 hover:bg-sky-500/20 dark:text-sky-300">
-            <Send className="size-3.5 mr-1" /> {sending ? "Mengirim…" : "Kirim Telegram"}
-          </Button>
-          <Button size="sm" onClick={handleSave} disabled={saving}>
-            <Save className="size-3.5 mr-1" /> {saving ? "Menyimpan…" : "Simpan"}
-          </Button>
+            actions={
+        <div className="flex items-center gap-2 text-xs">
+          {saveStatus === "saving" && (
+            <span className="flex items-center gap-1.5 text-amber-500 font-medium">
+              <span className="size-2 rounded-full bg-amber-500 animate-pulse" /> Menyimpan...
+            </span>
+          )}
+          {saveStatus === "saved" && (
+            <span className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
+              <CheckCircle2 className="size-3.5" /> Tersimpan otomatis
+            </span>
+          )}
+          {saveStatus === "idle" && (
+            <span className="text-[11px] text-muted-foreground">Auto-save aktif</span>
+          )}
         </div>
       }
     >
