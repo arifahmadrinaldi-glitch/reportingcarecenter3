@@ -187,6 +187,7 @@ export function DailyChecklistPage() {
         if (error) throw error;
         if (data) setRecordId(data.id);
       }
+      await saveMasterTools(items);
       await refetch();
       toast.success("Checklist tersimpan!");
     } catch (e) {
@@ -205,14 +206,15 @@ export function DailyChecklistPage() {
     setDialogOpen(true);
   };
 
-  const handleSaveItemModal = () => {
+    const handleSaveItemModal = async () => {
     if (!editingItem || !editingItem.name.trim()) {
       toast.error("Nama monitoring wajib diisi");
       return;
     }
+    let updated: Item[];
     if (editingItem.id) {
-      setItems((prev) =>
-        prev.map((i) => (i.id === editingItem.id ? { ...i, name: editingItem.name.trim(), cat: editingItem.cat, url: editingItem.url.trim() } : i))
+      updated = items.map((i) =>
+        i.id === editingItem.id ? { ...i, name: editingItem.name.trim(), cat: editingItem.cat, url: editingItem.url.trim() } : i
       );
       toast.success("Monitoring diperbarui");
     } else {
@@ -225,16 +227,20 @@ export function DailyChecklistPage() {
         notes: "",
         ticket: "",
       };
-      setItems((prev) => [...prev, newItem]);
+      updated = [...items, newItem];
       toast.success("Monitoring ditambahkan");
     }
+    setItems(updated);
     setDialogOpen(false);
     setEditingItem(null);
+    await saveMasterTools(updated);
   };
 
-  const handleDeleteItem = (id: string) => {
-    setItems((prev) => prev.filter((i) => i.id !== id));
+  const handleDeleteItem = async (id: string) => {
+    const updated = items.filter((i) => i.id !== id);
+    setItems(updated);
     toast.info("Monitoring dihapus");
+    await saveMasterTools(updated);
   };
 
   const reportText = () => {
