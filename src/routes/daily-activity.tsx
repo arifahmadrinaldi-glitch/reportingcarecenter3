@@ -45,7 +45,7 @@ type Item = {
   ticket: string;
 };
 
-const DEFAULT_TOOLS: Item[] = [
+const DEFAULT_TOOLS: Item[] = []
   // PRTG
   { id: "prtg_gov1", name: "GOV 1", cat: "PRTG", url: "http://prtg-gov1.telkomsat.net:9100/", status: "uncheck", notes: "", ticket: "" },
   { id: "prtg_gov2", name: "GOV 2", cat: "PRTG", url: "http://prtg-gov2.telkomsat.net:9200/", status: "uncheck", notes: "", ticket: "" },
@@ -106,14 +106,15 @@ export function DailyChecklistPage() {
     queryFn: async () => (await supabase.from("schedules").select("*").eq("title", "daily_checklist_tools").eq("period", "master").maybeSingle()).data,
   });
 
-  const masterTools: Item[] = useMemo(() => {
-    const list = masterRow?.data as Item[] | undefined;
-    if (list && Array.isArray(list) && list.length > 0) return list;
+    const masterTools: Item[] = useMemo(() => {
+    if (masterRow && Array.isArray(masterRow.data)) {
+      return masterRow.data as Item[];
+    }
     try {
       const local = localStorage.getItem("daily_checklist_master_tools");
       if (local) {
         const parsed = JSON.parse(local);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed)) return parsed;
       }
     } catch {}
     return DEFAULT_TOOLS;
@@ -152,17 +153,24 @@ export function DailyChecklistPage() {
       const p = saved.data as { onDuty?: string; items?: Item[] };
       setOnDuty(p?.onDuty || roster.join(", "));
       if (p?.items?.length) {
-        const savedIds = new Set(p.items.map((i) => i.id));
-        const missing = masterTools.filter((m) => !savedIds.has(m.id)).map((m) => ({ ...m, status: "uncheck" as ToolStatus, notes: "", ticket: "" }));
-        setItems([...p.items, ...missing]);
+        const savedMap = new Map(p.items.map((i) => [i.id, i]));
+        const merged = masterTools.map((m) => {
+          const prev = savedMap.get(m.id);
+          return {
+            ...m,
+            status: prev?.status || ("uncheck" as ToolStatus),
+            notes: prev?.notes || "",
+            ticket: prev?.ticket || "",
+          };
+        });
+        setItems(merged);
       } else {
-        setItems(masterTools);
+        setItems(masterTools.map((m) => ({ ...m, status: "uncheck" as ToolStatus, notes: "", ticket: "" })));
       }
     } else {
       setRecordId(null);
       setOnDuty(roster.join(", "));
-      // Ganti tanggal/shift baru: tetap gunakan daftar master tools yang sudah diinput
-      setItems(masterTools.map((m) => ({ ...m, status: "uncheck", notes: "", ticket: "" })));
+      setItems(masterTools.map((m) => ({ ...m, status: "uncheck" as ToolStatus, notes: "", ticket: "" })));
     }
   }, [saved, masterTools, roster]);
 
@@ -258,6 +266,7 @@ export function DailyChecklistPage() {
     setDialogOpen(false);
     setEditingItem(null);
     await saveMasterTools(updated);
+    await saveChecklistData(updated, onDuty);
   };
 
   const handleDeleteItem = async (id: string) => {
@@ -265,6 +274,7 @@ export function DailyChecklistPage() {
     setItems(updated);
     toast.info("Monitoring dihapus");
     await saveMasterTools(updated);
+    await saveChecklistData(updated, onDuty);
   };
   
   return (
