@@ -270,7 +270,7 @@ export function DailyChecklistPage() {
   return (
     <AppShell
       title="Daily Checklist"
-      subtitle="Monitoring berkala kesehatan tools operasional per shift"
+      subtitle="Monitoring tools operasional"
             actions={
         <div className="flex items-center gap-2 text-xs">
           {saveStatus === "saving" && (
