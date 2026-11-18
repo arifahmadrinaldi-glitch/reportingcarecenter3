@@ -366,16 +366,15 @@ export function DailyChecklistPage() {
               onClick={() => { setItems((p) => p.map((i) => ({ ...i, status: "normal" }))); toast.success("Semua OK"); }}
             >
               <CheckCircle2 className="size-3 mr-1 text-emerald-600" /> Semua OK
-            </Button>
-                        {isAdmin && (
+            {isAdmin && (
               <Button
-                variant="outline"
+                type="button"
+                variant="ghost"
                 size="sm"
-                className="h-7 text-[10px]"
-                onClick={() => handleOpenAdd("PRTG")}
-                title="Tambah Monitoring Baru"
-              >
-                <Plus className="size-3 mr-1" /> Tambah
+                className="h-6 px-2 text-[10px] text-muted-foreground hover:text-foreground"
+                onClick={() => handleOpenAdd(cat)}
+            >
+                <Plus className="size-3 mr-1" /> Tambah di {cat}
               </Button>
             )}
           </div>
