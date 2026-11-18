@@ -266,48 +266,7 @@ export function DailyChecklistPage() {
     toast.info("Monitoring dihapus");
     await saveMasterTools(updated);
   };
-
-    CATEGORIES.forEach((cat) => {
-      const catItems = items.filter((i) => i.cat === cat);
-      if (catItems.length === 0) return;
-      lines.push(`\n🔹 *${cat}*`);
-      catItems.forEach((i, idx) => {
-        const icon = i.status === "normal" ? "✅" : i.status === "warning" ? "⚠️" : i.status === "critical" ? "❌" : "⚪";
-        let t = `${idx + 1}. ${icon} *${i.name}*`;
-        if (i.notes) t += ` - ${i.notes}`;
-        if (i.ticket) t += ` [Tiket: ${i.ticket}]`;
-        lines.push(t);
-      });
-    });
-
-    const otherItems = items.filter((i) => !CATEGORIES.includes(i.cat as Category));
-    if (otherItems.length > 0) {
-      lines.push(`\n🔹 *LAINNYA*`);
-      otherItems.forEach((i, idx) => {
-        const icon = i.status === "normal" ? "✅" : i.status === "warning" ? "⚠️" : i.status === "critical" ? "❌" : "⚪";
-        let t = `${idx + 1}. ${icon} *${i.name}* (${i.cat})`;
-        if (i.notes) t += ` - ${i.notes}`;
-        if (i.ticket) t += ` [Tiket: ${i.ticket}]`;
-        lines.push(t);
-      });
-    }
-
-    lines.push(`\n━━━━━━━━━━━━━━━━━━━━\n_Dilaporkan via Reporting Care Center_`);
-    return lines.join("\n");
-  };
-
-  const handleSendTelegram = async () => {
-    setSending(true);
-    try {
-      await handleSave();
-      await sendHandover({ data: { text: reportText() } });
-      toast.success("Terkirim ke Telegram!");
-    } catch (e) {
-      toast.error("Gagal kirim Telegram", { description: e instanceof Error ? e.message : String(e) });
-    } finally {
-      setSending(false);
-    }
-  };
+  
   return (
     <AppShell
       title="Daily Checklist"
