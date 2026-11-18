@@ -94,7 +94,7 @@ export function buildHandover(opts: {
     `Per Status:`,
     ...tally(active, (r) => r.status).map(([k, v]) => `  • ${k}: ${v}`),
     ``,
-        `Per Layanan:`,
+    `Per Layanan:`,
     ...tally(active, (r) => r.layanan?.trim() || "-").map(([k, v]) => `  • ${k}: ${v}`),
     ``,
     `CHECKLIST TOOLS MONITORING`,
@@ -114,6 +114,8 @@ export function buildHandover(opts: {
     }) : ["-"]),
     ``,
     `CATATAN AKTIVITAS PENTING`,
+    opts.notes.trim() || "-",
+  ];
   void formatDateTime;
   return lines.join("\n");
 }
