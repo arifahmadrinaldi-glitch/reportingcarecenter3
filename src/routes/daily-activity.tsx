@@ -146,7 +146,7 @@ export function DailyChecklistPage() {
     queryKey: ["daily-checklist", periodKey],
     queryFn: async () => (await supabase.from("schedules").select("*").eq("title", "daily_checklist").eq("period", periodKey).maybeSingle()).data,
   });
-
+  
     useEffect(() => {
     if (saved) {
       setRecordId(saved.id);
