@@ -46,27 +46,7 @@ type Item = {
 };
 
 const DEFAULT_TOOLS: Item[] = [];
-  // PRTG
-  { id: "prtg_gov1", name: "GOV 1", cat: "PRTG", url: "http://prtg-gov1.telkomsat.net:9100/", status: "uncheck", notes: "", ticket: "" },
-  { id: "prtg_gov2", name: "GOV 2", cat: "PRTG", url: "http://prtg-gov2.telkomsat.net:9200/", status: "uncheck", notes: "", ticket: "" },
-  // NETFLOW
-  { id: "netflow_boo1", name: "BOO 1", cat: "NETFLOW", url: "http://netflow-main.telkomsat.net:8000/", status: "uncheck", notes: "", ticket: "" },
-  // NMS HUB
-  { id: "hub_main", name: "Hub VSAT Utama", cat: "NMS HUB", url: "", status: "uncheck", notes: "", ticket: "" },
-  // CACTI
-  { id: "cacti_main", name: "Cacti Server", cat: "CACTI", url: "", status: "uncheck", notes: "", ticket: "" },
-  // NAGIOS
-  { id: "nagios_main", name: "Nagios Core", cat: "NAGIOS", url: "", status: "uncheck", notes: "", ticket: "" },
-  // LIBRE
-  { id: "libre_main", name: "LibreNMS", cat: "LIBRE", url: "", status: "uncheck", notes: "", ticket: "" },
-  // STARMON
-  { id: "starmon_main", name: "Starlink Monitoring Portal", cat: "STARMON", url: "", status: "uncheck", notes: "", ticket: "" },
-  // LAIN-LAIN
-  { id: "bot_telegram", name: "Bot Telegram (@CC3Notif_bot)", cat: "LAIN-LAIN", url: "", status: "uncheck", notes: "", ticket: "" },
-  { id: "carecenter_web", name: "Web Care Center Telkomsat", cat: "LAIN-LAIN", url: "", status:
-    "uncheck", notes: "", ticket: "" },
-  { id: "db_supabase", name: "Database & Server API", cat: "LAIN-LAIN", url: "", status: "uncheck", notes: "", ticket: "" },
-];
+  
 export function DailyChecklistPage() {
   const { isAdmin } = useAccess();
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
@@ -120,26 +100,41 @@ export function DailyChecklistPage() {
     return DEFAULT_TOOLS;
   }, [masterRow]);
 
-  const saveMasterTools = async (updatedTools: Item[]) => {
-    const stripped = updatedTools.map((t) => ({
-      id: t.id,
-      name: t.name,
-      cat: t.cat,
-      url: t.url || "",
-      status: "uncheck" as ToolStatus,
-      notes: "",
-      ticket: "",
-    }));
-    try {
-      localStorage.setItem("daily_checklist_master_tools", JSON.stringify(stripped));
-    } catch {}
-    if (masterRow?.id) {
-      await supabase.from("schedules").update({ data: stripped, updated_at: new Date().toISOString() }).eq("id", masterRow.id);
-    } else {
-      await supabase.from("schedules").insert({ title: "daily_checklist_tools", period: "master", data: stripped });
-    }
-    refetchMaster();
-  };
+  const saveMasterTools = async (updatedTools: Item[]): Promise<boolean> => {
+  const stripped = updatedTools.map((t) => ({
+    id: t.id,
+    name: t.name,
+    cat: t.cat,
+    url: t.url || "",
+    status: "uncheck" as ToolStatus,
+    notes: "",
+    ticket: "",
+  }));
+
+  const { error } = masterRow?.id
+    ? await supabase
+        .from("schedules")
+        .update({ data: stripped, updated_at: new Date().toISOString() })
+        .eq("id", masterRow.id)
+    : await supabase
+        .from("schedules")
+        .insert({ title: "daily_checklist_tools", period: "master", data: stripped });
+
+  if (error) {
+    console.error("Gagal menyimpan master monitoring:", error);
+    toast.error(`Gagal menyimpan daftar monitoring: ${error.message}`);
+    return false;
+  }
+
+  try {
+    localStorage.setItem("daily_checklist_master_tools", JSON.stringify(stripped));
+  } catch {
+    // Penyimpanan browser lokal tidak tersedia; data utama sudah tersimpan di Supabase.
+  }
+
+  await refetchMaster();
+  return true;
+};
 
   const periodKey = `checklist_${date}_${shift}`;
   const { data: saved, isFetching: loading, refetch } = useQuery({
@@ -265,7 +260,9 @@ export function DailyChecklistPage() {
     setItems(updated);
     setDialogOpen(false);
     setEditingItem(null);
-    await saveMasterTools(updated);
+    const masterSaved = await saveMasterTools(updated);
+    if (!masterSaved) return;
+
     await saveChecklistData(updated, onDuty);
   };
 
@@ -273,7 +270,9 @@ export function DailyChecklistPage() {
     const updated = items.filter((i) => i.id !== id);
     setItems(updated);
     toast.info("Monitoring dihapus");
-    await saveMasterTools(updated);
+    const masterSaved = await saveMasterTools(updated);
+    if (!masterSaved) return;
+
     await saveChecklistData(updated, onDuty);
   };
   
