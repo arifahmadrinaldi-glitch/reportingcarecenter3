@@ -87,16 +87,18 @@ export function DailyChecklistPage() {
     queryFn: async () => (await supabase.from("schedules").select("data").eq("period", month).maybeSingle()).data?.data as ScheduleData | undefined,
   });
 
-  const roster = useMemo(() => {
+    const roster = useMemo(() => {
     if (!sched) return [];
     const full = initializeSchedule(sched, undefined, month);
-    const slot = currentShift(new Date(`${date}T${SHIFT_INFO[shift].start + 1}:00:00`));
+    const [y, m, d] = date.split("-").map(Number);
+    const slot = {
+      shift,
+      date: new Date(y, m - 1, d),
+      start: new Date(y, m - 1, d, SHIFT_INFO[shift].start),
+      end: new Date(y, m - 1, d, SHIFT_INFO[shift].end),
+    };
     return Array.from(new Set([...officersOn(full, slot), ...officersOn(full?.business, slot)]));
   }, [sched, month, date, shift]);
-
-  useEffect(() => {
-    if (!onDuty && roster.length) setOnDuty(roster.join(", "));
-  }, [roster, onDuty]);
 
     // 1. Ambil Master Tools permanen
   const { data: masterRow, refetch: refetchMaster } = useQuery({
@@ -144,11 +146,11 @@ export function DailyChecklistPage() {
     queryFn: async () => (await supabase.from("schedules").select("*").eq("title", "daily_checklist").eq("period", periodKey).maybeSingle()).data,
   });
 
-  useEffect(() => {
+    useEffect(() => {
     if (saved) {
       setRecordId(saved.id);
       const p = saved.data as { onDuty?: string; items?: Item[] };
-      if (p?.onDuty) setOnDuty(p.onDuty);
+      setOnDuty(p?.onDuty || roster.join(", "));
       if (p?.items?.length) {
         const savedIds = new Set(p.items.map((i) => i.id));
         const missing = masterTools.filter((m) => !savedIds.has(m.id)).map((m) => ({ ...m, status: "uncheck" as ToolStatus, notes: "", ticket: "" }));
@@ -158,10 +160,11 @@ export function DailyChecklistPage() {
       }
     } else {
       setRecordId(null);
+      setOnDuty(roster.join(", "));
       // Ganti tanggal/shift baru: tetap gunakan daftar master tools yang sudah diinput
       setItems(masterTools.map((m) => ({ ...m, status: "uncheck", notes: "", ticket: "" })));
     }
-  }, [saved, masterTools]);
+  }, [saved, masterTools, roster]);
 
   const summary = useMemo(() => {
     const total = items.length;
