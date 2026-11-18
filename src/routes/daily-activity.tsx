@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { CheckCircle2, ExternalLink, Pencil, Plus, Trash2 } from "lucide-react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type DragEvent } from "react";
 import { toast } from "sonner";
 
 import { AppShell } from "@/components/AppShell";
@@ -187,6 +187,56 @@ export function DailyChecklistPage() {
       return updated;
     });
   };
+  const draggedItemIdRef = useRef<string | null>(null);
+
+const handleItemDragStart = (event: DragEvent<HTMLDivElement>, id: string) => {
+  draggedItemIdRef.current = id;
+  event.dataTransfer.effectAllowed = "move";
+  event.dataTransfer.setData("text/plain", id);
+};
+
+const handleItemDragOver = (event: DragEvent<HTMLDivElement>) => {
+  event.preventDefault();
+  event.dataTransfer.dropEffect = "move";
+};
+
+const handleItemDrop = async (event: DragEvent<HTMLDivElement>, targetId: string) => {
+  event.preventDefault();
+
+  const sourceId =
+    draggedItemIdRef.current || event.dataTransfer.getData("text/plain");
+  draggedItemIdRef.current = null;
+
+  if (!sourceId || sourceId === targetId) return;
+
+  const source = items.find((item) => item.id === sourceId);
+  const target = items.find((item) => item.id === targetId);
+
+  // Hanya izinkan pindah urutan dalam kategori asli yang sama.
+  if (!source || !target || source.cat !== target.cat) return;
+
+  const categoryItems = items.filter((item) => item.cat === source.cat);
+  const fromIndex = categoryItems.findIndex((item) => item.id === sourceId);
+  const toIndex = categoryItems.findIndex((item) => item.id === targetId);
+
+  if (fromIndex < 0 || toIndex < 0) return;
+
+  const reorderedCategory = [...categoryItems];
+  const [movedItem] = reorderedCategory.splice(fromIndex, 1);
+  reorderedCategory.splice(toIndex, 0, movedItem);
+
+  let categoryIndex = 0;
+  const updated = items.map((item) =>
+    item.cat === source.cat ? reorderedCategory[categoryIndex++] : item
+  );
+
+  setItems(updated);
+
+  const masterSaved = await saveMasterTools(updated);
+  if (!masterSaved) return;
+
+  await saveChecklistData(updated, onDuty);
+};
 
   const setField = (id: string, f: "notes" | "ticket", v: string) => {
     setItems((p) => {
@@ -320,7 +370,25 @@ export function DailyChecklistPage() {
                 ) : (
                   <div className="divide-y divide-border">
                     {catItems.map((i, idx) => (
-                      <div key={i.id} className={`p-3 grid gap-2.5 sm:grid-cols-[170px_1fr_auto] sm:items-center ${i.status === "critical" ? "bg-red-500/10" : i.status === "warning" ? "bg-amber-500/10" : "bg-surface"}`}>
+                      <div
+  key={i.id}
+  draggable={isAdmin}
+  onDragStart={(event) => handleItemDragStart(event, i.id)}
+  onDragOver={handleItemDragOver}
+  onDrop={(event) => {
+    void handleItemDrop(event, i.id);
+  }}
+  onDragEnd={() => {
+    draggedItemIdRef.current = null;
+  }}
+  className={`p-3 grid gap-2.5 sm:grid-cols-[170px_1fr_auto] sm:items-center ${
+    i.status === "critical"
+      ? "bg-red-500/10"
+      : i.status === "warning"
+        ? "bg-amber-500/10"
+        : "bg-surface"
+  }`}
+>
                         <div className="min-w-0">
                           <div className="flex items-center gap-1.5">
                             <span className="text-[10px] font-bold text-muted-foreground">{idx + 1}.</span>
