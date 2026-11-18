@@ -22,6 +22,13 @@ export const Route = createFileRoute("/daily-activity")({
 type ToolStatus = "normal" | "warning" | "critical" | "uncheck";
 
 const CATEGORIES = ["NMS HUB", "PRTG", "NETFLOW", "CACTI", "NAGIOS", "LIBRE", "STARMON", "LAIN-LAIN"] as const;
+const CATEGORY_GROUPS: { label: string; categories: readonly string[] }[] = [
+  { label: "NMS HUB", categories: ["NMS HUB"] },
+  { label: "PRTG", categories: ["PRTG"] },
+  { label: "MONITORING", categories: ["STARMON", "NETFLOW", "LIBRE", "CACTI"] },
+  { label: "NAGIOS", categories: ["NAGIOS"] },
+  { label: "LAIN-LAIN", categories: ["LAIN-LAIN"] },
+];
 
 type Item = {
   id: string;
@@ -93,17 +100,14 @@ export function DailyChecklistPage() {
       notes: "",
       ticket: "",
     }));
-
     const { error } = masterRow?.id
       ? await supabase.from("schedules").update({ data: stripped, updated_at: new Date().toISOString() }).eq("id", masterRow.id)
       : await supabase.from("schedules").insert({ title: "daily_checklist_tools", period: "master", data: stripped });
-
     if (error) {
       console.error("Gagal menyimpan master monitoring:", error);
       toast.error(`Gagal menyimpan daftar monitoring: ${error.message}`);
       return false;
     }
-
     try {
       localStorage.setItem("daily_checklist_master_tools", JSON.stringify(stripped));
     } catch {
@@ -300,14 +304,14 @@ export function DailyChecklistPage() {
         </div>
 
         <div className="columns-1 md:columns-2 gap-4">
-          {CATEGORIES.map((cat) => {
-            const catItems = items.filter((i) => i.cat === cat);
+          {CATEGORY_GROUPS.map(({ label, categories }) => {
+            const catItems = items.filter((i) => categories.includes(i.cat));
             return (
-              <div key={cat} className="panel mb-4 overflow-hidden break-inside-avoid">
+              <div key={label} className="panel mb-4 overflow-hidden break-inside-avoid">
                 <div className="border-b border-border bg-muted/40 px-3.5 py-2.5 flex items-center">
                   <div className="flex items-center gap-2">
                     <span className="inline-block size-2 rounded-full bg-primary" />
-                    <h2 className="text-xs font-bold uppercase tracking-wider">{cat}</h2>
+                    <h2 className="text-xs font-bold uppercase tracking-wider">{label}</h2>
                     <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-semibold text-muted-foreground">{catItems.filter((i) => i.status !== "uncheck").length}/{catItems.length}</span>
                   </div>
                 </div>
