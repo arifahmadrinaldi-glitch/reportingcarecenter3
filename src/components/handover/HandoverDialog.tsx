@@ -39,13 +39,67 @@ export function HandoverDialog({ open, onOpenChange, tickets, category }: {
     const d = sched.data?.[period];
     return cat === "vsat" ? d : d?.business;
   };
-  const outgoing = officersOn(pick(periodOf(current.date)), current);
+    const outgoing = officersOn(pick(periodOf(current.date)), current);
   const incoming = officersOn(pick(periodOf(next.date)), next);
+
+  const dateStr = `${current.date.getFullYear()}-${String(current.date.getMonth() + 1).padStart(2, "0")}-${String(current.date.getDate()).padStart(2, "0")}`;
+  const checklistPeriod = `checklist_${dateStr}_${current.shift}`;
+
+  const checklistQuery = useQuery({
+    queryKey: ["daily-checklist-handover", checklistPeriod],
+    enabled: open,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("schedules")
+        .select("data")
+        .eq("title", "daily_checklist")
+        .eq("period", checklistPeriod)
+        .maybeSingle();
+      return (data?.data as { items?: Array<{ name: string; cat: string; status: string; notes?: string; ticket?: string }> }) ?? null;
+    },
+  });
+
+  const checklistText = useMemo(() => {
+    const items = checklistQuery.data?.items;
+    if (!items || items.length === 0) return "├ Status: Belum ada data checklist untuk shift ini";
+
+    const total = items.length;
+    const normal = items.filter((i) => i.status === "normal").length;
+    const warning = items.filter((i) => i.status === "warning").length;
+    const critical = items.filter((i) => i.status === "critical").length;
+    const checked = normal + warning + critical;
+    const percent = total ? Math.round((checked / total) * 100) : 0;
+
+    const lines = [
+      `├ Progres  : ${checked}/${total} Selesai (${percent}%)`,
+      `├ Hasil    : ✅ Normal: ${normal} | ⚠️ Warning: ${warning} | ❌ Down: ${critical}`,
+    ];
+
+    const issues = items.filter((i) => i.status === "warning" || i.status === "critical");
+    if (issues.length > 0) {
+      lines.push(`└ Perhatian / Isu Tools:`);
+      issues.forEach((i) => {
+        const icon = i.status === "warning" ? "⚠️" : "❌";
+        let detail = `  • ${icon} ${i.name} (${i.cat})`;
+        if (i.notes) detail += ` - ${i.notes}`;
+        if (i.ticket) detail += ` [Tiket: ${i.ticket}]`;
+        lines.push(detail);
+      });
+    } else if (checked === total) {
+      lines.push(`└ Semua tools terpantau Normal.`);
+    } else {
+      lines.push(`└ Sebagian tools belum diceklis.`);
+    }
+
+    return lines.join("\n");
+  }, [checklistQuery.data]);
+
   const text = useMemo(
-    () => buildHandover({ tickets, category: cat, now, current, next, outgoing, incoming, notes }),
+    () => buildHandover({ tickets, category: cat, now, current, next, outgoing, incoming, notes, checklistText }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [tickets, cat, now, notes, sched.data],
+    [tickets, cat, now, notes, sched.data, checklistText],
   );
+
 
   const copy = async () => { await navigator.clipboard.writeText(text); toast.success("Teks handover disalin"); };
   const send = async () => {
