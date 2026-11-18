@@ -10,6 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
+import { useAccess } from "@/lib/app-access";
 import { currentShift, officersOn, SHIFT_INFO, type ShiftKey } from "@/lib/handover";
 import { initializeSchedule, type ScheduleData } from "@/lib/schedule";
 import { sendHandover } from "@/lib/telegram.functions";
@@ -67,6 +68,7 @@ const DEFAULT_TOOLS: Item[] = [
   { id: "db_supabase", name: "Database & Server API", cat: "LAIN-LAIN", url: "", status: "uncheck", notes: "", ticket: "" },
 ];
 export function DailyChecklistPage() {
+  const { isAdmin } = useAccess();
   const [date, setDate] = useState(() => new Date().toISOString().slice(0, 10));
   const [shift, setShift] = useState<ShiftKey>(() => currentShift(new Date()).shift);
   const [onDuty, setOnDuty] = useState("");
@@ -322,15 +324,17 @@ export function DailyChecklistPage() {
             >
               <CheckCircle2 className="size-3 mr-1 text-emerald-600" /> Semua OK
             </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-[10px]"
-              onClick={() => handleOpenAdd("PRTG")}
-              title="Tambah Monitoring Baru"
-            >
-              <Plus className="size-3 mr-1" /> Tambah
-            </Button>
+                        {isAdmin && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[10px]"
+                onClick={() => handleOpenAdd("PRTG")}
+                title="Tambah Monitoring Baru"
+              >
+                <Plus className="size-3 mr-1" /> Tambah
+              </Button>
+            )}
           </div>
         </div>
                 {/* Monitoring per Kategori */}
