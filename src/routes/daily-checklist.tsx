@@ -350,23 +350,54 @@ const handleItemDrop = async (
           </div>
         </div>
 
-          <div className={`grid gap-2.5 grid-cols-2 ${isAdmin ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
+                  <div className={`grid gap-2.5 grid-cols-2 ${isAdmin ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
           <div className="panel p-3 col-span-2 sm:col-span-1">
             <span className="text-[9px] font-semibold text-muted-foreground uppercase">Progres</span>
-            ...
+            <div className="mt-0.5 flex items-baseline justify-between">
+              <span className="text-lg font-bold">{summary.percent}%</span>
+              <span className="text-[10px] text-muted-foreground">{summary.checked}/{summary.total}</span>
+            </div>
+            <div className="mt-1.5 h-1.5 w-full rounded-full bg-muted overflow-hidden">
+              <div className="h-full bg-primary" style={{ width: `${summary.percent}%` }} />
+            </div>
           </div>
-          <div className="panel p-3 border-l-4 border-l-emerald-500">...</div>
-          <div className="panel p-3 border-l-4 border-l-amber-500">...</div>
-          <div className="panel p-3 border-l-4 border-l-red-500">...</div>
+          <div className="panel p-3 border-l-4 border-l-emerald-500">
+            <span className="text-[9px] font-semibold text-muted-foreground uppercase">Normal</span>
+            <div className="mt-0.5 text-lg font-bold text-emerald-600 dark:text-emerald-400">{summary.normal}</div>
+          </div>
+          <div className="panel p-3 border-l-4 border-l-amber-500">
+            <span className="text-[9px] font-semibold text-muted-foreground uppercase">Warning</span>
+            <div className="mt-0.5 text-lg font-bold text-amber-600 dark:text-amber-400">{summary.warning}</div>
+          </div>
+          <div className="panel p-3 border-l-4 border-l-red-500">
+            <span className="text-[9px] font-semibold text-muted-foreground uppercase">Down</span>
+            <div className="mt-0.5 text-lg font-bold text-red-600 dark:text-red-400">{summary.critical}</div>
+          </div>
           {isAdmin && (
             <div className="panel p-3 flex items-center justify-between col-span-2 sm:col-span-1">
-              <Button variant="outline" size="sm" className="h-7 text-[10px] flex-1 mr-1.5" onClick={() => {
-                const updated = items.map((i) => ({ ...i, status: "normal" as ToolStatus }));
-                setItems(updated);
-                triggerAutoSave(updated, onDuty);
-                toast.success("Semua OK");
-              }}><CheckCircle2 className="size-3 mr-1 text-emerald-600" /> Semua OK</Button>
-              <Button type="button" variant="outline" size="sm" className="h-7 text-[10px]" onClick={() => handleOpenAdd("PRTG")} title="Tambah Monitoring Baru"><Plus className="size-3 mr-1" /> Tambah</Button>
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-[10px] flex-1 mr-1.5"
+                onClick={() => {
+                  const updated = items.map((i) => ({ ...i, status: "normal" as ToolStatus }));
+                  setItems(updated);
+                  triggerAutoSave(updated, onDuty);
+                  toast.success("Semua OK");
+                }}
+              >
+                <CheckCircle2 className="size-3 mr-1 text-emerald-600" /> Semua OK
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="h-7 text-[10px]"
+                onClick={() => handleOpenAdd("PRTG")}
+                title="Tambah Monitoring Baru"
+              >
+                <Plus className="size-3 mr-1" /> Tambah
+              </Button>
             </div>
           )}
         </div>
