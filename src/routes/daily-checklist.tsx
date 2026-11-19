@@ -21,7 +21,7 @@ export const Route = createFileRoute("/daily-checklist")({
 
 type ToolStatus = "normal" | "warning" | "critical" | "uncheck";
 
-const CATEGORIES = ["NMS HUB", "PRTG", "NETFLOW", "CACTI", "NAGIOS", "LIBRE", "STARMON", "LAIN-LAIN"] as const;
+const CATEGORIES = ["NMS HUB", "PRTG", "BROADCAST", "NETFLOW", "CACTI", "NAGIOS", "LIBRE", "STARMON", "LAIN-LAIN"] as const;
 const CATEGORY_GROUPS: { label: string; categories: readonly string[] }[] = [
   { label: "NMS HUB", categories: ["NMS HUB"] },
   { label: "PRTG", categories: ["PRTG"] },
