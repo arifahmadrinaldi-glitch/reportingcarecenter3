@@ -11,7 +11,7 @@ import { useAccess } from "@/lib/app-access";
 import { toast } from "sonner";
 
 import { Link } from "@tanstack/react-router";
-import { CalendarDays, ClipboardList, LayoutGrid, LogOut, Radio, Satellite, Ticket, Tv } from "lucide-react";
+import { CalendarDays, ClipboardList, LayoutGrid, LogOut, Radio, Satellite, ShieldCheck, Ticket, Tv } from "lucide-react";
 import { useState, type ReactNode } from "react";
 
 import { AccessControls } from "@/components/AccessControls";
