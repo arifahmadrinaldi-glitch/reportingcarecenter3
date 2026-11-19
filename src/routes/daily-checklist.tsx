@@ -148,10 +148,9 @@ export function DailyChecklistPage() {
   const summary = useMemo(() => {
     const total = items.length;
     const normal = items.filter((i) => i.status === "normal").length;
-    const warning = items.filter((i) => i.status === "warning").length;
     const critical = items.filter((i) => i.status === "critical").length;
-    const checked = normal + warning + critical;
-    return { total, normal, warning, critical, checked, percent: total ? Math.round((checked / total) * 100) : 0 };
+    const checked = normal + critical;
+    return { total, normal, critical, checked, percent: total ? Math.round((checked / total) * 100) : 0 };
   }, [items]);
 
   const saveChecklistData = async (itemsToSave: Item[], dutyToSave: string) => {
@@ -350,7 +349,7 @@ const handleItemDrop = async (
           </div>
         </div>
 
-                  <div className={`grid gap-2.5 grid-cols-2 ${isAdmin ? "sm:grid-cols-5" : "sm:grid-cols-4"}`}>
+                  <div className={`grid gap-2.5 grid-cols-2 ${isAdmin ? "sm:grid-cols-4" : "sm:grid-cols-3"}`}>
           <div className="panel p-3 col-span-2 sm:col-span-1">
             <span className="text-[9px] font-semibold text-muted-foreground uppercase">Progres</span>
             <div className="mt-0.5 flex items-baseline justify-between">
@@ -364,10 +363,6 @@ const handleItemDrop = async (
           <div className="panel p-3 border-l-4 border-l-emerald-500">
             <span className="text-[9px] font-semibold text-muted-foreground uppercase">Normal</span>
             <div className="mt-0.5 text-lg font-bold text-emerald-600 dark:text-emerald-400">{summary.normal}</div>
-          </div>
-          <div className="panel p-3 border-l-4 border-l-amber-500">
-            <span className="text-[9px] font-semibold text-muted-foreground uppercase">Warning</span>
-            <div className="mt-0.5 text-lg font-bold text-amber-600 dark:text-amber-400">{summary.warning}</div>
           </div>
           <div className="panel p-3 border-l-4 border-l-red-500">
             <span className="text-[9px] font-semibold text-muted-foreground uppercase">Down</span>
@@ -433,8 +428,6 @@ const handleItemDrop = async (
   className={`p-3 grid gap-2.5 sm:grid-cols-[170px_1fr_auto] sm:items-center ${
     i.status === "critical"
       ? "bg-red-500/10"
-      : i.status === "warning"
-        ? "bg-amber-500/10"
         : "bg-surface"
   }`}
 >
@@ -450,8 +443,7 @@ const handleItemDrop = async (
                           <Input value={i.ticket} onChange={(e) => setField(i.id, "ticket", e.target.value)} placeholder="No Tiket" className="h-7 text-xs bg-background" />
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <button type="button" onClick={() => setStatus(i.id, "normal")} className={`px-2 py-1 text-[11px] font-semibold rounded ${i.status === "normal" ? "bg-emerald-600 text-white" : "border bg-background text-muted-foreground"}`}>OK</button>
-                          <button type="button" onClick={() => setStatus(i.id, "warning")} className={`px-2 py-1 text-[11px] font-semibold rounded ${i.status === "warning" ? "bg-amber-600 text-white" : "border bg-background text-muted-foreground"}`}>Warn</button>
+                          <button type="button" onClick={() => setStatus(i.id, "normal")} className={`px-2 py-1 text-[11px] font-semibold rounded ${i.status === "normal" ? "bg-emerald-600 text-white" : "border bg-background text-muted-foreground"}`}>OK</button
                           <button type="button" onClick={() => setStatus(i.id, "critical")} className={`px-2 py-1 text-[11px] font-semibold rounded ${i.status === "critical" ? "bg-red-600 text-white" : "border bg-background text-muted-foreground"}`}>Down</button>
                           {isAdmin && <>
                             <button type="button" onClick={() => handleOpenEdit(i)} className="p-1 text-muted-foreground hover:text-foreground ml-1" title="Edit nama/URL"><Pencil className="size-3" /></button>
