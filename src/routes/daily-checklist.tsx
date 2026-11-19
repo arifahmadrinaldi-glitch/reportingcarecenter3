@@ -443,7 +443,7 @@ const handleItemDrop = async (
                           <Input value={i.ticket} onChange={(e) => setField(i.id, "ticket", e.target.value)} placeholder="No Tiket" className="h-7 text-xs bg-background" />
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
-                          <button type="button" onClick={() => setStatus(i.id, "normal")} className={`px-2 py-1 text-[11px] font-semibold rounded ${i.status === "normal" ? "bg-emerald-600 text-white" : "border bg-background text-muted-foreground"}`}>OK</button
+                          <button type="button" onClick={() => setStatus(i.id, "normal")} className={`px-2 py-1 text-[11px] font-semibold rounded ${i.status === "normal" ? "bg-emerald-600 text-white" : "border bg-background text-muted-foreground"}`}>OK</button>
                           <button type="button" onClick={() => setStatus(i.id, "critical")} className={`px-2 py-1 text-[11px] font-semibold rounded ${i.status === "critical" ? "bg-red-600 text-white" : "border bg-background text-muted-foreground"}`}>Down</button>
                           {isAdmin && <>
                             <button type="button" onClick={() => handleOpenEdit(i)} className="p-1 text-muted-foreground hover:text-foreground ml-1" title="Edit nama/URL"><Pencil className="size-3" /></button>
