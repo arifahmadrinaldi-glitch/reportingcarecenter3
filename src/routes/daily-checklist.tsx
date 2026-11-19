@@ -14,7 +14,7 @@ import { useAccess } from "@/lib/app-access";
 import { currentShift, officersOn, SHIFT_INFO, type ShiftKey } from "@/lib/handover";
 import { initializeSchedule, type ScheduleData } from "@/lib/schedule";
 
-export const Route = createFileRoute("/daily-activity")({
+export const Route = createFileRoute("/daily-checklist")({
   head: () => ({ meta: [{ title: "Daily Checklist — Care Center Telkomsat" }] }),
   component: DailyChecklistPage,
 });
