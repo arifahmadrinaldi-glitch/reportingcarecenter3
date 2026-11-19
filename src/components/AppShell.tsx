@@ -1,3 +1,15 @@
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { useAccess } from "@/lib/app-access";
+import { toast } from "sonner";
+
 import { Link } from "@tanstack/react-router";
 import { CalendarDays, ClipboardList, LayoutGrid, LogOut, Radio, Satellite, Ticket, Tv } from "lucide-react";
 import { useState, type ReactNode } from "react";
@@ -33,6 +45,19 @@ export function AppShell({
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { signOut } = useAuth();
+  const { isAdmin, loginAdmin, logoutAdmin } = useAccess();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [password, setPassword] = useState("");
+
+  const handleSwitchAdmin = () => {
+    if (loginAdmin(password)) {
+      toast.success("Berhasil beralih ke Super User");
+      setPassword("");
+      setDialogOpen(false);
+    } else {
+      toast.error("Kode / password salah");
+    }
+  };
 
   const handleSignOut = async () => {
     await queryClient.cancelQueries();
@@ -50,7 +75,17 @@ export function AppShell({
           expanded ? "w-56" : "w-16"
         }`}
       >
-        <div className={`flex items-center gap-3 py-5 ${expanded ? "px-4" : "justify-center px-2"}`}>
+                <button
+          type="button"
+          onClick={() => {
+            setPassword("");
+            setDialogOpen(true);
+          }}
+          title="Klik untuk opsi Super User"
+          className={`flex items-center gap-3 py-5 text-left transition-colors hover:bg-sidebar-accent/50 ${
+            expanded ? "px-4" : "justify-center px-2"
+          }`}
+        >
           <span className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-sidebar-primary text-sidebar-primary-foreground">
             <Radio className="size-5" />
           </span>
@@ -60,7 +95,8 @@ export function AppShell({
               <span className="block truncate text-[11px] text-sidebar-foreground/70">Operations Dashboard</span>
             </span>
           ) : null}
-        </div>
+        </button>
+
         <nav className={`flex flex-col gap-1 py-2 ${expanded ? "px-3" : "px-2"}`}>
           {navItems.map(({ to, label, icon: Icon }) => (
             <Link
@@ -123,6 +159,60 @@ export function AppShell({
         </header>
         <main className="min-w-0 flex-1 p-4 md:p-6">{children}</main>
       </div>
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ShieldCheck className="size-5 text-primary" />
+              {isAdmin ? "Mode Super User Aktif" : "Switch to Super User"}
+            </DialogTitle>
+            <DialogDescription>
+              {isAdmin
+                ? "Saat ini Anda login sebagai Super User dengan hak akses penuh."
+                : "Masukkan kode / password admin untuk beralih ke mode Super User."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {!isAdmin && (
+            <Input
+              type="password"
+              value={password}
+              autoFocus
+              placeholder="Masukkan kode admin"
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSwitchAdmin();
+              }}
+            />
+          )}
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            {isAdmin ? (
+              <>
+                <Button
+                  variant="destructive"
+                  onClick={() => {logoutAdmin();
+                    setDialogOpen(false);
+                    toast.success("Kembali ke mode User Biasa");
+                  }}
+                >
+                  Keluar Super User
+                </Button>
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  Tutup
+                </Button>
+              </>
+            ) : (
+              <>
+                <Button variant="outline" onClick={() => setDialogOpen(false)}>
+                  Batal
+                </Button>
+                <Button onClick={handleSwitchAdmin}>Masuk</Button>
+              </>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
