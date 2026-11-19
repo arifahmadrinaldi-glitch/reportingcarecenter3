@@ -25,6 +25,7 @@ const CATEGORIES = ["NMS HUB", "PRTG", "NETFLOW", "CACTI", "NAGIOS", "LIBRE", "S
 const CATEGORY_GROUPS: { label: string; categories: readonly string[] }[] = [
   { label: "NMS HUB", categories: ["NMS HUB"] },
   { label: "PRTG", categories: ["PRTG"] },
+  { label: "BROADCAST", categories: ["BROADCAST"] },
   { label: "STARMON, NETFLOW, LIBRE, CACTI", categories: ["STARMON", "NETFLOW", "LIBRE", "CACTI"] },
   { label: "NAGIOS", categories: ["NAGIOS"] },
   { label: "LAIN-LAIN", categories: ["LAIN-LAIN"] },
